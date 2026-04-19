@@ -77,7 +77,7 @@ async function callModel(system: string, prompt: string): Promise<any[]> {
       generationConfig: {
         responseMimeType: 'application/json',
         temperature: 0.7,
-        maxOutputTokens: 8192,
+        maxOutputTokens: 32768,
       },
     }),
   })
