@@ -16,7 +16,7 @@ const tierASources = [
     language: 'sq',
     strategies: [
       { order: 1, type: 'http_cheerio' },
-      { order: 2, type: 'gemini_extract' },
+      { order: 2, type: 'gemini_synthesize' },
     ],
     schedule: '0 3 * * *',
     isActive: true,
@@ -30,7 +30,7 @@ const tierASources = [
     language: 'sq',
     strategies: [
       { order: 1, type: 'http_cheerio' },
-      { order: 2, type: 'gemini_extract' },
+      { order: 2, type: 'gemini_synthesize' },
     ],
     schedule: '0 3 * * *',
     isActive: true,
@@ -44,7 +44,7 @@ const tierASources = [
     language: 'sq',
     strategies: [
       { order: 1, type: 'http_cheerio' },
-      { order: 2, type: 'gemini_extract' },
+      { order: 2, type: 'gemini_synthesize' },
     ],
     schedule: '0 3 * * *',
     isActive: true,
@@ -58,7 +58,7 @@ const tierASources = [
     language: 'sq',
     strategies: [
       { order: 1, type: 'http_cheerio' },
-      { order: 2, type: 'gemini_extract' },
+      { order: 2, type: 'gemini_synthesize' },
     ],
     schedule: '0 3 * * *',
     isActive: true,

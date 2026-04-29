@@ -9,7 +9,7 @@ const prisma = new PrismaClient()
 
 const STRAT_2 = [
   { order: 1, type: 'http_cheerio' },
-  { order: 2, type: 'gemini_extract' },
+  { order: 2, type: 'gemini_synthesize' },
 ]
 const STRAT_1 = [{ order: 1, type: 'http_cheerio' }]
 
