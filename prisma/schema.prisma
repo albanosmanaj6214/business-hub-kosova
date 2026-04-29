@@ -42,25 +42,25 @@ enum BookingStatus {
 }
 
 model User {
-  id              String    @id @default(cuid())
-  email           String    @unique
-  password        String
-  name            String?
-  companyName     String?
-  sector          String?
-  language        String    @default("sq")
-  role            Role      @default(USER)
-  interests       String[]  @default([])
-  emailVerified   DateTime?
-  image           String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String?
+  companyName   String?
+  sector        String?
+  language      String    @default("sq")
+  role          Role      @default(USER)
+  interests     String[]  @default([])
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  subscription    Subscription?
-  notifications   Notification[]
-  bookings        ConsultationBooking[]
-  accounts        Account[]
-  sessions        Session[]
+  subscription  Subscription?
+  notifications Notification[]
+  bookings      ConsultationBooking[]
+  accounts      Account[]
+  sessions      Session[]
 }
 
 model Account {
@@ -115,63 +115,67 @@ model Subscription {
 }
 
 model Grant {
-  id           String   @id @default(cuid())
-  title        String
-  titleSq      String?
-  description  String   @db.Text
-  descriptionSq String? @db.Text
-  provider     String
-  amount       String?
-  currency     String   @default("EUR")
-  deadline     DateTime?
-  eligibility  String?  @db.Text
-  url          String?
-  country      String?
-  sectors      String[] @default([])
-  tags         String[] @default([])
-  isActive     Boolean  @default(true)
-  scrapedAt    DateTime @default(now())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String    @id @default(cuid())
+  title         String
+  titleSq       String?
+  description   String    @db.Text
+  descriptionSq String?   @db.Text
+  provider      String
+  amount        String?
+  currency      String    @default("EUR")
+  deadline      DateTime?
+  eligibility   String?   @db.Text
+  url           String?
+  country       String?
+  sectors       String[]  @default([])
+  tags          String[]  @default([])
+  isActive      Boolean   @default(true)
+  scrapedAt     DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([deadline])
   @@index([isActive])
 }
 
 model TradeFair {
-  id           String   @id @default(cuid())
-  name         String
-  nameSq       String?
-  description  String?  @db.Text
-  descriptionSq String? @db.Text
-  location     String
-  country      String
-  startDate    DateTime
-  endDate      DateTime
-  website      String?
-  sectors      String[] @default([])
-  tags         String[] @default([])
-  isActive     Boolean  @default(true)
-  scrapedAt    DateTime @default(now())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String   @id @default(cuid())
+  name          String
+  nameSq        String?
+  description   String?  @db.Text
+  descriptionSq String?  @db.Text
+  location      String
+  country       String
+  startDate     DateTime
+  endDate       DateTime
+  website       String?
+  sectors       String[] @default([])
+  tags          String[] @default([])
+  isActive      Boolean  @default(true)
+  scrapedAt     DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([startDate])
   @@index([isActive])
 }
 
 model ExportGuide {
-  id           String   @id @default(cuid())
-  title        String
-  titleSq      String?
-  content      String   @db.Text
-  contentSq    String?  @db.Text
-  country      String
-  sectors      String[] @default([])
-  tags         String[] @default([])
-  isPublished  Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String   @id @default(cuid())
+  title       String
+  titleSq     String?
+  titleEn     String?
+  titleDe     String?
+  content     String   @db.Text
+  contentSq   String?  @db.Text
+  contentEn   String?  @db.Text
+  contentDe   String?  @db.Text
+  country     String
+  sectors     String[] @default([])
+  tags        String[] @default([])
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([country])
 }
@@ -194,25 +198,25 @@ model Notification {
 }
 
 model ConsultationBooking {
-  id          String        @id @default(cuid())
-  userId      String
-  date        DateTime
-  time        String
-  topic       String
-  notes       String?       @db.Text
-  status      BookingStatus @default(PENDING)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id        String        @id @default(cuid())
+  userId    String
+  date      DateTime
+  time      String
+  topic     String
+  notes     String?       @db.Text
+  status    BookingStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ScraperLog {
-  id        String   @id @default(cuid())
-  type      String
-  status    String
-  message   String?  @db.Text
-  itemsFound Int     @default(0)
-  duration  Int?
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  type       String
+  status     String
+  message    String?  @db.Text
+  itemsFound Int      @default(0)
+  duration   Int?
+  createdAt  DateTime @default(now())
 }
