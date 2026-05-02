@@ -46,8 +46,8 @@ export default async function GuidePage({ params }: { params: { id: string } }) 
   const guide = await prisma.exportGuide.findUnique({ where: { id: params.id } })
   if (!guide || !guide.isPublished) notFound()
 
-  const title = pickTitle(guide as any, locale)
-  const body = pickContent(guide as any, locale)
+  const title = pickTitle(guide, locale)
+  const body = pickContent(guide, locale)
 
   return (
     <div className="max-w-3xl mx-auto">

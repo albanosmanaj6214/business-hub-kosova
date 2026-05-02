@@ -2,9 +2,21 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { scrapeKiesa } from '@/lib/scrapers/kiesa'
+import { scrapeMzhr } from '@/lib/scrapers/mzhr'
+import { scrapeMint } from '@/lib/scrapers/mint'
+import type { OpportunityInput } from '@/lib/scrapers/types'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+
+type ScraperFn = () => Promise<OpportunityInput[]>
+
+const SCRAPERS: Record<string, ScraperFn> = {
+  KIESA: scrapeKiesa,
+  MZHR: scrapeMzhr,
+  MINT: scrapeMint,
+}
 
 const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`
@@ -44,7 +56,6 @@ Each object must have:
 - tags (array — e.g. ["eu","export","sme"])`
 
 const FAIRS_SYSTEM = GRANTS_SYSTEM
-
 const FAIRS_PROMPT = `Produce a JSON array of 8 upcoming international trade fairs relevant to Kosovar exporters (food & beverage, textiles, wood, construction, ICT).
 Focus on the EU, Turkey, UAE, Western Balkans. Base on real recurring fairs (Anuga, SIAL, Gulfood, ITB, Ambiente, Heimtextil, BIG 5, Trieste Export, Tirana Export, Prishtina Tech Summit, etc.).
 Each object must have:
@@ -101,84 +112,310 @@ async function callModel(system: string, prompt: string): Promise<any[]> {
   }
 }
 
-async function scrapeGrants() {
-  const startTime = Date.now()
-  try {
-    const items = await callModel(GRANTS_SYSTEM, GRANTS_PROMPT)
-    let created = 0
-    for (const g of items) {
-      try {
-        await prisma.grant.create({
-          data: {
-            title: g.titleEn || g.title,
-            titleSq: g.titleSq ?? null,
-            description: g.descriptionEn || g.description,
-            descriptionSq: g.descriptionSq ?? null,
-            provider: g.provider || 'Unknown',
-            amount: g.amount ?? null,
-            currency: g.currency || 'EUR',
-            deadline: g.deadline ? new Date(g.deadline) : null,
-            eligibility: g.eligibility ?? null,
-            url: g.url ?? null,
-            country: g.country ?? 'Kosovo',
-            sectors: Array.isArray(g.sectors) ? g.sectors : [],
-            tags: Array.isArray(g.tags) ? g.tags : [],
-          },
-        })
-        created++
-      } catch (e) {
-        console.warn('grant insert skipped:', e)
-      }
+type LegacyOp = 'created' | 'updated' | 'skipped'
+
+async function persistOpportunity(
+  sourceId: string,
+  attemptId: string,
+  item: OpportunityInput,
+): Promise<{ grant: LegacyOp; fair: LegacyOp }> {
+  await prisma.opportunity.upsert({
+    where: { sourceId_externalId: { sourceId, externalId: item.externalId } },
+    create: {
+      sourceId,
+      externalId: item.externalId,
+      type: item.type,
+      title: item.title,
+      description: item.description ?? null,
+      deadline: item.deadline ?? null,
+      amount: item.amount ?? null,
+      currency: item.currency ?? 'EUR',
+      eligibility: item.eligibility ?? null,
+      sourceUrl: item.sourceUrl,
+      attemptId,
+    },
+    update: {
+      title: item.title,
+      description: item.description ?? null,
+      deadline: item.deadline ?? null,
+      lastSeenAt: new Date(),
+      attemptId,
+    },
+  })
+
+  let grant: LegacyOp = 'skipped'
+  let fair: LegacyOp = 'skipped'
+  const legacy = item.legacy ?? {}
+
+  if (item.type === 'GRANT') {
+    const existing = await prisma.grant.findFirst({ where: { url: item.sourceUrl } })
+    const data = {
+      title: item.title,
+      titleSq: legacy.titleSq ?? null,
+      description: item.description ?? item.title,
+      descriptionSq: legacy.descriptionSq ?? null,
+      provider: legacy.provider ?? 'KIESA',
+      amount: item.amount ?? null,
+      currency: item.currency ?? 'EUR',
+      deadline: item.deadline ?? null,
+      eligibility: item.eligibility ?? null,
+      url: item.sourceUrl,
+      country: legacy.country ?? 'Kosovo',
+      sectors: legacy.sectors ?? [],
+      tags: legacy.tags ?? [],
     }
-    await prisma.scraperLog.create({
-      data: { type: 'GRANTS', status: 'SUCCESS', message: `Scraped ${created}/${items.length} grants`, itemsFound: created, duration: Date.now() - startTime },
+    if (existing) {
+      await prisma.grant.update({ where: { id: existing.id }, data })
+      grant = 'updated'
+    } else {
+      await prisma.grant.create({ data })
+      grant = 'created'
+    }
+  } else if (item.type === 'FAIR') {
+    const websiteUrl = legacy.website ?? item.sourceUrl
+    const existing = await prisma.tradeFair.findFirst({ where: { website: websiteUrl } })
+    const start = legacy.startDate ?? existing?.startDate ?? new Date()
+    const end = legacy.endDate ?? existing?.endDate ?? start
+    const data = {
+      name: item.title,
+      nameSq: legacy.titleSq ?? null,
+      description: item.description ?? null,
+      descriptionSq: legacy.descriptionSq ?? null,
+      location: legacy.location ?? 'Kosovo',
+      country: legacy.country ?? 'Kosovo',
+      startDate: start,
+      endDate: end,
+      website: websiteUrl,
+      sectors: legacy.sectors ?? [],
+      tags: legacy.tags ?? [],
+    }
+    if (existing) {
+      await prisma.tradeFair.update({ where: { id: existing.id }, data })
+      fair = 'updated'
+    } else {
+      await prisma.tradeFair.create({ data })
+      fair = 'created'
+    }
+  }
+
+  return { grant, fair }
+}
+
+async function emergencySynthesize(): Promise<{ grants: number; fairs: number }> {
+  const grants = await callModel(GRANTS_SYSTEM, GRANTS_PROMPT)
+  let g = 0
+  for (const x of grants) {
+    try {
+      await prisma.grant.create({
+        data: {
+          title: x.titleEn || x.title,
+          titleSq: x.titleSq ?? null,
+          description: x.descriptionEn || x.description,
+          descriptionSq: x.descriptionSq ?? null,
+          provider: x.provider || 'Synthesized',
+          amount: x.amount ?? null,
+          currency: x.currency || 'EUR',
+          deadline: x.deadline ? new Date(x.deadline) : null,
+          eligibility: x.eligibility ?? null,
+          url: x.url ?? null,
+          country: x.country ?? 'Kosovo',
+          sectors: Array.isArray(x.sectors) ? x.sectors : [],
+          tags: Array.isArray(x.tags) ? x.tags : ['synthesized'],
+        },
+      })
+      g++
+    } catch {}
+  }
+  const fairs = await callModel(FAIRS_SYSTEM, FAIRS_PROMPT)
+  let f = 0
+  for (const x of fairs) {
+    try {
+      await prisma.tradeFair.create({
+        data: {
+          name: x.nameEn || x.name,
+          nameSq: x.nameSq ?? null,
+          description: x.descriptionEn || x.description || null,
+          descriptionSq: x.descriptionSq ?? null,
+          location: x.location || 'Unknown',
+          country: x.country || 'Unknown',
+          startDate: new Date(x.startDate),
+          endDate: new Date(x.endDate || x.startDate),
+          website: x.website ?? null,
+          sectors: Array.isArray(x.sectors) ? x.sectors : [],
+          tags: Array.isArray(x.tags) ? [...x.tags, 'synthesized'] : ['synthesized'],
+        },
+      })
+      f++
+    } catch {}
+  }
+  return { grants: g, fairs: f }
+}
+
+interface RunBody {
+  type?: 'all' | 'grants' | 'fairs'
+  source?: string
+  dryRun?: boolean
+}
+
+interface SourceRunResult {
+  code: string
+  ok: boolean
+  items?: number
+  itemsNew?: number
+  itemsUpdated?: number
+  grantsCreated?: number
+  grantsUpdated?: number
+  fairsCreated?: number
+  fairsUpdated?: number
+  error?: string
+}
+
+async function runOne(code: string, dryRun: boolean): Promise<SourceRunResult> {
+  const startedAt = new Date()
+  const fn = SCRAPERS[code]
+  if (!fn) return { code, ok: false, error: `No scraper registered for ${code}` }
+
+  const source = await prisma.source.findUnique({ where: { code } })
+  if (!source) return { code, ok: false, error: `Source ${code} not in DB` }
+  if (!source.isActive) return { code, ok: false, error: `Source ${code} is inactive` }
+
+  let attemptId: string | null = null
+  if (!dryRun) {
+    const attempt = await prisma.scrapeAttempt.create({
+      data: {
+        sourceId: source.id,
+        strategyUsed: 1,
+        status: 'PARTIAL',
+        triggeredBy: 'API',
+        startedAt,
+      },
     })
-    return { success: true, count: created }
-  } catch (error: any) {
-    await prisma.scraperLog.create({
-      data: { type: 'GRANTS', status: 'ERROR', message: String(error?.message || error), duration: Date.now() - startTime },
+    attemptId = attempt.id
+  }
+
+  let items: OpportunityInput[] = []
+  let scrapeError: string | null = null
+  try {
+    items = await fn()
+  } catch (e: any) {
+    scrapeError = String(e?.message || e)
+  }
+
+  if (dryRun) {
+    return { code, ok: scrapeError == null, items: items.length, error: scrapeError ?? undefined }
+  }
+
+  if (items.length === 0) {
+    const durationMs = Date.now() - startedAt.getTime()
+    await prisma.scrapeAttempt.update({
+      where: { id: attemptId! },
+      data: {
+        status: 'FAILED',
+        itemsFound: 0,
+        finishedAt: new Date(),
+        durationMs,
+        errorMessage: scrapeError ?? 'Real scraper returned 0 items',
+      },
     })
-    return { success: false, error: String(error?.message || error) }
+    await prisma.sourceHealth.update({
+      where: { sourceId: source.id },
+      data: {
+        lastFailureAt: new Date(),
+        consecutiveFailures: { increment: 1 },
+        currentStrategy: 1,
+      },
+    })
+    return { code, ok: false, items: 0, error: scrapeError ?? 'no items' }
+  }
+
+  let grantsCreated = 0, grantsUpdated = 0, fairsCreated = 0, fairsUpdated = 0
+  let itemsNew = 0, itemsUpdated = 0
+  for (const item of items) {
+    const before = await prisma.opportunity.findUnique({
+      where: { sourceId_externalId: { sourceId: source.id, externalId: item.externalId } },
+      select: { id: true },
+    })
+    try {
+      const r = await persistOpportunity(source.id, attemptId!, item)
+      if (r.grant === 'created') grantsCreated++
+      else if (r.grant === 'updated') grantsUpdated++
+      if (r.fair === 'created') fairsCreated++
+      else if (r.fair === 'updated') fairsUpdated++
+      if (before) itemsUpdated++
+      else itemsNew++
+    } catch (e) {
+      console.warn('persist failed for', item.externalId, e)
+    }
+  }
+
+  const durationMs = Date.now() - startedAt.getTime()
+  await prisma.scrapeAttempt.update({
+    where: { id: attemptId! },
+    data: {
+      status: 'SUCCESS',
+      itemsFound: items.length,
+      itemsNew,
+      itemsUpdated,
+      durationMs,
+      finishedAt: new Date(),
+    },
+  })
+  await prisma.sourceHealth.update({
+    where: { sourceId: source.id },
+    data: {
+      lastSuccessAt: new Date(),
+      consecutiveFailures: 0,
+      currentStrategy: 1,
+      avgDurationMs: durationMs,
+      totalItemsLifetime: { increment: itemsNew },
+    },
+  })
+
+  return {
+    code,
+    ok: true,
+    items: items.length,
+    itemsNew,
+    itemsUpdated,
+    grantsCreated,
+    grantsUpdated,
+    fairsCreated,
+    fairsUpdated,
   }
 }
 
-async function scrapeFairs() {
-  const startTime = Date.now()
-  try {
-    const items = await callModel(FAIRS_SYSTEM, FAIRS_PROMPT)
-    let created = 0
-    for (const f of items) {
-      try {
-        await prisma.tradeFair.create({
-          data: {
-            name: f.nameEn || f.name,
-            nameSq: f.nameSq ?? null,
-            description: f.descriptionEn || f.description || null,
-            descriptionSq: f.descriptionSq ?? null,
-            location: f.location || 'Unknown',
-            country: f.country || 'Unknown',
-            startDate: new Date(f.startDate),
-            endDate: new Date(f.endDate || f.startDate),
-            website: f.website ?? null,
-            sectors: Array.isArray(f.sectors) ? f.sectors : [],
-            tags: Array.isArray(f.tags) ? f.tags : [],
-          },
-        })
-        created++
-      } catch (e) {
-        console.warn('fair insert skipped:', e)
-      }
-    }
-    await prisma.scraperLog.create({
-      data: { type: 'FAIRS', status: 'SUCCESS', message: `Scraped ${created}/${items.length} fairs`, itemsFound: created, duration: Date.now() - startTime },
-    })
-    return { success: true, count: created }
-  } catch (error: any) {
-    await prisma.scraperLog.create({
-      data: { type: 'FAIRS', status: 'ERROR', message: String(error?.message || error), duration: Date.now() - startTime },
-    })
-    return { success: false, error: String(error?.message || error) }
+async function runAll(body: RunBody) {
+  const dryRun = body.dryRun === true
+  const targetCode = body.source?.toUpperCase()
+
+  const codes = targetCode
+    ? [targetCode]
+    : Object.keys(SCRAPERS)
+
+  const results: SourceRunResult[] = []
+  for (const code of codes) {
+    results.push(await runOne(code, dryRun))
   }
+
+  const totals = results.reduce(
+    (acc, r) => {
+      acc.items += r.items ?? 0
+      acc.itemsNew += r.itemsNew ?? 0
+      acc.itemsUpdated += r.itemsUpdated ?? 0
+      acc.grantsCreated += r.grantsCreated ?? 0
+      acc.grantsUpdated += r.grantsUpdated ?? 0
+      acc.fairsCreated += r.fairsCreated ?? 0
+      acc.fairsUpdated += r.fairsUpdated ?? 0
+      return acc
+    },
+    { items: 0, itemsNew: 0, itemsUpdated: 0, grantsCreated: 0, grantsUpdated: 0, fairsCreated: 0, fairsUpdated: 0 },
+  )
+
+  return NextResponse.json({
+    mode: dryRun ? 'REAL_DRY_RUN' : 'REAL',
+    sources: results,
+    totals,
+  })
 }
 
 export async function POST(req: Request) {
@@ -190,19 +427,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (!process.env.GEMINI_API_KEY) {
-    return NextResponse.json({ error: 'GEMINI_API_KEY is not set' }, { status: 500 })
-  }
-
-  const { type } = await req.json().catch(() => ({ type: 'all' }))
-
-  if (type === 'grants') return NextResponse.json(await scrapeGrants())
-  if (type === 'fairs')  return NextResponse.json(await scrapeFairs())
-  if (type === 'all') {
-    const [grants, fairs] = await Promise.all([scrapeGrants(), scrapeFairs()])
-    return NextResponse.json({ grants, fairs })
-  }
-  return NextResponse.json({ error: 'Invalid type (use grants|fairs|all)' }, { status: 400 })
+  const body = (await req.json().catch(() => ({}))) as RunBody
+  return runAll(body)
 }
 
 export async function GET() {

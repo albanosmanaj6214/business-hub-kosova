@@ -42,25 +42,25 @@ enum BookingStatus {
 }
 
 model User {
-  id              String    @id @default(cuid())
-  email           String    @unique
-  password        String
-  name            String?
-  companyName     String?
-  sector          String?
-  language        String    @default("sq")
-  role            Role      @default(USER)
-  interests       String[]  @default([])
-  emailVerified   DateTime?
-  image           String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String?
+  companyName   String?
+  sector        String?
+  language      String    @default("sq")
+  role          Role      @default(USER)
+  interests     String[]  @default([])
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  subscription    Subscription?
-  notifications   Notification[]
-  bookings        ConsultationBooking[]
-  accounts        Account[]
-  sessions        Session[]
+  subscription  Subscription?
+  notifications Notification[]
+  bookings      ConsultationBooking[]
+  accounts      Account[]
+  sessions      Session[]
 }
 
 model Account {
@@ -115,63 +115,67 @@ model Subscription {
 }
 
 model Grant {
-  id           String   @id @default(cuid())
-  title        String
-  titleSq      String?
-  description  String   @db.Text
-  descriptionSq String? @db.Text
-  provider     String
-  amount       String?
-  currency     String   @default("EUR")
-  deadline     DateTime?
-  eligibility  String?  @db.Text
-  url          String?
-  country      String?
-  sectors      String[] @default([])
-  tags         String[] @default([])
-  isActive     Boolean  @default(true)
-  scrapedAt    DateTime @default(now())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String    @id @default(cuid())
+  title         String
+  titleSq       String?
+  description   String    @db.Text
+  descriptionSq String?   @db.Text
+  provider      String
+  amount        String?
+  currency      String    @default("EUR")
+  deadline      DateTime?
+  eligibility   String?   @db.Text
+  url           String?
+  country       String?
+  sectors       String[]  @default([])
+  tags          String[]  @default([])
+  isActive      Boolean   @default(true)
+  scrapedAt     DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([deadline])
   @@index([isActive])
 }
 
 model TradeFair {
-  id           String   @id @default(cuid())
-  name         String
-  nameSq       String?
-  description  String?  @db.Text
-  descriptionSq String? @db.Text
-  location     String
-  country      String
-  startDate    DateTime
-  endDate      DateTime
-  website      String?
-  sectors      String[] @default([])
-  tags         String[] @default([])
-  isActive     Boolean  @default(true)
-  scrapedAt    DateTime @default(now())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String   @id @default(cuid())
+  name          String
+  nameSq        String?
+  description   String?  @db.Text
+  descriptionSq String?  @db.Text
+  location      String
+  country       String
+  startDate     DateTime
+  endDate       DateTime
+  website       String?
+  sectors       String[] @default([])
+  tags          String[] @default([])
+  isActive      Boolean  @default(true)
+  scrapedAt     DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([startDate])
   @@index([isActive])
 }
 
 model ExportGuide {
-  id           String   @id @default(cuid())
-  title        String
-  titleSq      String?
-  content      String   @db.Text
-  contentSq    String?  @db.Text
-  country      String
-  sectors      String[] @default([])
-  tags         String[] @default([])
-  isPublished  Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String   @id @default(cuid())
+  title       String
+  titleSq     String?
+  titleEn     String?
+  titleDe     String?
+  content     String   @db.Text
+  contentSq   String?  @db.Text
+  contentEn   String?  @db.Text
+  contentDe   String?  @db.Text
+  country     String
+  sectors     String[] @default([])
+  tags        String[] @default([])
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([country])
 }
@@ -194,25 +198,155 @@ model Notification {
 }
 
 model ConsultationBooking {
-  id          String        @id @default(cuid())
-  userId      String
-  date        DateTime
-  time        String
-  topic       String
-  notes       String?       @db.Text
-  status      BookingStatus @default(PENDING)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id        String        @id @default(cuid())
+  userId    String
+  date      DateTime
+  time      String
+  topic     String
+  notes     String?       @db.Text
+  status    BookingStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ScraperLog {
-  id        String   @id @default(cuid())
-  type      String
-  status    String
-  message   String?  @db.Text
-  itemsFound Int     @default(0)
-  duration  Int?
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  type       String
+  status     String
+  message    String?  @db.Text
+  itemsFound Int      @default(0)
+  duration   Int?
+  createdAt  DateTime @default(now())
+}
+
+// ============================================================
+// Phase 11 — Multi-source scraping foundation
+// ============================================================
+
+enum SourceTier {
+  A
+  B
+  C
+}
+
+enum SourceCategory {
+  GRANT
+  FAIR
+  REGULATION
+  MIXED
+}
+
+enum OpportunityType {
+  GRANT
+  FAIR
+  REGULATION
+}
+
+enum OpportunityStatus {
+  NEW
+  REVIEWED
+  PUBLISHED
+  REJECTED
+}
+
+enum ScrapeStatus {
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+enum ScrapeTrigger {
+  CRON
+  N8N
+  MANUAL
+  API
+}
+
+model Source {
+  // CONVENTION: Never DELETE a Source - use isActive=false instead.
+  // CASCADE on child tables (Opportunity, ScrapeAttempt, SourceHealth) is for
+  // emergency cleanup only. Admin UI must expose Deactivate, not Delete.
+  id         String         @id @default(cuid())
+  code       String         @unique
+  name       String
+  tier       SourceTier
+  baseUrl    String
+  category   SourceCategory
+  language   String         @default("sq")
+  strategies Json
+  isActive   Boolean        @default(true)
+  schedule   String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  opportunities Opportunity[]
+  attempts      ScrapeAttempt[]
+  health        SourceHealth?
+
+  @@index([tier, isActive])
+  @@index([category])
+}
+
+model Opportunity {
+  id          String            @id @default(cuid())
+  sourceId    String
+  externalId  String
+  type        OpportunityType
+  title       String
+  titleEn     String?
+  description String?           @db.Text
+  deadline    DateTime?
+  amount      String?
+  currency    String?           @default("EUR")
+  eligibility String?           @db.Text
+  sourceUrl   String
+  rawHtml     String?           @db.Text
+  status      OpportunityStatus @default(NEW)
+  firstSeenAt DateTime          @default(now())
+  lastSeenAt  DateTime          @default(now())
+  attemptId   String?
+
+  source  Source         @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  attempt ScrapeAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+
+  @@unique([sourceId, externalId])
+  @@index([type, status])
+  @@index([deadline])
+  @@index([lastSeenAt])
+}
+
+model ScrapeAttempt {
+  id           String        @id @default(cuid())
+  sourceId     String
+  strategyUsed Int
+  startedAt    DateTime      @default(now())
+  finishedAt   DateTime?
+  status       ScrapeStatus
+  itemsFound   Int           @default(0)
+  itemsNew     Int           @default(0)
+  itemsUpdated Int           @default(0)
+  errorMessage String?       @db.Text
+  durationMs   Int?
+  triggeredBy  ScrapeTrigger
+
+  source        Source        @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  opportunities Opportunity[]
+
+  @@index([sourceId, startedAt])
+  @@index([status])
+}
+
+model SourceHealth {
+  sourceId            String    @id
+  lastSuccessAt       DateTime?
+  lastFailureAt       DateTime?
+  consecutiveFailures Int       @default(0)
+  currentStrategy     Int       @default(1)
+  avgDurationMs       Int?
+  totalItemsLifetime  Int       @default(0)
+  updatedAt           DateTime  @updatedAt
+
+  source Source @relation(fields: [sourceId], references: [id], onDelete: Cascade)
 }
