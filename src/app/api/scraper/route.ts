@@ -3,12 +3,18 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { scrapeKiesa } from '@/lib/scrapers/kiesa'
+import { scrapeMzhr } from '@/lib/scrapers/mzhr'
 import type { OpportunityInput } from '@/lib/scrapers/types'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const KIESA_CODE = 'KIESA'
+type ScraperFn = () => Promise<OpportunityInput[]>
+
+const SCRAPERS: Record<string, ScraperFn> = {
+  KIESA: scrapeKiesa,
+  MZHR: scrapeMzhr,
+}
 
 const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`
@@ -48,7 +54,6 @@ Each object must have:
 - tags (array — e.g. ["eu","export","sme"])`
 
 const FAIRS_SYSTEM = GRANTS_SYSTEM
-
 const FAIRS_PROMPT = `Produce a JSON array of 8 upcoming international trade fairs relevant to Kosovar exporters (food & beverage, textiles, wood, construction, ICT).
 Focus on the EU, Turkey, UAE, Western Balkans. Base on real recurring fairs (Anuga, SIAL, Gulfood, ITB, Ambiente, Heimtextil, BIG 5, Trieste Export, Tirana Export, Prishtina Tech Summit, etc.).
 Each object must have:
@@ -246,17 +251,31 @@ async function emergencySynthesize(): Promise<{ grants: number; fairs: number }>
 
 interface RunBody {
   type?: 'all' | 'grants' | 'fairs'
+  source?: string
   dryRun?: boolean
 }
 
-async function runKiesa(body: RunBody) {
-  const startedAt = new Date()
-  const dryRun = body.dryRun === true
+interface SourceRunResult {
+  code: string
+  ok: boolean
+  items?: number
+  itemsNew?: number
+  itemsUpdated?: number
+  grantsCreated?: number
+  grantsUpdated?: number
+  fairsCreated?: number
+  fairsUpdated?: number
+  error?: string
+}
 
-  const source = await prisma.source.findUnique({ where: { code: KIESA_CODE } })
-  if (!source) {
-    return NextResponse.json({ error: `Source ${KIESA_CODE} not found in DB` }, { status: 500 })
-  }
+async function runOne(code: string, dryRun: boolean): Promise<SourceRunResult> {
+  const startedAt = new Date()
+  const fn = SCRAPERS[code]
+  if (!fn) return { code, ok: false, error: `No scraper registered for ${code}` }
+
+  const source = await prisma.source.findUnique({ where: { code } })
+  if (!source) return { code, ok: false, error: `Source ${code} not in DB` }
+  if (!source.isActive) return { code, ok: false, error: `Source ${code} is inactive` }
 
   let attemptId: string | null = null
   if (!dryRun) {
@@ -275,71 +294,40 @@ async function runKiesa(body: RunBody) {
   let items: OpportunityInput[] = []
   let scrapeError: string | null = null
   try {
-    items = await scrapeKiesa()
+    items = await fn()
   } catch (e: any) {
     scrapeError = String(e?.message || e)
   }
 
-  if (items.length === 0) {
-    const allowEmergency = process.env.EMERGENCY_SYNTHESIZE === 'true'
-    if (!dryRun && attemptId) {
-      const durationMs = Date.now() - startedAt.getTime()
-      await prisma.scrapeAttempt.update({
-        where: { id: attemptId },
-        data: {
-          status: 'FAILED',
-          itemsFound: 0,
-          finishedAt: new Date(),
-          durationMs,
-          errorMessage: scrapeError ?? 'Real scraper returned 0 items',
-        },
-      })
-      await prisma.sourceHealth.update({
-        where: { sourceId: source.id },
-        data: {
-          lastFailureAt: new Date(),
-          consecutiveFailures: { increment: 1 },
-          currentStrategy: 1,
-        },
-      })
-    }
-
-    if (allowEmergency && !dryRun) {
-      const synth = await emergencySynthesize()
-      return NextResponse.json({
-        mode: 'EMERGENCY_SYNTHESIZE',
-        kiesa: { items: 0, error: scrapeError ?? 'no items' },
-        grants: { success: true, count: synth.grants, source: 'synthesized' },
-        fairs: { success: true, count: synth.fairs, source: 'synthesized' },
-      })
-    }
-
-    return NextResponse.json(
-      {
-        mode: 'REAL',
-        kiesa: { items: 0, error: scrapeError ?? 'no items' },
-        grants: { success: false, count: 0, error: 'KIESA scraper returned 0 items' },
-        fairs: { success: false, count: 0, error: 'KIESA scraper returned 0 items' },
-      },
-      { status: scrapeError ? 502 : 200 },
-    )
-  }
-
   if (dryRun) {
-    return NextResponse.json({
-      mode: 'REAL_DRY_RUN',
-      itemCount: items.length,
-      items,
-    })
+    return { code, ok: scrapeError == null, items: items.length, error: scrapeError ?? undefined }
   }
 
-  let grantsCreated = 0
-  let grantsUpdated = 0
-  let fairsCreated = 0
-  let fairsUpdated = 0
-  let itemsNew = 0
-  let itemsUpdated = 0
+  if (items.length === 0) {
+    const durationMs = Date.now() - startedAt.getTime()
+    await prisma.scrapeAttempt.update({
+      where: { id: attemptId! },
+      data: {
+        status: 'FAILED',
+        itemsFound: 0,
+        finishedAt: new Date(),
+        durationMs,
+        errorMessage: scrapeError ?? 'Real scraper returned 0 items',
+      },
+    })
+    await prisma.sourceHealth.update({
+      where: { sourceId: source.id },
+      data: {
+        lastFailureAt: new Date(),
+        consecutiveFailures: { increment: 1 },
+        currentStrategy: 1,
+      },
+    })
+    return { code, ok: false, items: 0, error: scrapeError ?? 'no items' }
+  }
 
+  let grantsCreated = 0, grantsUpdated = 0, fairsCreated = 0, fairsUpdated = 0
+  let itemsNew = 0, itemsUpdated = 0
   for (const item of items) {
     const before = await prisma.opportunity.findUnique({
       where: { sourceId_externalId: { sourceId: source.id, externalId: item.externalId } },
@@ -381,11 +369,50 @@ async function runKiesa(body: RunBody) {
     },
   })
 
+  return {
+    code,
+    ok: true,
+    items: items.length,
+    itemsNew,
+    itemsUpdated,
+    grantsCreated,
+    grantsUpdated,
+    fairsCreated,
+    fairsUpdated,
+  }
+}
+
+async function runAll(body: RunBody) {
+  const dryRun = body.dryRun === true
+  const targetCode = body.source?.toUpperCase()
+
+  const codes = targetCode
+    ? [targetCode]
+    : Object.keys(SCRAPERS)
+
+  const results: SourceRunResult[] = []
+  for (const code of codes) {
+    results.push(await runOne(code, dryRun))
+  }
+
+  const totals = results.reduce(
+    (acc, r) => {
+      acc.items += r.items ?? 0
+      acc.itemsNew += r.itemsNew ?? 0
+      acc.itemsUpdated += r.itemsUpdated ?? 0
+      acc.grantsCreated += r.grantsCreated ?? 0
+      acc.grantsUpdated += r.grantsUpdated ?? 0
+      acc.fairsCreated += r.fairsCreated ?? 0
+      acc.fairsUpdated += r.fairsUpdated ?? 0
+      return acc
+    },
+    { items: 0, itemsNew: 0, itemsUpdated: 0, grantsCreated: 0, grantsUpdated: 0, fairsCreated: 0, fairsUpdated: 0 },
+  )
+
   return NextResponse.json({
-    mode: 'REAL',
-    kiesa: { items: items.length, itemsNew, itemsUpdated },
-    grants: { success: true, created: grantsCreated, updated: grantsUpdated, source: 'kiesa' },
-    fairs: { success: true, created: fairsCreated, updated: fairsUpdated, source: 'kiesa' },
+    mode: dryRun ? 'REAL_DRY_RUN' : 'REAL',
+    sources: results,
+    totals,
   })
 }
 
@@ -399,7 +426,7 @@ export async function POST(req: Request) {
   }
 
   const body = (await req.json().catch(() => ({}))) as RunBody
-  return runKiesa(body)
+  return runAll(body)
 }
 
 export async function GET() {

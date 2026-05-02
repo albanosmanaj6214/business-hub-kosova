@@ -14,7 +14,6 @@ const STRAT_2 = [
 const STRAT_1 = [{ order: 1, type: 'http_cheerio' }]
 
 const tierBSources = [
-  { code: 'MZHR',   name: 'Ministria e Zhvillimit Rajonal',                                  tier: 'B', baseUrl: 'https://mzhr.rks-gov.net',  category: 'GRANT', language: 'sq', strategies: STRAT_2, schedule: '0 4 * * *', isActive: false },
   { code: 'ME',     name: 'Ministria e Ekonomisë',                                            tier: 'B', baseUrl: 'https://me.rks-gov.net',    category: 'GRANT', language: 'sq', strategies: STRAT_2, schedule: '0 4 * * *', isActive: false },
   { code: 'MMPHI',  name: 'Ministria e Mjedisit, Planifikimit Hapësinor dhe Infrastrukturës', tier: 'B', baseUrl: 'https://mmphi.rks-gov.net', category: 'GRANT', language: 'sq', strategies: STRAT_2, schedule: '0 4 * * *', isActive: false },
   { code: 'ICK',    name: 'Innovation Centre Kosovo',                                          tier: 'B', baseUrl: 'https://ickosovo.com',      category: 'GRANT', language: 'sq', strategies: STRAT_2, schedule: '0 4 * * *', isActive: false },

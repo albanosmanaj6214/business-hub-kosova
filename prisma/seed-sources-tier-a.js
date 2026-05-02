@@ -22,6 +22,17 @@ const tierASources = [
     isActive: true,
   },
   {
+    code: 'MZHR',
+    name: 'Ministria e Zhvillimit Rajonal',
+    tier: 'A',
+    baseUrl: 'https://mzhr.rks-gov.net',
+    category: 'GRANT',
+    language: 'sq',
+    strategies: [{ order: 1, type: 'http_cheerio' }],
+    schedule: '0 3 * * *',
+    isActive: true,
+  },
+  {
     code: 'EKOSOVA',
     name: 'Platforma eKosova - Shërbimet Elektronike Qeveritare',
     tier: 'A',
@@ -33,7 +44,7 @@ const tierASources = [
       { order: 2, type: 'gemini_synthesize' },
     ],
     schedule: '0 3 * * *',
-    isActive: true,
+    isActive: false,
   },
   {
     code: 'MINT',
@@ -47,7 +58,7 @@ const tierASources = [
       { order: 2, type: 'gemini_synthesize' },
     ],
     schedule: '0 3 * * *',
-    isActive: true,
+    isActive: false,
   },
   {
     code: 'MBPZHR',
@@ -61,7 +72,7 @@ const tierASources = [
       { order: 2, type: 'gemini_synthesize' },
     ],
     schedule: '0 3 * * *',
-    isActive: true,
+    isActive: false,
   },
 ]
 
