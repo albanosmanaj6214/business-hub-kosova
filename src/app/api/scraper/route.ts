@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { scrapeKiesa } from '@/lib/scrapers/kiesa'
 import { scrapeMzhr } from '@/lib/scrapers/mzhr'
+import { scrapeMint } from '@/lib/scrapers/mint'
 import type { OpportunityInput } from '@/lib/scrapers/types'
 
 export const runtime = 'nodejs'
@@ -14,6 +15,7 @@ type ScraperFn = () => Promise<OpportunityInput[]>
 const SCRAPERS: Record<string, ScraperFn> = {
   KIESA: scrapeKiesa,
   MZHR: scrapeMzhr,
+  MINT: scrapeMint,
 }
 
 const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
