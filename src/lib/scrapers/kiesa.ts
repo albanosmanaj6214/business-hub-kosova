@@ -10,12 +10,17 @@ const SKIP_PATTERNS = [
   /anulim/i, /anulohet/i, /shtyhet/i,
   /sesion informues/i, /information session/i,
 ]
-const FAIR_PATTERNS = [
+const FAIR_PATTERNS: RegExp[] = [
+  // Currently disabled: KIESA only publishes state-stand application calls,
+  // not actual fair listings. Real fair calendar lives in seed-fairs-real.js.
+]
+// State-stand application calls (e.g. "Thirrje publike per aplikim ne stenden")
+// These are administrative notices, NOT grants and NOT the fairs themselves.
+// Stored as REGULATION so they remain tracked without polluting grants/fairs UIs.
+const STAND_CALL_PATTERNS = [
   /pjesemarrje/i, /pjesëmarrje/i,
   /stenden/i, /stendën/i, /stenda/i,
   /panairin/i, /panair/i,
-  /world in paris/i, /tuttofood/i, /hannover messe/i,
-  /itb berlin/i, /light \+ building/i, /anuga/i, /sial/i,
 ]
 const GRANT_PATTERNS = [
   /public call/i, /thirrje publike/i, /thirrje/i,
@@ -32,6 +37,7 @@ export type KiesaClassification = OpportunityType | 'SKIP'
 export function classifyKiesaTitle(title: string): KiesaClassification {
   if (SKIP_PATTERNS.some((r) => r.test(title))) return 'SKIP'
   if (REGULATION_PATTERNS.some((r) => r.test(title))) return 'REGULATION'
+  if (STAND_CALL_PATTERNS.some((r) => r.test(title))) return 'REGULATION'
   if (FAIR_PATTERNS.some((r) => r.test(title))) return 'FAIR'
   if (GRANT_PATTERNS.some((r) => r.test(title))) return 'GRANT'
   return 'SKIP'

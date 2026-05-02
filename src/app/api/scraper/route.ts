@@ -147,7 +147,7 @@ async function persistOpportunity(
   let fair: LegacyOp = 'skipped'
   const legacy = item.legacy ?? {}
 
-  if (item.type === 'GRANT' || item.type === 'REGULATION') {
+  if (item.type === 'GRANT') {
     const existing = await prisma.grant.findFirst({ where: { url: item.sourceUrl } })
     const data = {
       title: item.title,
