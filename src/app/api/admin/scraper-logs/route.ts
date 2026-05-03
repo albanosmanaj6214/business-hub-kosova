@@ -9,10 +9,43 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const logs = await prisma.scraperLog.findMany({
-    orderBy: { createdAt: 'desc' },
-    take: 20,
+  const attempts = await prisma.scrapeAttempt.findMany({
+    orderBy: { startedAt: 'desc' },
+    take: 30,
+    include: { source: { select: { code: true, name: true } } },
   })
 
-  return NextResponse.json({ logs })
+  const logs = attempts.map((a) => ({
+    id: a.id,
+    sourceCode: a.source.code,
+    sourceName: a.source.name,
+    status: a.status,
+    itemsFound: a.itemsFound,
+    itemsNew: a.itemsNew,
+    itemsUpdated: a.itemsUpdated,
+    durationMs: a.durationMs,
+    errorMessage: a.errorMessage,
+    startedAt: a.startedAt,
+    finishedAt: a.finishedAt,
+    triggeredBy: a.triggeredBy,
+  }))
+
+  const sources = await prisma.source.findMany({
+    where: { isActive: true },
+    include: { health: true },
+    orderBy: { code: 'asc' },
+  })
+
+  const health = sources.map((s) => ({
+    code: s.code,
+    name: s.name,
+    homepage: s.baseUrl,
+    lastSuccessAt: s.health?.lastSuccessAt ?? null,
+    lastFailureAt: s.health?.lastFailureAt ?? null,
+    consecutiveFailures: s.health?.consecutiveFailures ?? 0,
+    avgDurationMs: s.health?.avgDurationMs ?? null,
+    totalItemsLifetime: s.health?.totalItemsLifetime ?? 0,
+  }))
+
+  return NextResponse.json({ logs, health })
 }

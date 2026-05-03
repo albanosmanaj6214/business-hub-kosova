@@ -9,9 +9,9 @@ import Link from 'next/link'
 
 const tierLabels: Record<string, string> = {
   FREE: 'Falas',
-  STARTER: 'Starter - EUR39/muaj',
-  PROFESSIONAL: 'Professional - EUR99/muaj',
-  ENTERPRISE: 'Enterprise - EUR249/muaj',
+  STARTER: 'Starter — €39/muaj',
+  PROFESSIONAL: 'Professional — €99/muaj',
+  ENTERPRISE: 'Enterprise — €249/muaj',
 }
 
 export default async function SubscriptionPage() {
@@ -56,9 +56,9 @@ export default async function SubscriptionPage() {
 
           {subscription?.tier === 'FREE' && (
             <div className="bg-gradient-to-r from-[#1B4F72] to-[#2E86C1] rounded-xl p-6 text-white">
-              <h3 className="font-semibold text-lg mb-2">Permiresoni Planin</h3>
+              <h3 className="font-semibold text-lg mb-2">Përmirësoni Planin</h3>
               <p className="text-sm text-white/80 mb-4">
-                Merrni akses te plote ne grante, panaire, udhezues dhe konsultime.
+                Merrni akses të plotë në grante, panaire, udhëzues dhe konsultime.
               </p>
               <Link href="/pricing">
                 <Button className="bg-white text-[#1B4F72] hover:bg-gray-100">

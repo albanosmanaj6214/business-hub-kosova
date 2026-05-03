@@ -28,7 +28,7 @@ export function Navbar() {
               Shërbimet
             </Link>
             <Link href="/pricing" className="text-gray-600 hover:text-[#1B4F72] transition-colors">
-              \u00c7mimet
+              Çmimet
             </Link>
             <Link href="/about" className="text-gray-600 hover:text-[#1B4F72] transition-colors">
               Rreth Nesh
@@ -73,7 +73,7 @@ export function Navbar() {
               Shërbimet
             </Link>
             <Link href="/pricing" className="block py-2 text-gray-600" onClick={() => setIsOpen(false)}>
-              \u00c7mimet
+              Çmimet
             </Link>
             <Link href="/about" className="block py-2 text-gray-600" onClick={() => setIsOpen(false)}>
               Rreth Nesh
