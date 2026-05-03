@@ -33,9 +33,25 @@ interface GrantRow {
 
 type GrantStatus = 'active' | 'expired' | 'no_deadline'
 
+function extractYearFromTitle(title: string): number | null {
+  const matches = title.match(/(?:19|20)\d{2}/g)
+  if (!matches || matches.length === 0) return null
+  return Math.max(...matches.map((m) => parseInt(m, 10)))
+}
+
 function classify(g: GrantRow, today: Date): GrantStatus {
-  if (!g.deadline) return 'no_deadline'
-  return g.deadline >= today ? 'active' : 'expired'
+  if (g.deadline) return g.deadline >= today ? 'active' : 'expired'
+
+  const titleYear = extractYearFromTitle(`${g.title} ${g.titleSq ?? ''}`)
+  if (titleYear !== null && titleYear < today.getUTCFullYear()) return 'expired'
+
+  return 'no_deadline'
+}
+
+function expiredYear(g: GrantRow): number {
+  if (g.deadline) return g.deadline.getUTCFullYear()
+  const y = extractYearFromTitle(`${g.title} ${g.titleSq ?? ''}`)
+  return y ?? 0
 }
 
 export default async function GrantsPage({
@@ -61,7 +77,16 @@ export default async function GrantsPage({
   }
   for (const g of grants) buckets[classify(g, today)].push(g)
 
-  buckets.expired.sort((a, b) => (b.deadline?.getTime() ?? 0) - (a.deadline?.getTime() ?? 0))
+  buckets.expired.sort((a, b) => expiredYear(b) - expiredYear(a))
+
+  const expiredByYear = new Map<number, GrantRow[]>()
+  for (const g of buckets.expired) {
+    const y = expiredYear(g) || 0
+    const arr = expiredByYear.get(y) ?? []
+    arr.push(g)
+    expiredByYear.set(y, arr)
+  }
+  const expiredYearsDesc = Array.from(expiredByYear.keys()).sort((a, b) => b - a)
 
   const activeCount = buckets.active.length
   const noDeadlineCount = buckets.no_deadline.length
@@ -148,7 +173,7 @@ export default async function GrantsPage({
                   icon={<Calendar className="h-5 w-5 text-gray-500" />}
                   grants={buckets.no_deadline}
                   today={today}
-                  note="Afati nuk është gjetur në burimin zyrtar — kontrolloji detajet në linkun origjinal."
+                  note="Thirrje pa vit të specifikuar dhe pa afat të publikuar — kontrollo linkun origjinal për detaje."
                 />
               )}
             </>
@@ -157,13 +182,31 @@ export default async function GrantsPage({
       )}
 
       {showExpired && (
-        <Section
-          title="Arkivi i thirrjeve të mbyllura"
-          icon={<Clock className="h-5 w-5 text-gray-500" />}
-          grants={buckets.expired}
-          today={today}
-          note="Këto thirrje janë mbyllur. Mbahen për referencë historike."
-        />
+        <>
+          {expiredCount === 0 ? (
+            <Card>
+              <CardContent className="py-16 text-center">
+                <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Nuk ka thirrje të mbyllura në arkiv
+                </h3>
+                <p className="text-gray-500 text-sm">
+                  Asnjë grant nuk ka afat të skaduar ose vit të mëparshëm në titull.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            expiredYearsDesc.map((y) => (
+              <Section
+                key={y}
+                title={y > 0 ? `Viti ${y}` : 'Vit i pacaktuar'}
+                icon={<Clock className="h-5 w-5 text-gray-500" />}
+                grants={expiredByYear.get(y)!}
+                today={today}
+              />
+            ))
+          )}
+        </>
       )}
 
       {showAll && (
@@ -184,14 +227,15 @@ export default async function GrantsPage({
               today={today}
             />
           )}
-          {expiredCount > 0 && (
+          {expiredYearsDesc.map((y) => (
             <Section
-              title={`Të skaduara (${expiredCount})`}
+              key={y}
+              title={y > 0 ? `Të skaduara — ${y}` : 'Të skaduara — vit i pacaktuar'}
               icon={<Clock className="h-5 w-5 text-gray-500" />}
-              grants={buckets.expired}
+              grants={expiredByYear.get(y)!}
               today={today}
             />
-          )}
+          ))}
         </>
       )}
     </div>
@@ -232,6 +276,7 @@ function GrantCard({ grant, today }: { grant: GrantRow; today: Date }) {
   const status = classify(grant, today)
   const title = grant.titleSq || grant.title
   const description = grant.descriptionSq || grant.description
+  const titleYear = extractYearFromTitle(`${grant.title} ${grant.titleSq ?? ''}`)
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -246,7 +291,12 @@ function GrantCard({ grant, today }: { grant: GrantRow; today: Date }) {
         </div>
         <p className="text-sm text-gray-600 mb-3 line-clamp-2">{description}</p>
 
-        <DeadlineRow deadline={grant.deadline} status={status} today={today} />
+        <DeadlineRow
+          deadline={grant.deadline}
+          status={status}
+          today={today}
+          titleYear={titleYear}
+        />
 
         <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
           <span className="font-medium text-gray-700">{grant.provider}</span>
@@ -282,16 +332,28 @@ function DeadlineRow({
   deadline,
   status,
   today,
+  titleYear,
 }: {
   deadline: Date | null
   status: GrantStatus
   today: Date
+  titleYear: number | null
 }) {
   if (status === 'no_deadline') {
     return (
       <div className="flex items-center gap-2 text-sm">
         <Calendar className="h-4 w-4 text-gray-400" />
         <span className="text-gray-500">Afati: nuk është publikuar</span>
+      </div>
+    )
+  }
+
+  if (status === 'expired' && !deadline && titleYear !== null) {
+    return (
+      <div className="flex items-center gap-2 text-sm">
+        <Clock className="h-4 w-4 text-red-500" />
+        <span className="text-gray-500">Program i vitit {titleYear}</span>
+        <Badge variant="danger">Mbyllur</Badge>
       </div>
     )
   }
