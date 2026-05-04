@@ -17,33 +17,33 @@ import {
 const features = [
   {
     icon: Search,
-    title: 'Databaza e Granteve',
-    description: 'AI kërkon dhe gjen grante të përshtatshme për biznesin tuaj çdo ditë automatikisht.',
+    title: 'Grantet aktive të Kosovës',
+    description: 'Çdo thirrje aktive nga KIESA, MZHR e MINT — me afat, vlerë dhe link për aplikim. E përditësuar çdo natë.',
   },
   {
     icon: Calendar,
-    title: 'Kalendari i Panaireve',
-    description: 'Panairet tregtare ndërkombëtare të rëndësishme për eksportuesit e Kosovës.',
+    title: 'Panairet ndërkombëtare',
+    description: '15+ panaire të verifikuara në Evropë e Lindjen e Mesme — TUTTOFOOD, IFA, Gulfood, BAU. Me datë, qytet e organizator.',
   },
   {
     icon: BookOpen,
-    title: 'Udhëzues Eksporti',
-    description: 'Udhëzues të detajuar për eksport sipas vendit, duke përfshirë rregullat dhe dokumentet.',
+    title: 'Udhëzues eksporti për tregje konkrete',
+    description: 'Dokumentet, taksat dhe rregullat doganore për secilin treg ku do të eksportosh — pa pasur nevojë me thirrë konsulent.',
   },
   {
     icon: Bell,
-    title: 'Njoftime Inteligjente',
-    description: 'Merrni njoftime kur gjenden grante ose panaire që përputhen me interesat tuaja.',
+    title: 'Njoftime që përshtaten me sektorin tënd',
+    description: 'Vendos sektorin dhe tregjet me interes — t\'i dërgojmë në email vetëm thirrjet e panairet që të takojnë.',
   },
   {
     icon: Search,
-    title: 'Analiza Tregu',
-    description: 'Informacione mbi tregjet e eksportit dhe mundësitë e rritjes.',
+    title: 'Të dhëna për tregjet e eksportit',
+    description: 'Çfarë blen secili treg, sa importon nga Ballkani, dhe ku ka hapësirë për produktet kosovare.',
   },
   {
     icon: Users,
-    title: 'Konsultime',
-    description: 'Rezervoni konsultime me ekspertë të eksportit dhe tregtisë ndërkombëtare.',
+    title: 'Konsultime me ekspertë eksporti',
+    description: 'Sesione 1-me-1 për dokumentacion, çertifikime e kontakte me blerës — kur të hasësh problem konkret.',
   },
 ]
 
@@ -66,15 +66,14 @@ export default function HomePage() {
           <div className="max-w-3xl">
             <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm text-sm mb-6">
               <Zap className="h-4 w-4 mr-2 text-[#F39C12]" />
-              Powered by Artificial Intelligence
+              KIESA · MZHR · MINT — të përditësuara çdo natë
             </div>
             <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
-              Inteligjenca e Eksportit
-              <span className="block text-[#F39C12]">për Kosovën</span>
+              Grantet dhe panairet e eksportit,
+              <span className="block text-[#F39C12]">në një vend.</span>
             </h1>
             <p className="text-xl text-gray-200 mb-8 max-w-2xl">
-              Platforma e vetme që përdor AI për të gjetur grante, panaire tregtare dhe mundësi eksporti
-              për prodhuesit Kosovarë. Automatikisht, çdo ditë.
+              Mbledhim çdo thirrje publike për biznesin tënd nga burimet zyrtare të Kosovës dhe kalendarin e panaireve ndërkombëtare. Pa pasur nevojë me i ndjekë vetë.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/register">
@@ -115,8 +114,7 @@ export default function HomePage() {
               Çfarë Ofrojmë
             </h2>
             <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-              Platforma jonë përdor inteligjencë artificiale për të monitoruar dhe gjetur mundësitë
-              më të mira të eksportit për biznesin tuaj.
+              Gjithçka që të duhet me ndjekë grantet, panairet dhe rregullat e eksportit — pa hapë 20 faqe institucionesh në ditë.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -141,10 +139,10 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <Shield className="h-12 w-12 text-[#F39C12] mx-auto mb-6" />
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Gati për të Rritur Eksportin?
+            Gati me e ndjekë eksportin seriozisht?
           </h2>
           <p className="text-xl text-gray-300 mb-8">
-            Bashkohuni me qindra biznese Kosovare që përdorin platformën tonë.
+            Regjistrohu falas — shih grantet aktive sot, vendos për planin më vonë.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/register">

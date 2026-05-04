@@ -20,7 +20,7 @@ const plans: Plan[] = [
   {
     name: 'Starter',
     price: 39,
-    description: 'Për biznese të vogla që po fillojnë rrugën e eksportit.',
+    description: 'Për biznese të vogla që duan me e fillu eksportin pa investim të madh — qasje në grantet aktive dhe kalendarin e panaireve.',
     audience: 'Deri në 5 punonjës · 1 përdorues',
     features: [
       { text: 'Databaza e granteve aktive (KIESA, MZHR, MINT)', included: true },
@@ -39,7 +39,7 @@ const plans: Plan[] = [
   {
     name: 'Professional',
     price: 99,
-    description: 'Për biznese aktive që eksportojnë rregullisht dhe duan më shumë automatizim.',
+    description: 'Për biznese që tashmë eksportojnë dhe kanë nevojë me ndjekë disa tregje paralelisht — me njoftime të personalizuara dhe konsultime mujore.',
     audience: '5–50 punonjës · 3 përdorues',
     features: [
       { text: 'Gjithçka nga Starter', included: true, highlight: true },
@@ -57,7 +57,7 @@ const plans: Plan[] = [
   {
     name: 'Enterprise',
     price: 249,
-    description: 'Për kompani të mesme dhe të mëdha me nevoja të avancuara dhe integrim.',
+    description: 'Për kompani me ekip të dedikuar për eksport — qasje API për integrim me sistemet tuaja, raport mujor dhe menaxher kontaktit.',
     audience: '50+ punonjës · përdorues të pakufizuar',
     features: [
       { text: 'Gjithçka nga Professional', included: true, highlight: true },
@@ -77,17 +77,17 @@ const guarantees = [
   {
     icon: Sparkles,
     title: 'Të dhëna reale',
-    text: 'Burimet zyrtare scrape-ohen çdo natë. Asnjë e dhënë e gjeneruar artificialisht.',
+    text: 'Çdo grant vjen direkt nga faqja zyrtare e KIESA, MZHR ose MINT. Asnjë listë e improvizuar.',
   },
   {
     icon: ShieldCheck,
     title: 'Pa angazhim',
-    text: 'Anuloji në çdo moment. Pa kontratë afatgjatë, pa shpenzime të fshehura.',
+    text: 'Paguan për muajin që e përdor. Anulim me një klikim, pa kontratë e pa pyetje.',
   },
   {
     icon: Headphones,
     title: 'Mbështetje në shqip',
-    text: 'Ekipi ynë në Prishtinë i përgjigjet çdo pyetjeje në gjuhën tuaj.',
+    text: 'Pyet në shqip, përgjigjemi në shqip — brenda 24 orëve, nga ekip që e njeh tregun kosovar.',
   },
 ]
 
@@ -129,7 +129,7 @@ export default function PricingPage() {
               Zgjidh planin që të çon në eksport
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Tre plane fleksibile për biznese të Kosovës. Anulim në çdo kohë, pa kontratë afatgjatë.
+              Tre plane për tre faza të eksportit — nga biznesi që sapo po fillon, te kompania që ka nevojë për integrim API.
             </p>
           </div>
 
