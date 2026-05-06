@@ -171,11 +171,32 @@ model ExportGuide {
   contentEn   String?  @db.Text
   contentDe   String?  @db.Text
   country     String
+  countryCode String?  @unique // ISO 3166-1 alpha-2 (e.g. "DE", "US")
+  flag        String? // emoji or short code
   sectors     String[] @default([])
   tags        String[] @default([])
   isPublished Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  // Structured guide content (Phase 12 - Claude-researched). All bilingual
+  // string fields use { sq, en } shape inside the JSON.
+  marketOverview  Json? // { sq, en } overview text
+  customs         Json? // { vat, importDuties, authority: {name,url}, sourceUrl }
+  requiredDocs    Json? // [{ name:{sq,en}, description:{sq,en}, mandatory, issuedBy?, sourceUrl }]
+  certifications  Json? // [{ name, appliesTo[], description:{sq,en}, mandatory, authority, sourceUrl }]
+  labeling        Json? // { languages[], rules: [{rule:{sq,en}, mandatory, sourceUrl}] }
+  sectorRules     Json? // [{ sector, rules: [{rule:{sq,en}, mandatory, sourceUrl}] }]
+  tradeAgreements Json? // [{ name, benefit:{sq,en}, sourceUrl }]
+  contacts        Json? // [{ role, name?, address?, phone?, email?, url? }]
+  citations       Json? // [{ title, url }]
+
+  schemaVersion    Int       @default(1)
+  generatedBy      String? // 'manual' | 'claude' | 'reviewed'
+  lastResearchedAt DateTime?
+  reviewedBy       String?
+  reviewedAt       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([country])
 }
