@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio'
 import { createHash } from 'crypto'
 import type { OpportunityInput, OpportunityType } from './types'
-import { extractFromPdf, fetchTextTolerant, fetchTolerant, deadlineToDate } from '../extractors/claude-pdf'
+import { extractFromPdf, fetchTextTolerant, mergeExtractedFields, enrichmentEnvFor } from '../extractors/claude-pdf'
 
 const BASE_URL = 'https://kiesa.rks-gov.net'
 const LISTING_PATH = '/page.aspx?id=2,134'
@@ -123,10 +123,10 @@ export async function scrapeKiesa(opts: ScrapeKiesaOptions = {}): Promise<Opport
     })
   })
 
-  const enrichDefault = process.env.KIESA_ENRICH === 'true'
-  const enrich = opts.enrich ?? enrichDefault
+  const env = enrichmentEnvFor('KIESA')
+  const enrich = opts.enrich ?? env.enabled
   if (enrich) {
-    const maxEnrich = opts.maxEnrich ?? Number(process.env.KIESA_ENRICH_MAX || '5')
+    const maxEnrich = opts.maxEnrich ?? env.max
     let count = 0
     for (const item of items) {
       if (count >= maxEnrich) break
@@ -159,29 +159,10 @@ export async function enrichKiesaItem(item: OpportunityInput): Promise<void> {
     pdfLinks.push(absoluteUrl(h))
   })
   if (pdfLinks.length === 0) return
-
   // Prefer the main thirrje PDF over annex declarations / forms.
   // KIESA detail pages typically list the main call first.
-  const pdfUrl = pdfLinks[0]
-  const extracted = await extractFromPdf({ pdfUrl, context: item.title })
-
-  const deadline = deadlineToDate(extracted.deadline)
-  if (deadline) item.deadline = deadline
-  if (extracted.eligibility) item.eligibility = extracted.eligibility
-  if (extracted.amountMin != null && extracted.amountMax != null) {
-    if (extracted.amountMin === extracted.amountMax) {
-      item.amount = `€${extracted.amountMin.toLocaleString('de-DE')}`
-    } else {
-      item.amount = `€${extracted.amountMin.toLocaleString('de-DE')} - €${extracted.amountMax.toLocaleString('de-DE')}`
-    }
-  }
-  if (extracted.currency) item.currency = extracted.currency
-  if (extracted.summary) item.description = extracted.summary
-  if (extracted.sectors.length > 0) {
-    const legacy = item.legacy ?? {}
-    legacy.sectors = Array.from(new Set([...(legacy.sectors ?? []), ...extracted.sectors]))
-    item.legacy = legacy
-  }
+  const extracted = await extractFromPdf({ pdfUrl: pdfLinks[0], context: item.title })
+  mergeExtractedFields(item, extracted)
 }
 
 /**
@@ -198,5 +179,3 @@ export async function fetchKiesaPubDate(detailUrl: string, opts: ScrapeKiesaOpti
   return parsePubDate(main)
 }
 
-// Avoid unused-import warning: fetchTolerant is exported for testing.
-void fetchTolerant

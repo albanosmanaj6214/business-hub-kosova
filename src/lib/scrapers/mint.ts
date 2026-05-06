@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio'
 import { createHash } from 'crypto'
 import type { OpportunityInput, OpportunityType } from './types'
+import { extractFromPdf, fetchTextTolerant, mergeExtractedFields, enrichmentEnvFor } from '../extractors/claude-pdf'
 
 const BASE_URL = 'https://mint.rks-gov.net'
 const LISTING_PATH = '/'
@@ -20,6 +21,11 @@ const KEEP_TITLE = [
   /skema?/i,
   /fond[i]?\s+kosovar/i,
   /nmvm/i,
+]
+
+const RESULT_PATTERNS = [
+  /lista/i, /perfitues/i, /përfitues/i,
+  /vendimi/i, /rezultat/i, /preliminare/i,
 ]
 
 function classify(title: string): OpportunityType | 'SKIP' {
@@ -45,17 +51,27 @@ function decodeEntities(text: string): string {
 export interface ScrapeMintOptions {
   fetchImpl?: typeof fetch
   baseUrl?: string
+  /** When true, downloads each call's PDF and asks Claude to extract
+   *  structured fields. Defaults to env MINT_ENRICH === 'true'. */
+  enrich?: boolean
+  /** Cap on enrichment calls per scrape run. Defaults to env MINT_ENRICH_MAX or 5. */
+  maxEnrich?: number
 }
 
 export async function scrapeMint(opts: ScrapeMintOptions = {}): Promise<OpportunityInput[]> {
-  const fetchFn = opts.fetchImpl ?? fetch
   const base = opts.baseUrl ?? BASE_URL
 
-  const res = await fetchFn(`${base}${LISTING_PATH}`, {
-    headers: { 'User-Agent': USER_AGENT, Accept: 'text/html' },
-  })
-  if (!res.ok) throw new Error(`MINT listing fetch failed: HTTP ${res.status}`)
-  const html = await res.text()
+  // MINT shares the same IIS server quirk as KIESA (intermittent malformed
+  // HTTP/1.1 headers that undici rejects). Use the tolerant fetcher unless
+  // the caller injects their own.
+  const html = opts.fetchImpl
+    ? await opts.fetchImpl(`${base}${LISTING_PATH}`, {
+        headers: { 'User-Agent': USER_AGENT, Accept: 'text/html' },
+      }).then((r) => {
+        if (!r.ok) throw new Error(`MINT listing fetch failed: HTTP ${r.status}`)
+        return r.text()
+      })
+    : await fetchTextTolerant(`${base}${LISTING_PATH}`)
 
   const $ = cheerio.load(html)
   const seen = new Set<string>()
@@ -91,5 +107,32 @@ export async function scrapeMint(opts: ScrapeMintOptions = {}): Promise<Opportun
     })
   })
 
+  const env = enrichmentEnvFor('MINT')
+  const enrich = opts.enrich ?? env.enabled
+  if (enrich) {
+    const maxEnrich = opts.maxEnrich ?? env.max
+    let count = 0
+    for (const item of items) {
+      if (count >= maxEnrich) break
+      if (item.type !== 'GRANT') continue
+      if (RESULT_PATTERNS.some((r) => r.test(item.title))) continue
+      try {
+        await enrichMintItem(item)
+        count++
+      } catch (err) {
+        console.warn(`[mint] enrichment failed for ${item.externalId}:`, (err as Error).message)
+      }
+    }
+  }
+
   return items
+}
+
+/**
+ * Mutates `item` in place. MINT items already have a direct PDF URL in
+ * `sourceUrl` (the listing links straight to PDFs), so no detail-page step.
+ */
+export async function enrichMintItem(item: OpportunityInput): Promise<void> {
+  const extracted = await extractFromPdf({ pdfUrl: item.sourceUrl, context: item.title })
+  mergeExtractedFields(item, extracted)
 }

@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio'
 import { createHash } from 'crypto'
 import type { OpportunityInput, OpportunityType } from './types'
+import { extractFromHtmlPage, mergeExtractedFields, enrichmentEnvFor } from '../extractors/claude-pdf'
 
 const BASE_URL = 'https://mzhr.rks-gov.net'
 const LISTING_PATHS = [
@@ -20,6 +21,12 @@ const SLUG_GRANT_PREFIXES = [
 
 const SKIP_PATTERNS = [/anulim/i, /anulohet/i, /shtyhet/i]
 const FAIR_PATTERNS = [/panair/i, /stenden/i, /stendë/i]
+
+// Items that announce results / decisions / lists rather than open calls.
+const RESULT_PATTERNS = [
+  /lista/i, /perfitues/i, /përfitues/i,
+  /vendimi/i, /rezultat/i, /preliminare/i,
+]
 
 function classifyTitle(title: string, slug: string): OpportunityType | 'SKIP' {
   if (SKIP_PATTERNS.some((r) => r.test(title))) return 'SKIP'
@@ -55,6 +62,11 @@ function decodeEntities(text: string): string {
 export interface ScrapeMzhrOptions {
   fetchImpl?: typeof fetch
   baseUrl?: string
+  /** When true, fetches each open-call detail page + PDF and asks Claude
+   *  to extract structured fields. Defaults to env MZHR_ENRICH === 'true'. */
+  enrich?: boolean
+  /** Cap on enrichment calls per scrape run. Defaults to env MZHR_ENRICH_MAX or 5. */
+  maxEnrich?: number
 }
 
 export async function scrapeMzhr(opts: ScrapeMzhrOptions = {}): Promise<OpportunityInput[]> {
@@ -113,5 +125,37 @@ export async function scrapeMzhr(opts: ScrapeMzhrOptions = {}): Promise<Opportun
     })
   }
 
+  const env = enrichmentEnvFor('MZHR')
+  const enrich = opts.enrich ?? env.enabled
+  if (enrich) {
+    const maxEnrich = opts.maxEnrich ?? env.max
+    let count = 0
+    for (const item of items) {
+      if (count >= maxEnrich) break
+      if (item.type !== 'GRANT') continue
+      if (RESULT_PATTERNS.some((r) => r.test(item.title))) continue
+      try {
+        await enrichMzhrItem(item)
+        count++
+      } catch (err) {
+        console.warn(`[mzhr] enrichment failed for ${item.externalId}:`, (err as Error).message)
+      }
+    }
+  }
+
   return items
+}
+
+/**
+ * Mutates `item` in place. MZHR (WordPress) puts the call text inline in the
+ * article body; the only PDFs on the page are global header/menu items.
+ * So we extract from the article HTML rather than chasing a PDF.
+ */
+export async function enrichMzhrItem(item: OpportunityInput): Promise<void> {
+  const extracted = await extractFromHtmlPage({
+    pageUrl: item.sourceUrl,
+    context: item.title,
+    articleSelectors: ['article .entry-content', '.entry-content', 'article', '.post-content'],
+  })
+  mergeExtractedFields(item, extracted)
 }

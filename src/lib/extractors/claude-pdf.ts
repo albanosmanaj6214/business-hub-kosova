@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { PDFParse } from 'pdf-parse'
+import * as cheerio from 'cheerio'
 import * as https from 'node:https'
 import * as http from 'node:http'
 import * as zlib from 'node:zlib'
@@ -121,21 +122,22 @@ export async function fetchTextTolerant(url: string): Promise<string> {
   return buf.toString('utf-8')
 }
 
-export async function extractFromPdf(opts: ExtractFromPdfOptions): Promise<ExtractedGrantFields> {
-  const buf = await fetchTolerant(opts.pdfUrl)
-  const parser = new PDFParse({ data: new Uint8Array(buf) })
-  const parsed = await parser.getText()
-  let text = (parsed.text ?? '').trim()
-  if (!text) throw new Error(`PDF has no extractable text: ${opts.pdfUrl}`)
-  if (text.length > MAX_PDF_CHARS) text = text.slice(0, MAX_PDF_CHARS) + '\n[...truncated]'
+/**
+ * Lower-level: send arbitrary plain text from a grant call to Claude and
+ * get the structured JSON back. Used by extractFromPdf and extractFromHtmlPage.
+ */
+export async function extractFromText(text: string, opts: { context?: string; sourceUrl?: string } = {}): Promise<ExtractedGrantFields> {
+  let body = text.trim()
+  if (!body) throw new Error('extractFromText: empty input')
+  if (body.length > MAX_PDF_CHARS) body = body.slice(0, MAX_PDF_CHARS) + '\n[...truncated]'
 
   const userText = [
     opts.context ? `Listing title: ${opts.context}` : '',
-    `PDF source: ${opts.pdfUrl}`,
+    opts.sourceUrl ? `Source: ${opts.sourceUrl}` : '',
     '',
-    '--- BEGIN PDF TEXT ---',
-    text,
-    '--- END PDF TEXT ---',
+    '--- BEGIN DOCUMENT TEXT ---',
+    body,
+    '--- END DOCUMENT TEXT ---',
   ].filter(Boolean).join('\n')
 
   const resp = await client().messages.create({
@@ -152,17 +154,103 @@ export async function extractFromPdf(opts: ExtractFromPdfOptions): Promise<Extra
   let raw = textBlock.text.trim()
   raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '')
 
-  let json: ExtractedGrantFields
   try {
-    json = JSON.parse(raw) as ExtractedGrantFields
+    return JSON.parse(raw) as ExtractedGrantFields
   } catch (err) {
     throw new Error(`Failed to parse Claude JSON output: ${(err as Error).message}\nRaw: ${raw.slice(0, 300)}`)
   }
-  return json
+}
+
+export async function extractFromPdf(opts: ExtractFromPdfOptions): Promise<ExtractedGrantFields> {
+  const buf = await fetchTolerant(opts.pdfUrl)
+  const parser = new PDFParse({ data: new Uint8Array(buf) })
+  const parsed = await parser.getText()
+  const text = (parsed.text ?? '').trim()
+  if (!text) throw new Error(`PDF has no extractable text: ${opts.pdfUrl}`)
+  return extractFromText(text, { context: opts.context, sourceUrl: opts.pdfUrl })
+}
+
+export interface ExtractFromHtmlPageOptions {
+  pageUrl: string
+  /** CSS selectors tried in order; the first match's text content is sent to Claude. */
+  articleSelectors?: string[]
+  context?: string
+}
+
+/**
+ * Fetches an HTML page (e.g. a WordPress thirrje article) and extracts
+ * structured fields from the article body text.
+ */
+export async function extractFromHtmlPage(opts: ExtractFromHtmlPageOptions): Promise<ExtractedGrantFields> {
+  const html = await fetchTextTolerant(opts.pageUrl)
+  const $ = cheerio.load(html)
+  // Strip nav/header/footer/script/style noise before reading.
+  $('nav, header, footer, script, style, noscript, .menu, .navbar, #header, #footer').remove()
+
+  const selectors = opts.articleSelectors ?? [
+    'article .entry-content',
+    'article',
+    '.entry-content',
+    '.post-content',
+    'main',
+    '#content',
+  ]
+  let text = ''
+  for (const sel of selectors) {
+    const $el = $(sel).first()
+    if ($el.length) {
+      text = $el.text().replace(/\s+/g, ' ').trim()
+      if (text.length > 200) break
+    }
+  }
+  if (!text) text = $('body').text().replace(/\s+/g, ' ').trim()
+  if (!text) throw new Error(`HTML page has no extractable text: ${opts.pageUrl}`)
+
+  return extractFromText(text, { context: opts.context, sourceUrl: opts.pageUrl })
 }
 
 export function deadlineToDate(d: string | null): Date | null {
   if (!d) return null
   const parsed = new Date(`${d}T23:59:59Z`)
   return isNaN(parsed.getTime()) ? null : parsed
+}
+
+/**
+ * Merges Claude-extracted fields into an OpportunityInput in place.
+ * Used by every per-source enrich function so the merge rules stay consistent.
+ */
+export function mergeExtractedFields(
+  item: { deadline?: Date | null; eligibility?: string | null; amount?: string | null; currency?: string | null; description?: string | null; legacy?: { sectors?: string[] } | null },
+  extracted: ExtractedGrantFields,
+): void {
+  const deadline = deadlineToDate(extracted.deadline)
+  if (deadline) item.deadline = deadline
+  if (extracted.eligibility) item.eligibility = extracted.eligibility
+  if (extracted.amountMin != null && extracted.amountMax != null) {
+    item.amount = extracted.amountMin === extracted.amountMax
+      ? `€${extracted.amountMin.toLocaleString('de-DE')}`
+      : `€${extracted.amountMin.toLocaleString('de-DE')} - €${extracted.amountMax.toLocaleString('de-DE')}`
+  }
+  if (extracted.currency) item.currency = extracted.currency
+  if (extracted.summary) item.description = extracted.summary
+  if (extracted.sectors.length > 0) {
+    const legacy = item.legacy ?? {}
+    legacy.sectors = Array.from(new Set([...(legacy.sectors ?? []), ...extracted.sectors]))
+    item.legacy = legacy
+  }
+}
+
+/**
+ * Common knob set applied across all scrapers' enrichment paths.
+ */
+export interface EnrichmentEnv {
+  enabled: boolean
+  max: number
+}
+
+export function enrichmentEnvFor(prefix: string): EnrichmentEnv {
+  return {
+    enabled: process.env[`${prefix}_ENRICH`] === 'true',
+    max: Number(process.env[`${prefix}_ENRICH_MAX`] || '5'),
+  }
 }
