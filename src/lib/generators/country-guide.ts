@@ -1,7 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk'
+import type { PrismaClient } from '@prisma/client'
 
 const MODEL = 'claude-sonnet-4-6'
-const MAX_TOKENS = 16384
+const MAX_TOKENS = 32000
 const MAX_SEARCHES = 6
 
 let _client: Anthropic | null = null
@@ -10,7 +11,9 @@ function client(): Anthropic {
     if (!process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY === 'placeholder') {
       throw new Error('ANTHROPIC_API_KEY not configured')
     }
-    _client = new Anthropic()
+    // Web-search calls can take several minutes (multiple searches + 16k output).
+    // Bump well above the SDK's default request timeout.
+    _client = new Anthropic({ timeout: 15 * 60 * 1000, maxRetries: 1 })
   }
   return _client
 }
@@ -210,7 +213,10 @@ ${SCHEMA_HINT}`
 
 export async function generateCountryGuide(opts: GenerateCountryGuideOptions): Promise<GenerateCountryGuideResult> {
   const userPrompt = buildUserPrompt(opts)
-  const resp = await client().messages.create({
+  // Stream the response so we don't hit transport timeouts on long
+  // web-search-heavy generations. Final message is reconstructed via the
+  // SDK's stream helpers.
+  const stream = client().messages.stream({
     model: MODEL,
     max_tokens: MAX_TOKENS,
     system: SYSTEM_PROMPT,
@@ -223,6 +229,7 @@ export async function generateCountryGuide(opts: GenerateCountryGuideOptions): P
     ],
     messages: [{ role: 'user', content: userPrompt }],
   })
+  const resp = await stream.finalMessage()
 
   const textBlocks = resp.content.filter((b) => b.type === 'text') as Array<{ type: 'text'; text: string }>
   const fullText = textBlocks.map((b) => b.text).join('\n').trim()
@@ -272,6 +279,89 @@ export async function generateCountryGuide(opts: GenerateCountryGuideOptions): P
     },
     rawJson: jsonText,
   }
+}
+
+/**
+ * Persists a generated guide into the ExportGuide table. Uses countryCode
+ * as the upsert key. Sets generatedBy='claude' and lastResearchedAt=now.
+ * The legacy markdown `content` field gets a flat SQ rendering so the
+ * existing /dashboard/guides UI keeps working until the new view ships.
+ */
+export async function persistCountryGuide(prisma: PrismaClient, guide: CountryGuide): Promise<{ id: string; created: boolean }> {
+  const existing = await prisma.exportGuide.findUnique({ where: { countryCode: guide.countryCode } })
+
+  const flatSq = renderFlatSq(guide)
+  const flatEn = renderFlatEn(guide)
+  const data = {
+    title: `Udhëzues eksporti për ${guide.country}`,
+    titleSq: `Udhëzues eksporti për ${guide.country}`,
+    titleEn: `Export guide for ${guide.country}`,
+    content: flatSq,
+    contentSq: flatSq,
+    contentEn: flatEn,
+    country: guide.country,
+    countryCode: guide.countryCode,
+    flag: guide.flag,
+    sectors: (guide.sectorRules ?? []).map((s) => s.sector),
+    tags: ['claude-research', 'auto-generated'],
+    isPublished: false, // requires admin review before going live
+
+    marketOverview: guide.marketOverview as any,
+    customs: guide.customs as any,
+    requiredDocs: guide.requiredDocs as any,
+    certifications: guide.certifications as any,
+    labeling: guide.labeling as any,
+    sectorRules: guide.sectorRules as any,
+    tradeAgreements: guide.tradeAgreements as any,
+    contacts: guide.contacts as any,
+    citations: guide.citations as any,
+
+    schemaVersion: 1,
+    generatedBy: 'claude',
+    lastResearchedAt: new Date(),
+  }
+
+  if (existing) {
+    await prisma.exportGuide.update({ where: { id: existing.id }, data })
+    return { id: existing.id, created: false }
+  }
+  const created = await prisma.exportGuide.create({ data })
+  return { id: created.id, created: true }
+}
+
+function renderFlatSq(g: CountryGuide): string {
+  const lines: string[] = []
+  lines.push(`# Udhëzues eksporti — ${g.country} ${g.flag}\n`)
+  lines.push(`## Përmbledhje e tregut\n${g.marketOverview.sq}\n`)
+  lines.push(`## Dogana dhe TVSH\n- TVSH: ${g.customs.vat}\n- Autoriteti: ${g.customs.authority.name} — ${g.customs.authority.url}\n- ${g.customs.importDuties.sq}\n`)
+  lines.push(`## Dokumentet e detyrueshme`)
+  for (const d of g.requiredDocs) {
+    lines.push(`- ${d.mandatory ? '✅' : '⚪'} **${d.name.sq}** — ${d.description.sq}\n  Burimi: ${d.sourceUrl}`)
+  }
+  lines.push(`\n## Çertifikimet`)
+  for (const c of g.certifications) {
+    lines.push(`- ${c.mandatory ? '✅' : '⚪'} **${c.name}** (${c.appliesTo.join(', ')}) — ${c.description.sq}\n  Burimi: ${c.sourceUrl}`)
+  }
+  lines.push(`\n## Marrëveshjet tregtare`)
+  for (const t of g.tradeAgreements) {
+    lines.push(`- **${t.name}**: ${t.benefit.sq}\n  Burimi: ${t.sourceUrl}`)
+  }
+  return lines.join('\n')
+}
+function renderFlatEn(g: CountryGuide): string {
+  const lines: string[] = []
+  lines.push(`# Export guide — ${g.country} ${g.flag}\n`)
+  lines.push(`## Market overview\n${g.marketOverview.en}\n`)
+  lines.push(`## Customs and VAT\n- VAT: ${g.customs.vat}\n- Authority: ${g.customs.authority.name} — ${g.customs.authority.url}\n- ${g.customs.importDuties.en}\n`)
+  lines.push(`## Required documents`)
+  for (const d of g.requiredDocs) {
+    lines.push(`- ${d.mandatory ? '[M]' : '[O]'} **${d.name.en}** — ${d.description.en}\n  Source: ${d.sourceUrl}`)
+  }
+  lines.push(`\n## Certifications`)
+  for (const c of g.certifications) {
+    lines.push(`- ${c.mandatory ? '[M]' : '[O]'} **${c.name}** (${c.appliesTo.join(', ')}) — ${c.description.en}\n  Source: ${c.sourceUrl}`)
+  }
+  return lines.join('\n')
 }
 
 /** Quick shape check before committing to DB. */
