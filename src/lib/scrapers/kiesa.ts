@@ -38,6 +38,9 @@ export type KiesaClassification = OpportunityType | 'SKIP'
 
 export function classifyKiesaTitle(title: string): KiesaClassification {
   if (SKIP_PATTERNS.some((r) => r.test(title))) return 'SKIP'
+  // Result / winner-list announcements MUST be skipped - they pollute the
+  // grants list with already-decided items that have no deadline or amount.
+  if (RESULT_PATTERNS.some((r) => r.test(title))) return 'SKIP'
   if (REGULATION_PATTERNS.some((r) => r.test(title))) return 'REGULATION'
   if (STAND_CALL_PATTERNS.some((r) => r.test(title))) return 'REGULATION'
   if (FAIR_PATTERNS.some((r) => r.test(title))) return 'FAIR'
