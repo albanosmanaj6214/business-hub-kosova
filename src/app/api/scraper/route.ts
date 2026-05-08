@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { scrapeKiesa } from '@/lib/scrapers/kiesa'
 import { scrapeMzhr } from '@/lib/scrapers/mzhr'
 import { scrapeMint } from '@/lib/scrapers/mint'
+import { scrapeKosme } from '@/lib/scrapers/kosme'
 import type { OpportunityInput } from '@/lib/scrapers/types'
 
 export const runtime = 'nodejs'
@@ -16,6 +17,7 @@ const SCRAPERS: Record<string, ScraperFn> = {
   KIESA: scrapeKiesa,
   MZHR: scrapeMzhr,
   MINT: scrapeMint,
+  KOSME: scrapeKosme,
 }
 
 type LegacyOp = 'created' | 'updated' | 'skipped'
