@@ -18,7 +18,7 @@ const sourceSerif = Source_Serif_4({
 })
 
 export const metadata: Metadata = {
-  title: 'Kosova Business Hub — Platforma e Inteligjencës së Eksportit',
+  title: 'Kosova Business Hub · Mundësitë e eksportit',
   description: 'Zbuloni grante, panaire tregtare dhe udhëzues eksporti për prodhuesit e Kosovës. Powered by AI.',
 }
 

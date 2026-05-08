@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
 import { Button } from '@/components/ui/button'
+import { getServerT } from '@/lib/i18n-server'
 import {
   Search,
   Calendar,
@@ -14,47 +15,24 @@ import {
   CheckCircle2,
 } from 'lucide-react'
 
-const features = [
-  {
-    icon: Search,
-    title: 'Grantet aktive të Kosovës',
-    description: 'Çdo thirrje aktive nga KIESA, MZHR e MINT — me afat, vlerë dhe link për aplikim. E përditësuar çdo natë.',
-  },
-  {
-    icon: Calendar,
-    title: 'Panairet ndërkombëtare',
-    description: '15+ panaire të verifikuara në Evropë e Lindjen e Mesme — TUTTOFOOD, IFA, Gulfood, BAU. Me datë, qytet e organizator.',
-  },
-  {
-    icon: BookOpen,
-    title: 'Udhëzues eksporti për tregje konkrete',
-    description: 'Dokumentet, taksat dhe rregullat doganore për secilin treg ku do të eksportosh — pa pasur nevojë me thirrë konsulent.',
-  },
-  {
-    icon: Bell,
-    title: 'Njoftime që përshtaten me sektorin tënd',
-    description: 'Vendos sektorin dhe tregjet me interes — t\'i dërgojmë në email vetëm thirrjet e panairet që të takojnë.',
-  },
-  {
-    icon: Search,
-    title: 'Të dhëna për tregjet e eksportit',
-    description: 'Çfarë blen secili treg, sa importon nga Ballkani, dhe ku ka hapësirë për produktet kosovare.',
-  },
-  {
-    icon: Users,
-    title: 'Konsultime me ekspertë eksporti',
-    description: 'Sesione 1-me-1 për dokumentacion, çertifikime e kontakte me blerës — kur të hasësh problem konkret.',
-  },
-]
-
-const stats = [
-  { value: '500+', label: 'Grante të Monitoruara' },
-  { value: '200+', label: 'Panaire Tregtare' },
-  { value: '50+', label: 'Vende me Udhëzues' },
-  { value: '24/7', label: 'Monitoring me AI' },
-]
-
 export default function HomePage() {
+  const t = getServerT()
+
+  const features = [
+    { icon: Search, title: t('feat.grants.t'), description: t('feat.grants.d') },
+    { icon: Calendar, title: t('feat.fairs.t'), description: t('feat.fairs.d') },
+    { icon: BookOpen, title: t('feat.guides.t'), description: t('feat.guides.d') },
+    { icon: Bell, title: t('feat.notif.t'), description: t('feat.notif.d') },
+    { icon: Users, title: t('feat.consult.t'), description: t('feat.consult.d') },
+  ]
+
+  const stats = [
+    { value: '30+', label: t('stats.grants') },
+    { value: '15+', label: t('stats.fairs') },
+    { value: '20+', label: t('stats.countries') },
+    { value: '24/7', label: t('stats.ai') },
+  ]
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -66,25 +44,25 @@ export default function HomePage() {
           <div className="max-w-3xl">
             <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm text-sm mb-6">
               <Zap className="h-4 w-4 mr-2 text-[#F39C12]" />
-              KIESA · MZHR · MINT — të përditësuara çdo natë
+              {t('home.badge')}
             </div>
             <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
-              Grantet dhe panairet e eksportit,
-              <span className="block text-[#F39C12]">në një vend.</span>
+              {t('home.title.1')}
+              <span className="block text-[#F39C12]">{t('home.title.2')}</span>
             </h1>
             <p className="text-xl text-gray-200 mb-8 max-w-2xl">
-              Mbledhim çdo thirrje publike për biznesin tënd nga burimet zyrtare të Kosovës dhe kalendarin e panaireve ndërkombëtare. Pa pasur nevojë me i ndjekë vetë.
+              {t('home.sub')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/register">
                 <Button size="xl" className="bg-[#F39C12] hover:bg-[#E67E22] text-white font-semibold w-full sm:w-auto">
-                  Fillo Falas
+                  {t('home.cta.start')}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
               <Link href="/pricing">
                 <Button size="xl" variant="outline" className="border-white text-white hover:bg-white hover:text-[#1B4F72] w-full sm:w-auto">
-                  Shiko Çmimet
+                  {t('home.cta.pricing')}
                 </Button>
               </Link>
             </div>
@@ -111,10 +89,10 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-[#1B4F72] mb-4">
-              Çfarë Ofrojmë
+              {t('features.title')}
             </h2>
             <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-              Gjithçka që të duhet me ndjekë grantet, panairet dhe rregullat e eksportit — pa hapë 20 faqe institucionesh në ditë.
+              {t('features.sub')}
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -139,26 +117,30 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <Shield className="h-12 w-12 text-[#F39C12] mx-auto mb-6" />
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Gati me e ndjekë eksportin seriozisht?
+            {t('cta.ready')}
           </h2>
           <p className="text-xl text-gray-300 mb-8">
-            Regjistrohu falas — shih grantet aktive sot, vendos për planin më vonë.
+            {t('cta.ready.sub')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/register">
               <Button size="xl" className="bg-[#F39C12] hover:bg-[#E67E22] text-white font-semibold">
-                Regjistrohu Tani - Falas
+                {t('cta.register.free')}
               </Button>
             </Link>
           </div>
-          <div className="flex items-center justify-center gap-6 mt-8 text-gray-300">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 mt-8 text-gray-300">
             <div className="flex items-center">
               <CheckCircle2 className="h-5 w-5 mr-2 text-[#27AE60]" />
-              Pa kartë krediti
+              {t('cta.noCard')}
             </div>
             <div className="flex items-center">
               <CheckCircle2 className="h-5 w-5 mr-2 text-[#27AE60]" />
-              Plani falas përgjithmonë
+              {t('cta.cancel')}
+            </div>
+            <div className="flex items-center">
+              <CheckCircle2 className="h-5 w-5 mr-2 text-[#27AE60]" />
+              {t('cta.support')}
             </div>
           </div>
         </div>

@@ -57,7 +57,7 @@ export function Wordmark({ variant, size, asLink, className }: WordmarkProps) {
 
   if (asLink) {
     return (
-      <Link href="/" aria-label="Kosova Business Hub — kreu" className="inline-flex">
+      <Link href="/" aria-label="Kosova Business Hub, kreu" className="inline-flex">
         {content}
       </Link>
     )

@@ -44,6 +44,7 @@ export default async function DashboardPage() {
     where: { isActive: true },
     include: { health: true },
     orderBy: { code: 'asc' },
+    take: 2,
   })
 
   const lastSuccess = sources.reduce<Date | null>((acc, s) => {
@@ -71,7 +72,7 @@ export default async function DashboardPage() {
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 rounded-full px-4 py-2 border border-gray-200">
           <RefreshCw className="h-4 w-4" />
-          <span>Përditësuar {timeAgoSq(lastSuccess)}</span>
+          <span>E përditësuar {timeAgoSq(lastSuccess)}</span>
         </div>
       </div>
 
@@ -97,13 +98,10 @@ export default async function DashboardPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Burimet aktive të të dhënave</h2>
-            <span className="text-xs text-gray-500">Scraper: çdo natë në 03:00 (CET)</span>
-          </div>
+          <h2 className="text-lg font-semibold text-gray-900">Burimet aktive të të dhënave</h2>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {sources.map((s) => {
               const healthy = s.health?.consecutiveFailures === 0 && s.health?.lastSuccessAt
               return (

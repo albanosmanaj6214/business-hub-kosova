@@ -5,8 +5,9 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { cn } from '@/lib/utils'
+import { Wordmark } from '@/components/brand/Wordmark'
 import {
-  Globe2, LayoutDashboard, Search, Calendar, BookOpen,
+  LayoutDashboard, Search, Calendar, BookOpen,
   Bell, Settings, CreditCard, MessageSquare, Menu, X,
   LogOut, Shield, ChevronRight,
 } from 'lucide-react'
@@ -40,11 +41,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       )}>
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-100">
-          <Link href="/" className="flex items-center space-x-2">
-            <Globe2 className="h-7 w-7 text-[#1B4F72]" />
-            <span className="font-bold text-[#1B4F72]">BH Kosova</span>
-          </Link>
-          <button className="lg:hidden" onClick={() => setSidebarOpen(false)}>
+          <Wordmark variant="primary" size="sm" asLink />
+          <button className="lg:hidden" onClick={() => setSidebarOpen(false)} aria-label="Mbyll menynë">
             <X className="h-5 w-5 text-gray-500" />
           </button>
         </div>

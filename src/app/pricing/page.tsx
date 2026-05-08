@@ -20,7 +20,7 @@ const plans: Plan[] = [
   {
     name: 'Starter',
     price: 39,
-    description: 'Për biznese të vogla që duan me e fillu eksportin pa investim të madh — qasje në grantet aktive dhe kalendarin e panaireve.',
+    description: 'Për biznese të vogla që duan ta fillojnë eksportin pa investim të madh. Përfshin grantet aktive dhe kalendarin e panaireve.',
     audience: 'Deri në 5 punonjës · 1 përdorues',
     features: [
       { text: 'Databaza e granteve aktive (KIESA, MZHR, MINT)', included: true },
@@ -39,7 +39,7 @@ const plans: Plan[] = [
   {
     name: 'Professional',
     price: 99,
-    description: 'Për biznese që tashmë eksportojnë dhe kanë nevojë me ndjekë disa tregje paralelisht — me njoftime të personalizuara dhe konsultime mujore.',
+    description: 'Për biznese që tashmë eksportojnë dhe kanë nevojë të ndjekin disa tregje paralelisht, me njoftime të personalizuara dhe konsultime mujore.',
     audience: '5–50 punonjës · 3 përdorues',
     features: [
       { text: 'Gjithçka nga Starter', included: true, highlight: true },
@@ -57,7 +57,7 @@ const plans: Plan[] = [
   {
     name: 'Enterprise',
     price: 249,
-    description: 'Për kompani me ekip të dedikuar për eksport — qasje API për integrim me sistemet tuaja, raport mujor dhe menaxher kontaktit.',
+    description: 'Për kompani me ekip të dedikuar për eksport. Qasje API për integrim me sistemet tuaja, raport mujor dhe menaxher i dedikuar i kontaktit.',
     audience: '50+ punonjës · përdorues të pakufizuar',
     features: [
       { text: 'Gjithçka nga Professional', included: true, highlight: true },
@@ -87,14 +87,14 @@ const guarantees = [
   {
     icon: Headphones,
     title: 'Mbështetje në shqip',
-    text: 'Pyet në shqip, përgjigjemi në shqip — brenda 24 orëve, nga ekip që e njeh tregun kosovar.',
+    text: 'Pyet në shqip, përgjigjemi në shqip. Brenda 24 orëve, nga ekip që e njeh tregun kosovar.',
   },
 ]
 
 const faqs = [
   {
     q: 'A mund ta provoj platformën pa pagesë?',
-    a: 'Po — regjistrimi është falas dhe të jep akses të kufizuar në grantet aktive. Për akses të plotë, zgjidh një plan me pagesë.',
+    a: 'Po. Regjistrimi është falas dhe të jep akses të kufizuar në grantet aktive. Për akses të plotë, zgjidh një plan me pagesë.',
   },
   {
     q: 'A mund ta ndryshoj planin më vonë?',
@@ -110,7 +110,7 @@ const faqs = [
   },
   {
     q: 'A ofroni zbritje për pagesë vjetore?',
-    a: 'Po — me pagesë vjetore përfitoni 2 muaj falas (zbritje 16%). Na kontakto për ofertë të personalizuar.',
+    a: 'Po. Me pagesë vjetore përfitoni 2 muaj falas (zbritje 16%). Na kontakto për ofertë të personalizuar.',
   },
 ]
 
@@ -129,7 +129,7 @@ export default function PricingPage() {
               Zgjidh planin që të çon në eksport
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Tre plane për tre faza të eksportit — nga biznesi që sapo po fillon, te kompania që ka nevojë për integrim API.
+              Tre plane për tre faza të eksportit. Nga biznesi që sapo po fillon, te kompania që ka nevojë për integrim API.
             </p>
           </div>
 
