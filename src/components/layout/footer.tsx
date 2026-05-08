@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Globe2 } from 'lucide-react'
+import { Wordmark } from '@/components/brand/Wordmark'
 
 export function Footer() {
   return (
@@ -7,11 +7,8 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center space-x-2 mb-4">
-              <Globe2 className="h-8 w-8" />
-              <span className="text-xl font-bold">
-                Business Hub <span className="text-[#2E86C1]">Kosova</span>
-              </span>
+            <div className="mb-4">
+              <Wordmark variant="inverse" size="md" />
             </div>
             <p className="text-gray-300 max-w-md">
               Platforma e inteligjencës së eksportit për prodhuesit e Kosovës.
@@ -39,7 +36,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-white/20 mt-8 pt-8 text-center text-gray-300 text-sm">
-          © {new Date().getFullYear()} Business Hub Kosova. Të gjitha të drejtat e rezervuara.
+          © {new Date().getFullYear()} Kosova Business Hub. Të gjitha të drejtat e rezervuara.
         </div>
       </div>
     </footer>

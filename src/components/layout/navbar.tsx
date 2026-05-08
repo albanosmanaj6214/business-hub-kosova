@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Menu, X, Globe2, LogOut, LayoutDashboard } from 'lucide-react'
+import { Wordmark } from '@/components/brand/Wordmark'
+import { Menu, X, LogOut, LayoutDashboard } from 'lucide-react'
 
 export function Navbar() {
   const { data: session } = useSession()
@@ -15,12 +16,7 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
-              <Globe2 className="h-8 w-8 text-[#1B4F72]" />
-              <span className="text-xl font-bold text-[#1B4F72]">
-                Business Hub <span className="text-[#2E86C1]">Kosova</span>
-              </span>
-            </Link>
+            <Wordmark variant="primary" size="lg" asLink />
           </div>
 
           <div className="hidden md:flex items-center space-x-6">
