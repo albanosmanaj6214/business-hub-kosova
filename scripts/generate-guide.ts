@@ -51,8 +51,10 @@ async function main() {
   const persisted = await persistCountryGuide(prisma, result.guide)
   const dur = ((Date.now() - start) / 1000).toFixed(1)
   console.log(`\n✓ Saved as ExportGuide id=${persisted.id} in ${dur}s.`)
-  console.log(`  Title: ${result.guide.title.sq}`)
-  console.log(`  Sections: customs=${(result.guide.customs ?? []).length} certs=${(result.guide.certifications ?? []).length} contacts=${(result.guide.contacts ?? []).length}`)
+  const g: any = result.guide
+  const titleSq = typeof g.title === 'string' ? g.title : g.title?.sq
+  console.log(`  Title: ${titleSq ?? '(missing)'}`)
+  console.log(`  Sections: customs=${(g.customs ?? []).length} certs=${(g.certifications ?? []).length} contacts=${(g.contacts ?? []).length}`)
 }
 
 main()
