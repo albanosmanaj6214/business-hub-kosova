@@ -86,17 +86,6 @@ const M: Record<string, Dict> = {
     de: 'Vereinbaren Sie einen Termin mit unseren Fachleuten zu einem Förderaufruf, einer Messe oder einer Exportfrage.',
   },
 
-  'cta.ready':          { sq: 'Hape llogarinë sot. Shiko çfarë afatesh janë aktive.', en: 'Open an account today. See what is active.', de: 'Eröffnen Sie heute ein Konto. Sehen Sie, was aktiv ist.' },
-  'cta.ready.sub':      {
-    sq: 'Llogaria bazë të jep qasje në grantet aktive dhe kalendarin e panaireve. Pa pagesë, pa kohëzgjatje. Mund të kalosh në plan me pagesë vetëm nëse ke nevojë për njoftime të personalizuara, udhëzues të plotë ose konsultime.',
-    en: 'The free account gives you access to active grants and the fair calendar. No charge, no time limit. Move to a paid plan only if you need personalized notifications, full guides, or consultations.',
-    de: 'Das kostenlose Konto gibt Ihnen Zugang zu aktiven Förderaufrufen und zum Messekalender. Keine Gebühr, keine Laufzeit. Wechseln Sie nur dann zu einem kostenpflichtigen Plan, wenn Sie personalisierte Benachrichtigungen, vollständige Leitfäden oder Beratung benötigen.',
-  },
-  'cta.register.free':  { sq: 'Krijo llogarinë falas', en: 'Create free account', de: 'Kostenloses Konto erstellen' },
-  'cta.noCard':         { sq: 'Pa kartë krediti',   en: 'No credit card',     de: 'Keine Kreditkarte' },
-  'cta.cancel':         { sq: 'Anulim me një klikim', en: 'Cancel in one click', de: 'Mit einem Klick kündbar' },
-  'cta.support':        { sq: 'Mbështetje në shqip', en: 'Albanian-speaking support', de: 'Albanischsprachiger Support' },
-
   'footer.tagline':     {
     sq: 'Mbledhim grantet, panairet dhe rregullat e eksportit në një vend, që biznesi yt të fokusohet në prodhim, jo në kërkim.',
     en: 'We gather grants, fairs, and export rules in one place, so your business can focus on production, not searching.',

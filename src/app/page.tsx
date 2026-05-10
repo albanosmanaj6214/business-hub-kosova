@@ -8,11 +8,9 @@ import {
   Calendar,
   BookOpen,
   Bell,
-  Shield,
   Zap,
   Users,
   ArrowRight,
-  CheckCircle2,
 } from 'lucide-react'
 
 export default function HomePage() {
@@ -108,40 +106,6 @@ export default function HomePage() {
                 <p className="text-gray-500">{feature.description}</p>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="bg-[#1B4F72] py-20">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <Shield className="h-12 w-12 text-[#F39C12] mx-auto mb-6" />
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            {t('cta.ready')}
-          </h2>
-          <p className="text-xl text-gray-300 mb-8">
-            {t('cta.ready.sub')}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/register">
-              <Button size="xl" className="bg-[#F39C12] hover:bg-[#E67E22] text-white font-semibold">
-                {t('cta.register.free')}
-              </Button>
-            </Link>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 mt-8 text-gray-300">
-            <div className="flex items-center">
-              <CheckCircle2 className="h-5 w-5 mr-2 text-[#27AE60]" />
-              {t('cta.noCard')}
-            </div>
-            <div className="flex items-center">
-              <CheckCircle2 className="h-5 w-5 mr-2 text-[#27AE60]" />
-              {t('cta.cancel')}
-            </div>
-            <div className="flex items-center">
-              <CheckCircle2 className="h-5 w-5 mr-2 text-[#27AE60]" />
-              {t('cta.support')}
-            </div>
           </div>
         </div>
       </section>
