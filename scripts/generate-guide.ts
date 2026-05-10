@@ -33,7 +33,7 @@ const prisma = new PrismaClient()
 async function main() {
   const start = Date.now()
   console.log(`▶ Generating guide for ${flag} ${nameSq} (${code.toUpperCase()})…`)
-  console.log(`  Model: claude-sonnet-4-6 + web_search. ETA 5–10 min.\n`)
+  console.log(`  Model: claude-haiku-4-5 + web_search. ETA 3–5 min.\n`)
 
   const result = await generateCountryGuide({
     countryCode: code.toUpperCase(),
