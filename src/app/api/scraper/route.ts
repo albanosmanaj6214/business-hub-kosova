@@ -57,20 +57,23 @@ async function persistOpportunity(
 
   if (item.type === 'GRANT') {
     const existing = await prisma.grant.findFirst({ where: { url: item.sourceUrl } })
+    // Preserve-existing semantics: scraper-provided value > existing DB value > default.
+    // Prevents subsequent scrape runs from wiping enriched data (deadline, descriptionSq, sectors, etc.)
+    // populated by Haiku extraction. NEW grants (no existing) still create with whatever the scraper has.
     const data = {
       title: item.title,
-      titleSq: legacy.titleSq ?? null,
-      description: item.description ?? item.title,
-      descriptionSq: legacy.descriptionSq ?? null,
-      provider: legacy.provider ?? 'KIESA',
-      amount: item.amount ?? null,
-      currency: item.currency ?? 'EUR',
-      deadline: item.deadline ?? null,
-      eligibility: item.eligibility ?? null,
+      titleSq: legacy.titleSq ?? existing?.titleSq ?? null,
+      description: item.description ?? existing?.description ?? item.title,
+      descriptionSq: legacy.descriptionSq ?? existing?.descriptionSq ?? null,
+      provider: legacy.provider ?? existing?.provider ?? 'KIESA',
+      amount: item.amount ?? existing?.amount ?? null,
+      currency: item.currency ?? existing?.currency ?? 'EUR',
+      deadline: item.deadline ?? existing?.deadline ?? null,
+      eligibility: item.eligibility ?? existing?.eligibility ?? null,
       url: item.sourceUrl,
-      country: legacy.country ?? 'Kosovo',
-      sectors: legacy.sectors ?? [],
-      tags: legacy.tags ?? [],
+      country: legacy.country ?? existing?.country ?? 'Kosovo',
+      sectors: (legacy.sectors && legacy.sectors.length) ? legacy.sectors : (existing?.sectors ?? []),
+      tags: (legacy.tags && legacy.tags.length) ? legacy.tags : (existing?.tags ?? []),
     }
     if (existing) {
       await prisma.grant.update({ where: { id: existing.id }, data })
