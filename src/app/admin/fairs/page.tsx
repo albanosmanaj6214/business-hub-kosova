@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminFairsPage() {
   const fairs = await prisma.tradeFair.findMany({ orderBy: { startDate: 'asc' } })
 

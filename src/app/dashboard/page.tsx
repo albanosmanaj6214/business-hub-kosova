@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge'
 import { Search, Calendar, BookOpen, Bell, Clock, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 function timeAgoSq(d: Date | null): string {
   if (!d) return 'asnjëherë'
   const diffMs = Date.now() - d.getTime()

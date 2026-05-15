@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge'
 import { Calendar, MapPin, ExternalLink, Clock, Globe } from 'lucide-react'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 const SQ_MONTHS = [
   'Janar', 'Shkurt', 'Mars', 'Prill', 'Maj', 'Qershor',
   'Korrik', 'Gusht', 'Shtator', 'Tetor', 'Nëntor', 'Dhjetor',

@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
   ArrowLeft,
+  ChevronDown,
   ExternalLink,
   CheckCircle2,
   CircleDashed,
@@ -21,6 +22,8 @@ import {
 import { getServerLocale } from '@/lib/i18n-server'
 import type { Locale } from '@/lib/i18n'
 import { pickTitle, pickContent } from '../utils'
+
+export const dynamic = 'force-dynamic'
 
 interface BiText { sq: string; en: string }
 
@@ -66,6 +69,36 @@ function SectionHeader({ icon: Icon, title }: { icon: any; title: string }) {
       <Icon className="h-5 w-5 text-[#1B4F72]" />
       <h2 className="text-xl font-bold text-[#1B4F72]">{title}</h2>
     </div>
+  )
+}
+
+function CollapsibleSection({
+  icon: Icon,
+  title,
+  count,
+  children,
+}: {
+  icon: any
+  title: string
+  count?: number
+  children: React.ReactNode
+}) {
+  return (
+    <details className="mb-4 bg-white border border-gray-200 rounded-lg group overflow-hidden">
+      <summary className="cursor-pointer px-6 py-4 list-none flex items-center justify-between hover:bg-gray-50 transition-colors">
+        <div className="flex items-center gap-3">
+          <Icon className="h-5 w-5 text-[#1B4F72]" />
+          <h2 className="text-lg font-semibold text-[#1B4F72]">{title}</h2>
+          {typeof count === 'number' && count > 0 && (
+            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{count}</span>
+          )}
+        </div>
+        <ChevronDown className="h-5 w-5 text-gray-400 group-open:rotate-180 transition-transform" />
+      </summary>
+      <div className="px-6 pb-6 pt-2 border-t border-gray-100">
+        {children}
+      </div>
+    </details>
   )
 }
 
@@ -145,9 +178,7 @@ export default async function GuidePage({ params }: { params: { id: string } }) 
 
       {/* Customs & VAT */}
       {customs && (
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <SectionHeader icon={Building2} title={t('Dogana dhe TVSH', 'Customs and VAT')} />
+        <CollapsibleSection icon={Building2} title={t('Dogana dhe TVSH', 'Customs and VAT')}>
             <div className="grid sm:grid-cols-2 gap-4 mb-4">
               <div className="bg-gray-50 rounded p-3">
                 <div className="text-xs text-gray-500 mb-1">TVSH</div>
@@ -164,15 +195,12 @@ export default async function GuidePage({ params }: { params: { id: string } }) 
             </div>
             <p className="text-sm text-gray-700 leading-relaxed">{bi(customs.importDuties, locale)}</p>
             {customs.sourceUrl && <SourceLink url={customs.sourceUrl} locale={locale} />}
-          </CardContent>
-        </Card>
+        </CollapsibleSection>
       )}
 
       {/* Required documents */}
       {requiredDocs.length > 0 && (
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <SectionHeader icon={FileText} title={t('Dokumentet e kërkuara për çdo dërgesë', 'Documents required per shipment')} />
+        <CollapsibleSection icon={FileText} title={t('Dokumentet e kërkuara për çdo dërgesë', 'Documents required per shipment')} count={requiredDocs.length}>
             <ul className="space-y-3">
               {requiredDocs.map((d: any, i: number) => (
                 <li key={i} className="border-l-2 border-gray-200 pl-3">
@@ -186,15 +214,12 @@ export default async function GuidePage({ params }: { params: { id: string } }) 
                 </li>
               ))}
             </ul>
-          </CardContent>
-        </Card>
+        </CollapsibleSection>
       )}
 
       {/* Certifications */}
       {certifications.length > 0 && (
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <SectionHeader icon={ShieldCheck} title={t('Çertifikimet dhe standardet', 'Certifications and standards')} />
+        <CollapsibleSection icon={ShieldCheck} title={t('Çertifikimet dhe standardet', 'Certifications and standards')} count={certifications.length}>
             <ul className="space-y-3">
               {certifications.map((c: any, i: number) => (
                 <li key={i} className="border-l-2 border-gray-200 pl-3">
@@ -213,15 +238,12 @@ export default async function GuidePage({ params }: { params: { id: string } }) 
                 </li>
               ))}
             </ul>
-          </CardContent>
-        </Card>
+        </CollapsibleSection>
       )}
 
       {/* Labeling */}
       {labeling && (labeling.rules ?? []).length > 0 && (
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <SectionHeader icon={Tag} title={t('Etiketimi dhe gjuha', 'Labelling and language')} />
+        <CollapsibleSection icon={Tag} title={t('Etiketimi dhe gjuha', 'Labelling and language')} count={(labeling.rules as any[]).length}>
             {labeling.languages?.length > 0 && (
               <div className="mb-3 flex items-center gap-2 flex-wrap">
                 <span className="text-sm text-gray-500">{t('Gjuhët e detyrueshme', 'Required languages')}:</span>
@@ -239,15 +261,12 @@ export default async function GuidePage({ params }: { params: { id: string } }) 
                 </li>
               ))}
             </ul>
-          </CardContent>
-        </Card>
+        </CollapsibleSection>
       )}
 
       {/* Sector rules */}
       {sectorRules.length > 0 && (
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <SectionHeader icon={Tag} title={t('Rregulla sipas sektorit', 'Sector-specific rules')} />
+        <CollapsibleSection icon={Tag} title={t('Rregulla sipas sektorit', 'Sector-specific rules')} count={sectorRules.length}>
             <div className="space-y-5">
               {sectorRules.map((sg: any, i: number) => (
                 <div key={i}>
@@ -266,15 +285,12 @@ export default async function GuidePage({ params }: { params: { id: string } }) 
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+        </CollapsibleSection>
       )}
 
       {/* Trade agreements */}
       {tradeAgreements.length > 0 && (
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <SectionHeader icon={Handshake} title={t('Marrëveshjet tregtare', 'Trade agreements')} />
+        <CollapsibleSection icon={Handshake} title={t('Marrëveshjet tregtare', 'Trade agreements')} count={tradeAgreements.length}>
             <ul className="space-y-3">
               {tradeAgreements.map((a: any, i: number) => (
                 <li key={i} className="border-l-2 border-green-300 pl-3">
@@ -284,15 +300,12 @@ export default async function GuidePage({ params }: { params: { id: string } }) 
                 </li>
               ))}
             </ul>
-          </CardContent>
-        </Card>
+        </CollapsibleSection>
       )}
 
       {/* Contacts */}
       {contacts.length > 0 && (
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <SectionHeader icon={Users} title={t('Kontakte institucionale', 'Institutional contacts')} />
+        <CollapsibleSection icon={Users} title={t('Kontakte institucionale', 'Institutional contacts')} count={contacts.length}>
             <div className="grid sm:grid-cols-2 gap-3">
               {contacts.map((c: any, i: number) => (
                 <div key={i} className="border rounded p-3">
@@ -310,8 +323,7 @@ export default async function GuidePage({ params }: { params: { id: string } }) 
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+        </CollapsibleSection>
       )}
 
       {/* Citations footer */}

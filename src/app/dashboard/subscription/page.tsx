@@ -6,6 +6,9 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { CreditCard } from 'lucide-react'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+
+export const dynamic = 'force-dynamic'
 
 const tierLabels: Record<string, string> = {
   FREE: 'Falas',
@@ -16,9 +19,10 @@ const tierLabels: Record<string, string> = {
 
 export default async function SubscriptionPage() {
   const session = await getServerSession(authOptions)
-  
+  if (!session?.user?.id) redirect('/login?callbackUrl=/dashboard/subscription')
+
   const subscription = await prisma.subscription.findUnique({
-    where: { userId: session?.user?.id },
+    where: { userId: session.user.id },
   })
 
   return (

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { MessageSquare, Loader2, Calendar } from 'lucide-react'
 
+
 export default function BookingsPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)

@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
+export const dynamic = 'force-dynamic'
+
 const TYPE_LABEL: Record<string, string> = {
   GRANT_APPLICATION: 'Aplikim Grant-i',
   EXPORT_GUIDE: 'Këshilla Eksporti',

@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminUsersPage() {
   const users = await prisma.user.findMany({
     include: { subscription: true },

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Loader2, Save } from 'lucide-react'
 
+
 const sectors = [
   'Prodhim Ushqimor', 'Tekstile', 'Ndertimtari', 'Teknologji',
   'Bujqesi', 'Energji', 'Minerale', 'Metalurgji', 'Dru & Mobileri',

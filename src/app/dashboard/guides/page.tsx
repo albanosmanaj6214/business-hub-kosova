@@ -7,6 +7,8 @@ import { BookOpen } from 'lucide-react'
 import { getServerLocale } from '@/lib/i18n-server'
 import type { Locale } from '@/lib/i18n'
 
+export const dynamic = 'force-dynamic'
+
 interface BiText { sq: string; en: string }
 
 function previewFor(g: any, locale: Locale): string {

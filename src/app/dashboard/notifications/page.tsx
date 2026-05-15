@@ -5,6 +5,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Bell, Search, Calendar, BookOpen, Info } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 const typeIcons = {
   GRANT: Search,
   FAIR: Calendar,

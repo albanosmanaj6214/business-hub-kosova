@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Send, Loader2 } from 'lucide-react'
 
+
 export default function AdminNotificationsPage() {
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)

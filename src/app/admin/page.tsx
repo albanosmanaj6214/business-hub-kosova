@@ -3,6 +3,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Users, Search, Calendar, BookOpen, CreditCard, Bot, CheckCircle2, XCircle } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminPage() {
   const [users, grants, fairs, guides, subs, attempts] = await Promise.all([
     prisma.user.count(),
