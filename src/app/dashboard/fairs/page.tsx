@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Calendar, MapPin, ExternalLink, Clock, Globe } from 'lucide-react'
@@ -165,6 +166,10 @@ export default async function FairsPage({
           ))}
         </div>
       )}
+      <ExpertContactCard
+        variant="FAIR_REGISTRATION"
+        source="dashboard-fairs-list"
+      />
     </div>
   )
 }

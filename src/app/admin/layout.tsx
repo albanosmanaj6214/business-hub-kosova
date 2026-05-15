@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
-  Shield, Users, Search, Calendar, BookOpen, Bot, Bell,
+  Shield, Users, Search, Calendar, BookOpen, Bot, Bell, Inbox,
   LayoutDashboard, Menu, X, ArrowLeft,
 } from 'lucide-react'
 
@@ -17,6 +17,7 @@ const adminNav = [
   { name: 'Udhezuesit', href: '/admin/guides', icon: BookOpen },
   { name: 'AI Scraper', href: '/admin/scraper', icon: Bot },
   { name: 'Njoftimet', href: '/admin/notifications', icon: Bell },
+  { name: 'Leads', href: '/admin/leads', icon: Inbox },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

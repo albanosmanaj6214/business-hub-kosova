@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Wordmark } from '@/components/brand/Wordmark'
+import { NewsletterSignup } from '@/components/marketing/NewsletterSignup'
 import { getServerT } from '@/lib/i18n-server'
 import { Mail, Phone, MapPin } from 'lucide-react'
 
@@ -14,9 +15,16 @@ export function Footer() {
             <div className="mb-4">
               <Wordmark variant="inverse" size="md" />
             </div>
-            <p className="text-gray-300 max-w-md leading-relaxed">
+            <p className="text-gray-300 max-w-md leading-relaxed mb-6">
               {t('footer.tagline')}
             </p>
+            <div className="bg-white/5 border border-white/10 rounded-lg p-4 max-w-md">
+              <div className="text-sm font-semibold mb-2 text-white">Newsletter javor falas</div>
+              <p className="text-xs text-gray-300 mb-3 leading-relaxed">
+                Çdo të hënë: grantet e reja, panairet me afat këtë muaj, ndryshimet doganore. Pa spam.
+              </p>
+              <NewsletterSignup source="footer" />
+            </div>
           </div>
 
           <div>

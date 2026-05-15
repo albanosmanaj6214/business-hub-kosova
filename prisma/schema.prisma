@@ -59,6 +59,7 @@ model User {
   subscription  Subscription?
   notifications Notification[]
   bookings      ConsultationBooking[]
+  consultationRequests ConsultationRequest[]
   accounts      Account[]
   sessions      Session[]
 }
@@ -370,4 +371,57 @@ model SourceHealth {
   updatedAt           DateTime  @updatedAt
 
   source Source @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+}
+
+enum ConsultationRequestType {
+  GRANT_APPLICATION
+  EXPORT_GUIDE
+  FAIR_REGISTRATION
+  CERTIFICATION
+  CUSTOMS
+  TRAINING
+  INVESTOR_INQUIRY
+  OTHER
+}
+
+enum LeadStatus {
+  NEW
+  IN_PROGRESS
+  CONVERTED
+  ARCHIVED
+}
+
+model ConsultationRequest {
+  id         String                  @id @default(cuid())
+  userId     String?
+  name       String
+  email      String
+  phone      String?
+  company    String?
+  type       ConsultationRequestType
+  contextId  String?
+  contextRef String?
+  message    String                  @db.Text
+  status     LeadStatus              @default(NEW)
+  source     String?
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @updatedAt
+  user       User?                   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([type])
+}
+
+model NewsletterSubscriber {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String?
+  sector         String?
+  source         String?
+  isActive       Boolean   @default(true)
+  confirmedAt    DateTime?
+  unsubscribedAt DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([isActive, createdAt])
 }
