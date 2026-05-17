@@ -9,7 +9,12 @@ export default async function AdminGrantsPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold">Grantet ({grants.length})</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">Grantet ({grants.length})</h2>
+        <a href="/admin/grants/new" className="inline-flex items-center gap-2 px-4 py-2 bg-[#1B4F72] hover:bg-[#2E86C1] text-white text-sm font-medium rounded-md transition-colors">
+          <span>+ Shto grant nga URL</span>
+        </a>
+      </div>
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
