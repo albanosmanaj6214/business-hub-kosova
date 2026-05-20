@@ -42,9 +42,13 @@ export function classifyKiesaTitle(title: string): KiesaClassification {
   // grants list with already-decided items that have no deadline or amount.
   if (RESULT_PATTERNS.some((r) => r.test(title))) return 'SKIP'
   if (REGULATION_PATTERNS.some((r) => r.test(title))) return 'REGULATION'
+  // Check GRANT (thirrje/aplikim/public call) BEFORE stand-call patterns:
+  // a "THIRRJE PUBLIKE PËR APLIKIM NË STENDËN..." is a real funding opportunity
+  // (KIESA pays for the state stand), not regulation. Winner-lists are already
+  // filtered above by RESULT_PATTERNS (lista/preliminare/perfitues).
+  if (GRANT_PATTERNS.some((r) => r.test(title))) return 'GRANT'
   if (STAND_CALL_PATTERNS.some((r) => r.test(title))) return 'REGULATION'
   if (FAIR_PATTERNS.some((r) => r.test(title))) return 'FAIR'
-  if (GRANT_PATTERNS.some((r) => r.test(title))) return 'GRANT'
   return 'SKIP'
 }
 
