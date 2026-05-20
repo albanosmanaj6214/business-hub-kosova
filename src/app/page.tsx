@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Navbar } from '@/components/layout/navbar'
 import { Footer } from '@/components/layout/footer'
+import { TradePulse } from '@/components/marketing/TradePulse'
 import { Button } from '@/components/ui/button'
 import { getServerT } from '@/lib/i18n-server'
 import {
@@ -67,6 +68,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <TradePulse />
 
       {/* Stats */}
       <section className="bg-gray-50 py-12">
