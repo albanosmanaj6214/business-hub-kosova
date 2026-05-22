@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 import { Wordmark } from '@/components/brand/Wordmark'
 import {
   LayoutDashboard, Search, Calendar, BookOpen,
-  Bell, Settings, CreditCard, MessageSquare, Menu, X,
+  Bell, Settings, CreditCard, MessageSquare, Menu, X, GraduationCap,
   LogOut, Shield, ChevronRight,
 } from 'lucide-react'
 
@@ -17,6 +17,7 @@ const navigation = [
   { name: 'Grante', href: '/dashboard/grants', icon: Search },
   { name: 'Panaire', href: '/dashboard/fairs', icon: Calendar },
   { name: 'Udhezues', href: '/dashboard/guides', icon: BookOpen },
+  { name: 'Termet e Eksportit', href: '/dashboard/terma', icon: GraduationCap },
   { name: 'Njoftime', href: '/dashboard/notifications', icon: Bell },
   { name: 'Konsultime', href: '/dashboard/bookings', icon: MessageSquare },
   { name: 'Abonimi', href: '/dashboard/subscription', icon: CreditCard },
