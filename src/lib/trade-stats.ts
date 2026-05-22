@@ -29,7 +29,7 @@ export const TRADE_PULSE = {
   asOf: '2025',
   source: 'ASK / BQK',
   sourceUrl: 'https://ask.rks-gov.net',
-  verified: true,
+  verified: false,  // ⚠ ASK/BQK-origin por jo ende konfirmuar nga PDF-i parësor; konfirmo para launch
   narrative:
     'Hendeku tregtar i Kosovës po thellohet: mbi €7 miliardë importe përballë më pak se €1 miliard eksporte. Sa më i madh hendeku, aq më e madhe mundësia për prodhimin dhe eksportin vendor.',
   stats: [
