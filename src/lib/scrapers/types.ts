@@ -25,6 +25,9 @@ export interface LegacyMeta {
   startDate?: Date
   endDate?: Date
   website?: string
+  eventType?: 'FAIR' | 'TRAINING' | 'WEBINAR' | 'MATCHMAKING' | 'WORKSHOP' | 'CONFERENCE'
+  organizer?: string | null
+  registrationUrl?: string | null
 }
 
 export interface OpportunityInput {

@@ -6,6 +6,7 @@ import { scrapeKiesa } from '@/lib/scrapers/kiesa'
 import { scrapeMzhr } from '@/lib/scrapers/mzhr'
 import { scrapeMint } from '@/lib/scrapers/mint'
 import { scrapeKosme } from '@/lib/scrapers/kosme'
+import { scrapeOek } from '@/lib/scrapers/oek'
 import type { OpportunityInput } from '@/lib/scrapers/types'
 import { classifyGrantDeadline, classifyResultToUpdate } from '@/lib/classifiers/deadline-classifier'
 
@@ -19,6 +20,7 @@ const SCRAPERS: Record<string, ScraperFn> = {
   MZHR: scrapeMzhr,
   MINT: scrapeMint,
   KOSME: scrapeKosme,
+  OEK: scrapeOek,
 }
 
 type LegacyOp = 'created' | 'updated' | 'skipped'
@@ -118,6 +120,9 @@ async function persistOpportunity(
       website: websiteUrl,
       sectors: legacy.sectors ?? [],
       tags: legacy.tags ?? [],
+      eventType: legacy.eventType ?? existing?.eventType ?? 'FAIR',
+      organizer: legacy.organizer ?? existing?.organizer ?? null,
+      registrationUrl: legacy.registrationUrl ?? existing?.registrationUrl ?? null,
     }
     if (existing) {
       await prisma.tradeFair.update({ where: { id: existing.id }, data })
