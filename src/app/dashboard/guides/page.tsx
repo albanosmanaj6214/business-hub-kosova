@@ -37,7 +37,7 @@ export default async function GuidesPage() {
   const locale: Locale = getServerLocale()
   const guides = await prisma.exportGuide.findMany({
     where: { isPublished: true, deletedAt: null },
-    orderBy: [{ country: 'asc' }],
+    orderBy: [{ countryCode: "asc" }],
   })
 
   const t = (sq: string, en: string) => locale === 'sq' ? sq : en
