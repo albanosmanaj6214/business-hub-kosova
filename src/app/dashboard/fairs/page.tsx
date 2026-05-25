@@ -107,54 +107,62 @@ export default async function FairsPage({
 
   const baseFilters = { sector: sectorFilter, country: countryFilter, type: typeFilter || '' }
 
+  const visibleSet = showPast ? past : upcoming
+  const countByType = EVENT_TYPE_ORDER.reduce((acc, k) => {
+    acc[k] = visibleSet.filter((f) => f.eventType === k).length
+    return acc
+  }, {} as Record<EventType, number>)
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Panaire dhe Evente</h1>
-          <p className="text-gray-500 mt-1">
-            Panaire ndërkombëtare, trajnime, webinare dhe takime matchmaking, të verifikuara dhe relevante për eksportuesit kosovarë.
-          </p>
-        </div>
-        <div className="flex gap-2 text-sm">
-          <Link
-            href={`/dashboard/fairs${buildQuery(baseFilters)}`}
-            className={tabClass(!showPast)}
-          >
-            Të ardhshme ({upcoming.length})
-          </Link>
-          <Link
-            href={`/dashboard/fairs${buildQuery({ ...baseFilters, show: 'past' })}`}
-            className={tabClass(showPast)}
-          >
-            Të kaluara ({past.length})
-          </Link>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Panaire dhe Evente</h1>
+        <p className="text-gray-500 mt-1">
+          Panaire ndërkombëtare, trajnime, webinare dhe takime matchmaking, të verifikuara dhe relevante për eksportuesit kosovarë.
+        </p>
       </div>
 
-      {presentTypes.length > 1 && (
-        <div className="flex flex-wrap gap-2 items-center bg-gray-50 rounded-lg p-3 border border-gray-200">
-          <span className="text-xs font-medium text-gray-600 mr-1">Lloji:</span>
-          <FilterPill
+      {/* Primary tabs: event type */}
+      <div className="-mx-4 lg:-mx-8 px-4 lg:px-8 border-b border-gray-200">
+        <nav className="flex gap-1 overflow-x-auto pb-px" aria-label="Lloji i eventit">
+          <TypeTab
             label="Të gjitha"
+            count={visibleSet.length}
             href={`/dashboard/fairs${buildQuery({ sector: sectorFilter, country: countryFilter, show: showPast ? 'past' : '' })}`}
             active={!typeFilter}
           />
-          {presentTypes.map((t) => (
-            <FilterPill
-              key={t}
-              label={EVENT_TYPE_PLURAL_SQ[t]}
+          {EVENT_TYPE_ORDER.map((tk) => (
+            <TypeTab
+              key={tk}
+              label={EVENT_TYPE_PLURAL_SQ[tk]}
+              count={countByType[tk]}
               href={`/dashboard/fairs${buildQuery({
                 sector: sectorFilter,
                 country: countryFilter,
-                type: t,
+                type: tk,
                 show: showPast ? 'past' : '',
               })}`}
-              active={typeFilter === t}
+              active={typeFilter === tk}
             />
           ))}
-        </div>
-      )}
+        </nav>
+      </div>
+
+      {/* Secondary: upcoming/past toggle */}
+      <div className="flex gap-2 text-sm">
+        <Link
+          href={`/dashboard/fairs${buildQuery(baseFilters)}`}
+          className={tabClass(!showPast)}
+        >
+          Të ardhshme ({upcoming.length})
+        </Link>
+        <Link
+          href={`/dashboard/fairs${buildQuery({ ...baseFilters, show: 'past' })}`}
+          className={tabClass(showPast)}
+        >
+          Të kaluara ({past.length})
+        </Link>
+      </div>
 
       {(allSectors.length > 0 || allCountries.length > 1) && (
         <div className="flex flex-wrap gap-2 items-center bg-gray-50 rounded-lg p-3 border border-gray-200">
@@ -326,6 +334,31 @@ function FairCard({
         )}
       </CardContent>
     </Card>
+  )
+}
+
+
+function TypeTab({
+  label, count, href, active,
+}: {
+  label: string; count: number; href: string; active: boolean
+}) {
+  return (
+    <Link
+      href={href}
+      className={`group inline-flex items-center gap-1.5 whitespace-nowrap px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+        active
+          ? 'border-[#1B4F72] text-[#1B4F72]'
+          : count === 0
+            ? 'border-transparent text-gray-400 hover:text-gray-600'
+            : 'border-transparent text-gray-600 hover:text-[#1B4F72] hover:border-gray-300'
+      }`}
+    >
+      <span>{label}</span>
+      <span className={`text-xs rounded-full px-1.5 py-0.5 ${
+        active ? 'bg-[#1B4F72]/10 text-[#1B4F72]' : 'bg-gray-100 text-gray-500'
+      }`}>{count}</span>
+    </Link>
   )
 }
 
