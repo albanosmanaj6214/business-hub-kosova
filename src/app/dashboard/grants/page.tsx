@@ -16,6 +16,19 @@ function formatSqDate(d: Date): string {
   return `${d.getUTCDate()} ${SQ_MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`
 }
 
+
+// "Today" computed in Kosovo timezone (uses 'Europe/Belgrade' tz — same CET/CEST as Pristina, more universally supported).
+// Ensures grants flip to archive at Kosovo midnight, not UTC midnight.
+function kosovoToday(): Date {
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Belgrade',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  })
+  const parts = fmt.formatToParts(new Date())
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
+  return new Date(`${get('year')}-${get('month')}-${get('day')}T00:00:00.000Z`)
+}
+
 function daysBetween(a: Date, b: Date): number {
   const ms = a.getTime() - b.getTime()
   return Math.round(ms / (1000 * 60 * 60 * 24))
@@ -125,8 +138,7 @@ export default async function GrantsPage({
   // Fair-participation calls belong to /dashboard/fairs, not here.
   const grants = grantsRaw.filter((g) => !isFairStandCall(g))
 
-  const today = new Date()
-  today.setUTCHours(0, 0, 0, 0)
+  const today = kosovoToday()
 
   const buckets = {
     active: [] as GrantRow[],
@@ -346,9 +358,11 @@ function GrantCard({ grant, today }: { grant: GrantRow; today: Date }) {
         <div className="flex items-start justify-between gap-3 mb-3">
           <h3 className="font-semibold text-gray-900 leading-snug">{title}</h3>
           {grant.amount && (
-            <Badge variant="success" className="shrink-0">
-              {grant.amount}
-            </Badge>
+            status === 'active' ? (
+              <Badge variant="success" className="shrink-0">{grant.amount}</Badge>
+            ) : (
+              <span className="text-sm font-medium text-gray-500 shrink-0">{grant.amount}</span>
+            )
           )}
         </div>
         <p className="text-sm text-gray-600 mb-3 line-clamp-2">{description}</p>
