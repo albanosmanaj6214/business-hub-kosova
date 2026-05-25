@@ -1,35 +1,53 @@
 import Anthropic from '@anthropic-ai/sdk'
 
-// Providers / titles known to run continuously (no deadline). Match is case-insensitive substring.
+// Truly perpetual programs (no specific deadline ever). Match by substring, case-insensitive.
+// Annual cycles do NOT belong here — they're 'has_deadline' year by year.
 const KNOWN_ONGOING_KEYWORDS = [
   'Fondi Kosovar për Garanci Kreditore',
   'FKGK',
 ]
 
+export type Audience = 'business' | 'civil_society' | 'mixed' | 'unknown'
+
 export interface ClassifyResult {
   source: 'heuristic' | 'ai' | 'fallback'
   deadline: Date | null
   isOngoing: boolean
+  audience: Audience
   confidence: 'high' | 'medium' | 'low'
   evidence: string
 }
 
 const client = new Anthropic()
 
-const SYSTEM_PROMPT = `You classify Kosovo government / EU funding announcements (in Albanian, English, or mixed).
+const SYSTEM_PROMPT = `You classify Kosovo grant / funding announcements (Albanian, English, or mixed).
 
-Given the title, provider, and page content, decide:
-1. Is there an explicit submission deadline mentioned? (a specific date in the future, or a phrase like "deri më DD.MM.YYYY", "deadline: ...", "afati: ...")
-2. Or is the program explicitly described as continuously open / always accepting? (phrases like "i vazhdueshëm", "thirrje e hapur", "rolling basis", "always open", "open call")
+Given a page, you must answer TWO independent questions:
 
-Respond with STRICT JSON only, no prose:
-{ "deadline": "YYYY-MM-DD" or null, "isOngoing": true or false, "confidence": "high" | "medium" | "low", "evidence": "<≤15 word quote or reason>" }
+(A) AUDIENCE — who is this call for?
+- "business": for SMEs, micro/small businesses, manufacturers, exporters, startups, entrepreneurs
+- "civil_society": for NGOs, OJF, OJQ, "organizata të shoqërisë civile", non-profit associations
+- "mixed": explicitly accepts both businesses AND NGOs
+- "unknown": page does not say clearly
+
+(B) DEADLINE / ONGOING — when does it close?
+- A specific submission deadline date → return as deadline "YYYY-MM-DD"
+- The program is TRULY PERPETUAL (always open, no annual cycle, no end date ever) → isOngoing=true. Examples: credit guarantee funds (FKGK), rolling-basis loan programs.
+- An annual or yearly recurring cycle is NOT ongoing — each year is a separate call. If you see "Thirrje 2024", "Thirrje 2025", "Thirrje 2026" listed, these are CYCLES, not ongoing. If the current year's deadline is shown, return it. Otherwise no_deadline.
+- If the page is archive/index/navigation only and the actual call is not visible → no_deadline, confidence "low"
+
+Respond STRICT JSON only:
+{ "audience": "business" | "civil_society" | "mixed" | "unknown",
+  "deadline": "YYYY-MM-DD" or null,
+  "isOngoing": true or false,
+  "confidence": "high" | "medium" | "low",
+  "evidence": "<≤20 word reason>" }
 
 Rules:
-- If a deadline date is clearly stated → return that date; isOngoing=false.
-- If the page clearly says it is ongoing/perpetual → deadline=null, isOngoing=true.
-- If the page is ambiguous or you cannot tell → deadline=null, isOngoing=false, confidence="low".
-- Never guess a deadline. Past dates (already expired) should be returned as deadline anyway if that's what the page says, with confidence="medium".`
+- Never guess a deadline; never set isOngoing for annual cycles.
+- Only set audience="civil_society" if the page explicitly addresses NGOs/OJF/OJQ as the primary or sole audience. When in doubt, use "unknown" or "mixed".
+- "Thirrje për organizatat e shoqërisë civile" → civil_society.
+- "Thirrje për biznese mikro/të vogla/të mesme" → business.`
 
 async function fetchAndClean(url: string): Promise<string> {
   const res = await fetch(url, {
@@ -53,8 +71,10 @@ export async function classifyGrantDeadline(grant: {
   titleSq?: string | null
   provider: string
   url: string | null
+  description?: string | null
+  descriptionSq?: string | null
 }): Promise<ClassifyResult> {
-  // 1) Heuristic: known-ongoing keywords
+  // 1) Heuristic for known truly-perpetual programs
   const haystack = `${grant.title} ${grant.titleSq ?? ''} ${grant.provider}`.toLowerCase()
   for (const kw of KNOWN_ONGOING_KEYWORDS) {
     if (haystack.includes(kw.toLowerCase())) {
@@ -62,42 +82,43 @@ export async function classifyGrantDeadline(grant: {
         source: 'heuristic',
         deadline: null,
         isOngoing: true,
+        audience: 'business',
         confidence: 'high',
         evidence: `Provider/title matches known ongoing program: ${kw}`,
       }
     }
   }
 
-  // 2) AI fallback — needs a URL
-  if (!grant.url) {
-    return { source: 'fallback', deadline: null, isOngoing: false, confidence: 'low', evidence: 'No source URL to verify.' }
+  // 2) AI classification — uses URL if available, else falls back to title/description text
+  let pageText = ''
+  if (grant.url) {
+    try {
+      pageText = await fetchAndClean(grant.url)
+    } catch (err) {
+      pageText = ''
+    }
   }
+  // Always include title + description as backup context
+  const context = `Title: ${grant.titleSq || grant.title}
+Provider: ${grant.provider}
+URL: ${grant.url ?? '(none)'}
+Description: ${grant.descriptionSq || grant.description || '(none)'}
 
-  let pageText: string
-  try {
-    pageText = await fetchAndClean(grant.url)
-    if (pageText.length < 200) throw new Error('page text too short')
-  } catch (err: any) {
-    return { source: 'fallback', deadline: null, isOngoing: false, confidence: 'low', evidence: `Fetch failed: ${err?.message ?? err}` }
-  }
+${pageText ? `Page content:\n${pageText}` : '(could not fetch page content)'}`
 
   try {
     const resp = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 350,
+      max_tokens: 400,
       system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-      messages: [
-        {
-          role: 'user',
-          content: `Title: ${grant.titleSq || grant.title}\nProvider: ${grant.provider}\nURL: ${grant.url}\n\nPage content:\n${pageText}`,
-        },
-      ],
+      messages: [{ role: 'user', content: context }],
     })
     const block = resp.content.find((b) => b.type === 'text')
     if (!block || block.type !== 'text') throw new Error('no text response')
     const m = block.text.match(/\{[\s\S]*\}/)
-    if (!m) throw new Error('no JSON in response')
+    if (!m) throw new Error('no JSON found')
     const parsed = JSON.parse(m[0]) as {
+      audience?: Audience
       deadline?: string | null
       isOngoing?: boolean
       confidence?: 'high' | 'medium' | 'low'
@@ -112,38 +133,47 @@ export async function classifyGrantDeadline(grant: {
       source: 'ai',
       deadline,
       isOngoing: !!parsed.isOngoing,
+      audience: parsed.audience ?? 'unknown',
       confidence: parsed.confidence ?? 'medium',
       evidence: parsed.evidence ?? '',
     }
   } catch (err: any) {
-    return { source: 'fallback', deadline: null, isOngoing: false, confidence: 'low', evidence: `AI failed: ${err?.message ?? err}` }
+    return {
+      source: 'fallback',
+      deadline: null,
+      isOngoing: false,
+      audience: 'unknown',
+      confidence: 'low',
+      evidence: `Classifier failed: ${err?.message ?? err}`,
+    }
   }
 }
 
 /**
- * Apply a ClassifyResult to a grant. Returns the field updates to persist.
- * - Confident classification → update fields, set classifiedAt.
- * - Low-confidence fallback → still mark classifiedAt so we don't retry forever,
- *   AND set isActive=false to keep it out of public view until admin reviews.
+ * Convert classification result into DB field updates.
+ *
+ * Conservative policy (per user preference):
+ *  - NEVER set isActive=false based on classifier alone — keep grants visible in archive.
+ *  - Audience determines public/hidden visibility.
+ *  - Bucketing (Aktive vs Të skaduara) is handled by the page based on deadline + isOngoing.
  */
 export function classifyResultToUpdate(result: ClassifyResult): Record<string, any> {
-  const base: Record<string, any> = {
+  const upd: Record<string, any> = {
     classifiedAt: new Date(),
     classificationSource: result.source,
+    audience: result.audience,
   }
   if (result.deadline) {
-    base.deadline = result.deadline
-    base.isOngoing = false
-    base.isActive = result.deadline.getTime() > Date.now()
-    return base
+    upd.deadline = result.deadline
+    upd.isOngoing = false
+    // Keep isActive based on whether deadline is still in future
+    upd.isActive = result.deadline.getTime() > Date.now()
+  } else if (result.isOngoing) {
+    upd.isOngoing = true
+    upd.isActive = true
+  } else {
+    // No deadline confirmed — leave isActive untouched; bucket UI shows it under "Të skaduara" with "Afati i paqartë"
+    upd.isOngoing = false
   }
-  if (result.isOngoing) {
-    base.isOngoing = true
-    base.isActive = true
-    return base
-  }
-  // fallback — neither deadline nor ongoing
-  base.isOngoing = false
-  base.isActive = false
-  return base
+  return upd
 }

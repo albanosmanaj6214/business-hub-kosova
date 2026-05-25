@@ -33,6 +33,8 @@ interface GrantRow {
   url: string | null
   tags: string[]
   isOngoing: boolean
+  isActive: boolean
+  audience: string | null
 }
 
 type GrantStatus = 'active' | 'expired' | 'no_deadline'
@@ -44,11 +46,12 @@ function extractYearFromTitle(title: string): number | null {
 }
 
 function classify(g: GrantRow, today: Date): GrantStatus {
-  if (g.isOngoing) return 'active'
-  if (g.deadline) return g.deadline >= today ? 'active' : 'expired'
+  if (g.isOngoing && g.isActive) return 'active'
+  if (g.deadline) return g.deadline >= today && g.isActive ? 'active' : 'expired'
 
   const titleYear = extractYearFromTitle(`${g.title} ${g.titleSq ?? ''}`)
   if (titleYear !== null && titleYear < today.getUTCFullYear()) return 'expired'
+  if (!g.isActive) return 'expired'
 
   return 'no_deadline'
 }
@@ -68,7 +71,7 @@ export default async function GrantsPage({
   const showExpired = searchParams?.show === 'expired'
 
   const grants = (await prisma.grant.findMany({
-    where: { isActive: true, deletedAt: null },
+    where: { deletedAt: null, NOT: { audience: 'civil_society' } },
     orderBy: [{ deadline: 'asc' }, { createdAt: 'desc' }],
   })) as GrantRow[]
 
@@ -115,7 +118,7 @@ export default async function GrantsPage({
                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
             }`}
           >
-            Vetëm aktive ({activeCount + noDeadlineCount})
+            Vetëm aktive ({activeCount})
           </Link>
           <Link
             href="/dashboard/grants?show=expired"
@@ -125,7 +128,7 @@ export default async function GrantsPage({
                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
             }`}
           >
-            Të skaduara ({expiredCount})
+            Arkivi ({expiredCount + noDeadlineCount})
           </Link>
           <Link
             href="/dashboard/grants?show=all"
@@ -142,7 +145,7 @@ export default async function GrantsPage({
 
       {!showAll && !showExpired && (
         <>
-          {activeCount === 0 && noDeadlineCount === 0 ? (
+          {activeCount === 0 ? (
             <Card>
               <CardContent className="py-16 text-center">
                 <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
@@ -150,66 +153,63 @@ export default async function GrantsPage({
                   Nuk ka grante aktive për momentin
                 </h3>
                 <p className="text-gray-500 max-w-md mx-auto">
-                  Të gjitha grantet e regjistruara kanë afate të skaduara. Scraper-i ynë
-                  kontrollon burimet zyrtare çdo natë — kontrollo prapë së shpejti, ose shih
-                  arkivin e thirrjeve të mbyllura.
+                  Të gjitha grantet e regjistruara kanë afate të skaduara ose janë në arkiv. Scraper-i ynë
+                  kontrollon burimet zyrtare çdo natë.
                 </p>
                 <Link
                   href="/dashboard/grants?show=expired"
                   className="inline-block mt-4 text-sm text-[#2E86C1] hover:underline"
                 >
-                  Shih arkivin ({expiredCount} thirrje të mbyllura) →
+                  Shih arkivin ({expiredCount + noDeadlineCount} thirrje) →
                 </Link>
               </CardContent>
             </Card>
           ) : (
-            <>
-              {activeCount > 0 && (
-                <Section
-                  title="Aktive — afati nuk ka kaluar"
-                  icon={<CheckCircle2 className="h-5 w-5 text-green-600" />}
-                  grants={buckets.active}
-                  today={today}
-                />
-              )}
-              {noDeadlineCount > 0 && (
-                <Section
-                  title="Pa afat të publikuar"
-                  icon={<Calendar className="h-5 w-5 text-gray-500" />}
-                  grants={buckets.no_deadline}
-                  today={today}
-                  note="Thirrje pa vit të specifikuar dhe pa afat të publikuar — kontrollo linkun origjinal për detaje."
-                />
-              )}
-            </>
+            <Section
+              title="Aktive — afati nuk ka kaluar"
+              icon={<CheckCircle2 className="h-5 w-5 text-green-600" />}
+              grants={buckets.active}
+              today={today}
+            />
           )}
         </>
       )}
 
       {showExpired && (
         <>
-          {expiredCount === 0 ? (
+          {(expiredCount + noDeadlineCount) === 0 ? (
             <Card>
               <CardContent className="py-16 text-center">
                 <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Nuk ka thirrje të mbyllura në arkiv
+                  Nuk ka thirrje në arkiv
                 </h3>
                 <p className="text-gray-500 text-sm">
-                  Asnjë grant nuk ka afat të skaduar ose vit të mëparshëm në titull.
+                  Asnjë grant me afat të skaduar ose pa konfirmim.
                 </p>
               </CardContent>
             </Card>
           ) : (
-            expiredYearsDesc.map((y) => (
-              <Section
-                key={y}
-                title={y > 0 ? `Viti ${y}` : 'Vit i pacaktuar'}
-                icon={<Clock className="h-5 w-5 text-gray-500" />}
-                grants={expiredByYear.get(y)!}
-                today={today}
-              />
-            ))
+            <>
+              {noDeadlineCount > 0 && (
+                <Section
+                  title="Afati i paqartë"
+                  icon={<AlertTriangle className="h-5 w-5 text-gray-400" />}
+                  grants={buckets.no_deadline}
+                  today={today}
+                  note="Thirrje që janë në burimet zyrtare por për të cilat nuk kemi konfirmuar një afat të publikuar. Kontrollo linkun origjinal për detaje."
+                />
+              )}
+              {expiredYearsDesc.map((y) => (
+                <Section
+                  key={y}
+                  title={y > 0 ? `Viti ${y}` : 'Vit i pacaktuar'}
+                  icon={<Clock className="h-5 w-5 text-gray-500" />}
+                  grants={expiredByYear.get(y)!}
+                  today={today}
+                />
+              ))}
+            </>
           )}
         </>
       )}
@@ -226,7 +226,7 @@ export default async function GrantsPage({
           )}
           {noDeadlineCount > 0 && (
             <Section
-              title={`Pa afat (${noDeadlineCount})`}
+              title={`Afati i paqartë (${noDeadlineCount})`}
               icon={<Calendar className="h-5 w-5 text-gray-500" />}
               grants={buckets.no_deadline}
               today={today}
@@ -362,9 +362,10 @@ function DeadlineRow({
   }
   if (status === 'no_deadline') {
     return (
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex items-center gap-2 text-sm flex-wrap">
         <Calendar className="h-4 w-4 text-gray-400" />
-        <span className="text-gray-500">Afati: nuk është publikuar</span>
+        <span className="text-gray-500">Afati i paqartë</span>
+        <Badge variant="secondary">arkiv</Badge>
       </div>
     )
   }

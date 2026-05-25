@@ -75,10 +75,9 @@ async function persistOpportunity(
       country: legacy.country ?? existing?.country ?? 'Kosovo',
       sectors: (legacy.sectors && legacy.sectors.length) ? legacy.sectors : (existing?.sectors ?? []),
       tags: (legacy.tags && legacy.tags.length) ? legacy.tags : (existing?.tags ?? []),
-      // Auto-deactivate when the deadline has passed; keep existing flag when no deadline known.
-      isActive: (item.deadline ?? existing?.deadline)
-        ? new Date((item.deadline ?? existing?.deadline)!).getTime() > Date.now()
-        : (existing?.isActive ?? true),
+      // Keep isActive=true by default. Bucketing in the public UI (Aktive vs Arkivi) handles
+      // visibility based on deadline + isOngoing. Admins can manually set isActive=false to hide.
+      isActive: existing?.isActive ?? true,
     }
     if (existing) {
       await prisma.grant.update({ where: { id: existing.id }, data })

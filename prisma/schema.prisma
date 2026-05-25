@@ -138,6 +138,7 @@ model Grant {
   isOngoing            Boolean   @default(false)
   classifiedAt         DateTime?
   classificationSource String?
+  audience             String?  // 'business' | 'civil_society' | 'mixed' | 'unknown'
 
   @@index([deadline])
   @@index([isActive])

@@ -5,7 +5,7 @@ const prisma = new PrismaClient()
 
 async function main() {
   const candidates = await prisma.grant.findMany({
-    where: { deadline: null, deletedAt: null, classifiedAt: null },
+    where: { deletedAt: null, classifiedAt: null },
     select: { id: true, title: true, titleSq: true, provider: true, url: true },
   })
 

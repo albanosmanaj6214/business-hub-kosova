@@ -44,15 +44,19 @@ export default async function AdminGrantsPage() {
                     <td className="p-4 text-gray-600">{g.amount || '-'}</td>
                     <td className="p-4 text-gray-500">{g.deadline ? new Date(g.deadline).toLocaleDateString('sq-AL') : '-'}</td>
                     <td className="p-4">
-                      {g.isOngoing ? (
-                        <Badge variant="success">E vazhdueshme</Badge>
-                      ) : g.isActive ? (
-                        <Badge variant="success">Aktive</Badge>
-                      ) : g.classifiedAt && !g.deadline ? (
-                        <Badge variant="warning">Pa konfirmim</Badge>
-                      ) : (
-                        <Badge variant="danger">Joaktiv</Badge>
-                      )}
+                      <div className="flex flex-col gap-1 items-start">
+                        {g.isOngoing ? (
+                          <Badge variant="success">E vazhdueshme</Badge>
+                        ) : g.isActive ? (
+                          <Badge variant="success">Aktive</Badge>
+                        ) : (
+                          <Badge variant="danger">Joaktiv</Badge>
+                        )}
+                        {g.audience === 'civil_society' && <Badge variant="warning">OJF (fshehur)</Badge>}
+                        {g.audience === 'mixed' && <Badge variant="secondary">Mikse</Badge>}
+                        {g.audience === 'unknown' && <Badge variant="secondary">Audienca: ?</Badge>}
+                        {!g.classifiedAt && <Badge variant="secondary">pa klasifikuar</Badge>}
+                      </div>
                     </td>
                     <td className="p-4 text-right"><DeleteButton entityPath="grants" id={g.id} label={g.title} /></td>
                   </tr>

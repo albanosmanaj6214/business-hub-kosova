@@ -27,7 +27,7 @@ export async function POST() {
 
   // Find candidates: no deadline, not soft-deleted, never classified before
   const candidates = await prisma.grant.findMany({
-    where: { deadline: null, deletedAt: null, classifiedAt: null },
+    where: { deletedAt: null, classifiedAt: null },
     select: { id: true, title: true, titleSq: true, provider: true, url: true },
   })
 
