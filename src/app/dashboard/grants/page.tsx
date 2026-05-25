@@ -45,6 +45,44 @@ function extractYearFromTitle(title: string): number | null {
   return Math.max(...matches.map((m) => parseInt(m, 10)))
 }
 
+
+// Local Kosovo institutions take priority in display order over international ones.
+// Match by substring/word-boundary in provider name (case-insensitive).
+const LOCAL_PROVIDER_PATTERNS = [
+  /ministri/i,         // Ministria e ...
+  /\bKIESA\b/i,
+  /\bMZHR\b/i,
+  /\bMINT\b/i,
+  /\bKOSME\b/i,
+  /\bMIET\b/i,
+  /\bATK\b/i,
+  /\bARBK\b/i,
+  /\bFKGK\b/i,
+  /\bBQK\b/i,
+  /komuna/i,
+  /qeveria/i,
+  /kuvendi/i,
+  /agjencia kosovare/i,
+  /odat? ekonomik/i,   // Oda Ekonomike e Kosovës
+  /\bGIZ\b/i,         // GIZ — zyrë Kosovë
+  /\bLuxDev\b/i,      // LuxDev — zyrë Kosovë
+  /EU4\s*Business/i,  // EU4Business / EU4Businesses
+  /\bAZHB\b/i,        // Agjencia për Zhvillimin Bujqësor
+]
+
+function isLocalProvider(provider: string): boolean {
+  return LOCAL_PROVIDER_PATTERNS.some((re) => re.test(provider))
+}
+
+// Sort: local Kosovo institutions first, then keep the existing order (deadline asc / etc.)
+function sortLocalFirst<T extends { provider: string }>(arr: T[]): T[] {
+  return [...arr].sort((a, b) => {
+    const al = isLocalProvider(a.provider) ? 0 : 1
+    const bl = isLocalProvider(b.provider) ? 0 : 1
+    return al - bl
+  })
+}
+
 function classify(g: GrantRow, today: Date): GrantStatus {
   if (g.isOngoing && g.isActive) return 'active'
   if (g.deadline) return g.deadline >= today && g.isActive ? 'active' : 'expired'
@@ -85,6 +123,8 @@ export default async function GrantsPage({
   }
   for (const g of grants) buckets[classify(g, today)].push(g)
 
+  buckets.active = sortLocalFirst(buckets.active)
+  buckets.no_deadline = sortLocalFirst(buckets.no_deadline)
   buckets.expired.sort((a, b) => expiredYear(b) - expiredYear(a))
 
   const expiredByYear = new Map<number, GrantRow[]>()
@@ -94,6 +134,7 @@ export default async function GrantsPage({
     arr.push(g)
     expiredByYear.set(y, arr)
   }
+  for (const y of Array.from(expiredByYear.keys())) expiredByYear.set(y, sortLocalFirst(expiredByYear.get(y)!))
   const expiredYearsDesc = Array.from(expiredByYear.keys()).sort((a, b) => b - a)
 
   const activeCount = buckets.active.length
