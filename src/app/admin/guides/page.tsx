@@ -21,20 +21,84 @@ interface AdminGuide {
   updatedAt: string
 }
 
-const PRESETS = [
-  { code: 'DE', sq: 'Gjermani', en: 'Germany', flag: '🇩🇪' },
-  { code: 'CH', sq: 'Zvicra', en: 'Switzerland', flag: '🇨🇭' },
-  { code: 'US', sq: 'Shtetet e Bashkuara të Amerikës', en: 'United States of America', flag: '🇺🇸' },
-  { code: 'GB', sq: 'Mbretëria e Bashkuar', en: 'United Kingdom', flag: '🇬🇧' },
-  { code: 'IT', sq: 'Itali', en: 'Italy', flag: '🇮🇹' },
-  { code: 'AT', sq: 'Austri', en: 'Austria', flag: '🇦🇹' },
-  { code: 'FR', sq: 'Francë', en: 'France', flag: '🇫🇷' },
-  { code: 'NL', sq: 'Holandë', en: 'Netherlands', flag: '🇳🇱' },
-  { code: 'TR', sq: 'Turqi', en: 'Turkey', flag: '🇹🇷' },
-  { code: 'AL', sq: 'Shqipëri', en: 'Albania', flag: '🇦🇱' },
-  { code: 'AE', sq: 'Emiratet e Bashkuara Arabe', en: 'United Arab Emirates', flag: '🇦🇪' },
-  { code: 'SA', sq: 'Arabia Saudite', en: 'Saudi Arabia', flag: '🇸🇦' },
+interface Preset {
+  code: string
+  sq: string
+  en: string
+  flag: string
+  region: 'cefta' | 'eu' | 'eea_diaspora' | 'mena' | 'asia'
+}
+
+const PRESETS: Preset[] = [
+  // CEFTA — fqinjët me marrëveshje tregtie të lirë (prioritet i lartë për eksport kosovar)
+  { code: 'AL', sq: 'Shqipëri', en: 'Albania', flag: '🇦🇱', region: 'cefta' },
+  { code: 'MK', sq: 'Maqedonia e Veriut', en: 'North Macedonia', flag: '🇲🇰', region: 'cefta' },
+  { code: 'ME', sq: 'Mali i Zi', en: 'Montenegro', flag: '🇲🇪', region: 'cefta' },
+  { code: 'BA', sq: 'Bosnja dhe Hercegovina', en: 'Bosnia and Herzegovina', flag: '🇧🇦', region: 'cefta' },
+  { code: 'RS', sq: 'Serbi', en: 'Serbia', flag: '🇷🇸', region: 'cefta' },
+  { code: 'MD', sq: 'Moldavi', en: 'Moldova', flag: '🇲🇩', region: 'cefta' },
+
+  // BE 27 — tregje me MSA (Marrëveshja e Stabilizim-Asociimit)
+  { code: 'DE', sq: 'Gjermani', en: 'Germany', flag: '🇩🇪', region: 'eu' },
+  { code: 'AT', sq: 'Austri', en: 'Austria', flag: '🇦🇹', region: 'eu' },
+  { code: 'IT', sq: 'Itali', en: 'Italy', flag: '🇮🇹', region: 'eu' },
+  { code: 'FR', sq: 'Francë', en: 'France', flag: '🇫🇷', region: 'eu' },
+  { code: 'NL', sq: 'Holandë', en: 'Netherlands', flag: '🇳🇱', region: 'eu' },
+  { code: 'BE', sq: 'Belgjikë', en: 'Belgium', flag: '🇧🇪', region: 'eu' },
+  { code: 'LU', sq: 'Luksemburg', en: 'Luxembourg', flag: '🇱🇺', region: 'eu' },
+  { code: 'ES', sq: 'Spanjë', en: 'Spain', flag: '🇪🇸', region: 'eu' },
+  { code: 'PT', sq: 'Portugali', en: 'Portugal', flag: '🇵🇹', region: 'eu' },
+  { code: 'IE', sq: 'Irlandë', en: 'Ireland', flag: '🇮🇪', region: 'eu' },
+  { code: 'GR', sq: 'Greqi', en: 'Greece', flag: '🇬🇷', region: 'eu' },
+  { code: 'HR', sq: 'Kroaci', en: 'Croatia', flag: '🇭🇷', region: 'eu' },
+  { code: 'SI', sq: 'Slloveni', en: 'Slovenia', flag: '🇸🇮', region: 'eu' },
+  { code: 'PL', sq: 'Poloni', en: 'Poland', flag: '🇵🇱', region: 'eu' },
+  { code: 'CZ', sq: 'Çeki', en: 'Czechia', flag: '🇨🇿', region: 'eu' },
+  { code: 'SK', sq: 'Sllovaki', en: 'Slovakia', flag: '🇸🇰', region: 'eu' },
+  { code: 'HU', sq: 'Hungari', en: 'Hungary', flag: '🇭🇺', region: 'eu' },
+  { code: 'RO', sq: 'Rumani', en: 'Romania', flag: '🇷🇴', region: 'eu' },
+  { code: 'BG', sq: 'Bullgari', en: 'Bulgaria', flag: '🇧🇬', region: 'eu' },
+  { code: 'DK', sq: 'Danimarkë', en: 'Denmark', flag: '🇩🇰', region: 'eu' },
+  { code: 'SE', sq: 'Suedi', en: 'Sweden', flag: '🇸🇪', region: 'eu' },
+  { code: 'FI', sq: 'Finlandë', en: 'Finland', flag: '🇫🇮', region: 'eu' },
+  { code: 'EE', sq: 'Estoni', en: 'Estonia', flag: '🇪🇪', region: 'eu' },
+  { code: 'LV', sq: 'Letoni', en: 'Latvia', flag: '🇱🇻', region: 'eu' },
+  { code: 'LT', sq: 'Lituani', en: 'Lithuania', flag: '🇱🇹', region: 'eu' },
+  { code: 'MT', sq: 'Maltë', en: 'Malta', flag: '🇲🇹', region: 'eu' },
+  { code: 'CY', sq: 'Qipro', en: 'Cyprus', flag: '🇨🇾', region: 'eu' },
+
+  // EEA / diasporë / partnerë të mëdhenj
+  { code: 'CH', sq: 'Zvicra', en: 'Switzerland', flag: '🇨🇭', region: 'eea_diaspora' },
+  { code: 'NO', sq: 'Norvegji', en: 'Norway', flag: '🇳🇴', region: 'eea_diaspora' },
+  { code: 'IS', sq: 'Islandë', en: 'Iceland', flag: '🇮🇸', region: 'eea_diaspora' },
+  { code: 'GB', sq: 'Mbretëria e Bashkuar', en: 'United Kingdom', flag: '🇬🇧', region: 'eea_diaspora' },
+  { code: 'US', sq: 'Shtetet e Bashkuara të Amerikës', en: 'United States of America', flag: '🇺🇸', region: 'eea_diaspora' },
+  { code: 'CA', sq: 'Kanada', en: 'Canada', flag: '🇨🇦', region: 'eea_diaspora' },
+  { code: 'AU', sq: 'Australi', en: 'Australia', flag: '🇦🇺', region: 'eea_diaspora' },
+
+  // Lindja e Mesme & Afrika e Veriut (Halal, ndërtim, mish)
+  { code: 'TR', sq: 'Turqi', en: 'Turkey', flag: '🇹🇷', region: 'mena' },
+  { code: 'AE', sq: 'Emiratet e Bashkuara Arabe', en: 'United Arab Emirates', flag: '🇦🇪', region: 'mena' },
+  { code: 'SA', sq: 'Arabia Saudite', en: 'Saudi Arabia', flag: '🇸🇦', region: 'mena' },
+  { code: 'QA', sq: 'Katar', en: 'Qatar', flag: '🇶🇦', region: 'mena' },
+  { code: 'KW', sq: 'Kuvajt', en: 'Kuwait', flag: '🇰🇼', region: 'mena' },
+  { code: 'EG', sq: 'Egjipt', en: 'Egypt', flag: '🇪🇬', region: 'mena' },
+  { code: 'IL', sq: 'Izrael', en: 'Israel', flag: '🇮🇱', region: 'mena' },
+
+  // Azi (tregje të mëdha)
+  { code: 'CN', sq: 'Kinë', en: 'China', flag: '🇨🇳', region: 'asia' },
+  { code: 'IN', sq: 'Indi', en: 'India', flag: '🇮🇳', region: 'asia' },
+  { code: 'JP', sq: 'Japoni', en: 'Japan', flag: '🇯🇵', region: 'asia' },
+  { code: 'KR', sq: 'Korea e Jugut', en: 'South Korea', flag: '🇰🇷', region: 'asia' },
 ]
+
+const REGION_LABELS: Record<Preset['region'], { sq: string; en: string }> = {
+  cefta:         { sq: 'CEFTA — fqinjët', en: 'CEFTA neighbours' },
+  eu:            { sq: 'BE 27', en: 'EU 27' },
+  eea_diaspora:  { sq: 'EEA & diasporë', en: 'EEA & diaspora' },
+  mena:          { sq: 'Lindja e Mesme', en: 'Middle East & N.Africa' },
+  asia:          { sq: 'Azi', en: 'Asia' },
+}
 
 export default function AdminGuidesPage() {
   const [guides, setGuides] = useState<AdminGuide[]>([])
@@ -106,26 +170,38 @@ export default function AdminGuidesPage() {
           <p className="text-sm text-gray-500 mb-4">
             Klikon në një vend dhe Claude bën kërkim në burime zyrtare (ec.europa.eu, autoritetet doganore, etj.) për 5-10 min. Gjeneron një draft që duhet rishikuar para publikimit.
           </p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-            {PRESETS.map((p) => {
-              const has = existing.has(p.code)
-              return (
-                <Button
-                  key={p.code}
-                  variant={has ? 'secondary' : 'default'}
-                  className="justify-start h-auto py-2"
-                  disabled={!!busy}
-                  onClick={() => generate(p)}
-                >
-                  <span className="text-xl mr-2">{p.flag}</span>
-                  <span className="flex-1 text-left">
-                    <span className="block font-medium">{p.sq}</span>
-                    <span className="block text-xs opacity-60">{p.code} {has ? '· ekziston' : ''}</span>
-                  </span>
-                </Button>
-              )
-            })}
-          </div>
+          {(['cefta','eu','eea_diaspora','mena','asia'] as const).map((region) => {
+            const list = PRESETS.filter((p) => p.region === region)
+            const have = list.filter((p) => existing.has(p.code)).length
+            return (
+              <div key={region} className="mb-5 last:mb-0">
+                <div className="flex items-baseline gap-2 mb-2 pb-1 border-b border-gray-100">
+                  <h4 className="text-sm font-semibold text-gray-700">{REGION_LABELS[region].sq}</h4>
+                  <span className="text-xs text-gray-400">{have}/{list.length} të gjeneruara</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                  {list.map((p) => {
+                    const has = existing.has(p.code)
+                    return (
+                      <Button
+                        key={p.code}
+                        variant={has ? 'secondary' : 'default'}
+                        className="justify-start h-auto py-2"
+                        disabled={!!busy}
+                        onClick={() => generate(p)}
+                      >
+                        <span className="text-xl mr-2">{p.flag}</span>
+                        <span className="flex-1 text-left">
+                          <span className="block font-medium">{p.sq}</span>
+                          <span className="block text-xs opacity-60">{p.code} {has ? '· ekziston' : ''}</span>
+                        </span>
+                      </Button>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
           {msg && (
             <div className="mt-4 p-3 rounded bg-blue-50 border border-blue-200 text-sm text-blue-900">{msg}</div>
           )}
