@@ -99,7 +99,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main content */}
       <div className="lg:pl-64">
-        <header className="bg-white border-b border-gray-200 h-16 flex items-center px-4 lg:px-8">
+        <header className="sticky top-0 z-20 bg-white border-b border-gray-200 h-16 flex items-center px-4 lg:px-8">
           <button className="lg:hidden mr-4" onClick={() => setSidebarOpen(true)}>
             <Menu className="h-6 w-6 text-gray-600" />
           </button>
