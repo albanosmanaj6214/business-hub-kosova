@@ -48,6 +48,16 @@ function extractYearFromTitle(title: string): number | null {
 
 // Local Kosovo institutions take priority in display order over international ones.
 // Match by substring/word-boundary in provider name (case-insensitive).
+
+// Calls about applying to a state booth at a trade fair (KIESA "Stenda Shtetërore")
+// or co-financing for fair participation. These conceptually belong with /dashboard/fairs,
+// not with general grants. Filtered out of the grants page only — they still exist in admin.
+const FAIR_STAND_CALL_PATTERN = /STEND[ËÊE]N|bashk[ëe]financim.{0,40}panair/i
+
+function isFairStandCall(g: { title: string; titleSq?: string | null }): boolean {
+  return FAIR_STAND_CALL_PATTERN.test(g.titleSq ?? g.title) || FAIR_STAND_CALL_PATTERN.test(g.title)
+}
+
 const LOCAL_PROVIDER_PATTERNS = [
   /ministri/i,         // Ministria e ...
   /\bKIESA\b/i,
@@ -64,7 +74,7 @@ const LOCAL_PROVIDER_PATTERNS = [
   /kuvendi/i,
   /agjencia kosovare/i,
   /odat? ekonomik/i,   // Oda Ekonomike e Kosovës
-  /\bGIZ\b/i,         // GIZ — zyrë Kosovë
+  /GIZ\s+Kosov/i,     // GIZ vetëm zyra Kosovë (jo GIZ Niger, Georgia, etj.)
   /\bLuxDev\b/i,      // LuxDev — zyrë Kosovë
   /EU4\s*Business/i,  // EU4Business / EU4Businesses
   /\bAZHB\b/i,        // Agjencia për Zhvillimin Bujqësor
@@ -108,10 +118,12 @@ export default async function GrantsPage({
   const showAll = searchParams?.show === 'all'
   const showExpired = searchParams?.show === 'expired'
 
-  const grants = (await prisma.grant.findMany({
+  const grantsRaw = (await prisma.grant.findMany({
     where: { deletedAt: null, NOT: { audience: 'civil_society' } },
     orderBy: [{ deadline: 'asc' }, { createdAt: 'desc' }],
   })) as GrantRow[]
+  // Fair-participation calls belong to /dashboard/fairs, not here.
+  const grants = grantsRaw.filter((g) => !isFairStandCall(g))
 
   const today = new Date()
   today.setUTCHours(0, 0, 0, 0)
