@@ -119,7 +119,7 @@ export default async function GrantsPage({
   const showExpired = searchParams?.show === 'expired'
 
   const grantsRaw = (await prisma.grant.findMany({
-    where: { deletedAt: null, NOT: { audience: 'civil_society' } },
+    where: { deletedAt: null, NOT: [{ audience: 'civil_society' }, { tags: { has: 'legacy_synthetic' } }] },
     orderBy: [{ deadline: 'asc' }, { createdAt: 'desc' }],
   })) as GrantRow[]
   // Fair-participation calls belong to /dashboard/fairs, not here.

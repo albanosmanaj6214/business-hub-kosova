@@ -52,6 +52,7 @@ export default async function AdminGrantsPage() {
                         ) : (
                           <Badge variant="danger">Joaktiv</Badge>
                         )}
+                        {g.tags?.includes('legacy_synthetic') && <Badge variant="danger">synthetic (fshehur)</Badge>}
                         {g.audience === 'civil_society' && <Badge variant="warning">OJF (fshehur)</Badge>}
                         {g.audience === 'mixed' && <Badge variant="secondary">Mikse</Badge>}
                         {g.audience === 'unknown' && <Badge variant="secondary">Audienca: ?</Badge>}
