@@ -12,6 +12,28 @@ const SQ_MONTHS = [
   'Korrik', 'Gusht', 'Shtator', 'Tetor', 'Nëntor', 'Dhjetor',
 ]
 
+type EventType = 'FAIR' | 'TRAINING' | 'WEBINAR' | 'MATCHMAKING' | 'WORKSHOP' | 'CONFERENCE'
+
+const EVENT_TYPE_ORDER: EventType[] = ['FAIR', 'TRAINING', 'WEBINAR', 'MATCHMAKING', 'WORKSHOP', 'CONFERENCE']
+
+const EVENT_TYPE_LABEL_SQ: Record<EventType, string> = {
+  FAIR: 'Panair',
+  TRAINING: 'Trajnim',
+  WEBINAR: 'Webinar',
+  MATCHMAKING: 'Matchmaking',
+  WORKSHOP: 'Workshop',
+  CONFERENCE: 'Konferencë',
+}
+
+const EVENT_TYPE_PLURAL_SQ: Record<EventType, string> = {
+  FAIR: 'Të gjitha panairet',
+  TRAINING: 'Trajnimet',
+  WEBINAR: 'Webinaret',
+  MATCHMAKING: 'Matchmaking',
+  WORKSHOP: 'Workshop-et',
+  CONFERENCE: 'Konferencat',
+}
+
 function formatSqDate(d: Date): string {
   return `${d.getUTCDate()} ${SQ_MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`
 }
@@ -43,12 +65,15 @@ interface FairRow {
   website: string | null
   sectors: string[]
   tags: string[]
+  eventType: EventType
+  organizer: string | null
+  registrationUrl: string | null
 }
 
 export default async function FairsPage({
   searchParams,
 }: {
-  searchParams?: { sector?: string; country?: string; show?: string }
+  searchParams?: { sector?: string; country?: string; show?: string; type?: string }
 }) {
   const showPast = searchParams?.show === 'past'
 
@@ -66,34 +91,40 @@ export default async function FairsPage({
 
   const allSectors = Array.from(new Set(fairs.flatMap((f) => f.sectors))).sort()
   const allCountries = Array.from(new Set(fairs.map((f) => f.country))).sort()
+  const presentTypes = EVENT_TYPE_ORDER.filter((t) => fairs.some((f) => f.eventType === t))
 
   const sectorFilter = searchParams?.sector || ''
   const countryFilter = searchParams?.country || ''
+  const rawType = (searchParams?.type || '').toUpperCase() as EventType
+  const typeFilter: EventType | '' = EVENT_TYPE_ORDER.includes(rawType) ? rawType : ''
 
   const matchesFilters = (f: FairRow) =>
     (!sectorFilter || f.sectors.includes(sectorFilter)) &&
-    (!countryFilter || f.country === countryFilter)
+    (!countryFilter || f.country === countryFilter) &&
+    (!typeFilter || f.eventType === typeFilter)
 
   const list = (showPast ? past : upcoming).filter(matchesFilters)
+
+  const baseFilters = { sector: sectorFilter, country: countryFilter, type: typeFilter || '' }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Panairet Tregtare</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Panaire dhe Evente</h1>
           <p className="text-gray-500 mt-1">
-            Panaire ndërkombëtare të verifikuara, relevante për eksportuesit kosovarë.
+            Panaire ndërkombëtare, trajnime, webinare dhe takime matchmaking, të verifikuara dhe relevante për eksportuesit kosovarë.
           </p>
         </div>
         <div className="flex gap-2 text-sm">
           <Link
-            href={`/dashboard/fairs${buildQuery({ sector: sectorFilter, country: countryFilter })}`}
+            href={`/dashboard/fairs${buildQuery(baseFilters)}`}
             className={tabClass(!showPast)}
           >
             Të ardhshme ({upcoming.length})
           </Link>
           <Link
-            href={`/dashboard/fairs${buildQuery({ sector: sectorFilter, country: countryFilter, show: 'past' })}`}
+            href={`/dashboard/fairs${buildQuery({ ...baseFilters, show: 'past' })}`}
             className={tabClass(showPast)}
           >
             Të kaluara ({past.length})
@@ -101,13 +132,37 @@ export default async function FairsPage({
         </div>
       </div>
 
+      {presentTypes.length > 1 && (
+        <div className="flex flex-wrap gap-2 items-center bg-gray-50 rounded-lg p-3 border border-gray-200">
+          <span className="text-xs font-medium text-gray-600 mr-1">Lloji:</span>
+          <FilterPill
+            label="Të gjitha"
+            href={`/dashboard/fairs${buildQuery({ sector: sectorFilter, country: countryFilter, show: showPast ? 'past' : '' })}`}
+            active={!typeFilter}
+          />
+          {presentTypes.map((t) => (
+            <FilterPill
+              key={t}
+              label={EVENT_TYPE_PLURAL_SQ[t]}
+              href={`/dashboard/fairs${buildQuery({
+                sector: sectorFilter,
+                country: countryFilter,
+                type: t,
+                show: showPast ? 'past' : '',
+              })}`}
+              active={typeFilter === t}
+            />
+          ))}
+        </div>
+      )}
+
       {(allSectors.length > 0 || allCountries.length > 1) && (
         <div className="flex flex-wrap gap-2 items-center bg-gray-50 rounded-lg p-3 border border-gray-200">
           <span className="text-xs font-medium text-gray-600 mr-1">Filtro:</span>
 
           <FilterPill
             label="Të gjithë sektorët"
-            href={`/dashboard/fairs${buildQuery({ country: countryFilter, show: showPast ? 'past' : '' })}`}
+            href={`/dashboard/fairs${buildQuery({ country: countryFilter, type: typeFilter || '', show: showPast ? 'past' : '' })}`}
             active={!sectorFilter}
           />
           {allSectors.map((s) => (
@@ -117,6 +172,7 @@ export default async function FairsPage({
               href={`/dashboard/fairs${buildQuery({
                 sector: s,
                 country: countryFilter,
+                type: typeFilter || '',
                 show: showPast ? 'past' : '',
               })}`}
               active={sectorFilter === s}
@@ -130,6 +186,7 @@ export default async function FairsPage({
                 label="Të gjitha vendet"
                 href={`/dashboard/fairs${buildQuery({
                   sector: sectorFilter,
+                  type: typeFilter || '',
                   show: showPast ? 'past' : '',
                 })}`}
                 active={!countryFilter}
@@ -141,6 +198,7 @@ export default async function FairsPage({
                   href={`/dashboard/fairs${buildQuery({
                     sector: sectorFilter,
                     country: c,
+                    type: typeFilter || '',
                     show: showPast ? 'past' : '',
                   })}`}
                   active={countryFilter === c}
@@ -156,7 +214,7 @@ export default async function FairsPage({
           <CardContent className="py-16 text-center">
             <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Asnjë panair {showPast ? 'i kaluar' : 'i ardhshëm'} nuk përputhet me filtrat
+              Asnjë event {showPast ? 'i kaluar' : 'i ardhshëm'} nuk përputhet me filtrat
             </h3>
             <p className="text-gray-500 text-sm">Hiq filtrat ose provo një kombinim tjetër.</p>
           </CardContent>
@@ -176,6 +234,15 @@ export default async function FairsPage({
   )
 }
 
+const TYPE_BADGE_STYLE: Record<EventType, string> = {
+  FAIR:        'bg-[#1B4F72]/10 text-[#1B4F72] border-[#1B4F72]/20',
+  TRAINING:    'bg-emerald-50 text-emerald-700 border-emerald-200',
+  WEBINAR:     'bg-violet-50 text-violet-700 border-violet-200',
+  MATCHMAKING: 'bg-amber-50 text-amber-700 border-amber-200',
+  WORKSHOP:    'bg-rose-50 text-rose-700 border-rose-200',
+  CONFERENCE:  'bg-sky-50 text-sky-700 border-sky-200',
+}
+
 function FairCard({
   fair,
   today,
@@ -188,12 +255,23 @@ function FairCard({
   const days = daysUntil(fair.startDate, today)
   const name = fair.nameSq || fair.name
   const description = fair.descriptionSq || fair.description
+  const isOnlineType = fair.eventType === 'WEBINAR' || fair.eventType === 'MATCHMAKING'
 
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-3 mb-2">
-          <h3 className="font-semibold text-gray-900 leading-snug">{name}</h3>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded border ${TYPE_BADGE_STYLE[fair.eventType]}`}>
+                {EVENT_TYPE_LABEL_SQ[fair.eventType]}
+              </span>
+              {fair.organizer && (
+                <span className="text-xs text-gray-500 truncate">{fair.organizer}</span>
+              )}
+            </div>
+            <h3 className="font-semibold text-gray-900 leading-snug">{name}</h3>
+          </div>
           {!past && days <= 60 && days >= 0 && (
             <Badge variant={days <= 14 ? 'warning' : 'success'} className="flex-shrink-0">
               {days === 0 ? 'sot' : `${days} ditë`}
@@ -212,7 +290,9 @@ function FairCard({
           </div>
           <div className="flex items-center">
             <MapPin className="h-4 w-4 mr-2 text-gray-400" />
-            {fair.location}, {fair.country}
+            {isOnlineType && fair.location.toLowerCase().includes('online')
+              ? 'Online'
+              : `${fair.location}, ${fair.country}`}
           </div>
           {past && (
             <div className="flex items-center text-gray-400">
@@ -232,15 +312,15 @@ function FairCard({
           </div>
         )}
 
-        {fair.website && (
+        {(fair.registrationUrl || fair.website) && (
           <a
-            href={fair.website}
+            href={fair.registrationUrl || fair.website || '#'}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center text-sm text-[#2E86C1] hover:underline mt-3"
           >
             <Globe className="h-3.5 w-3.5 mr-1.5" />
-            {past ? 'Faqja e organizatorit' : 'Detaje & regjistrim'}
+            {past ? 'Faqja e organizatorit' : (fair.registrationUrl ? 'Regjistrohu' : 'Detaje & regjistrim')}
             <ExternalLink className="h-3 w-3 ml-1" />
           </a>
         )}

@@ -41,6 +41,15 @@ enum BookingStatus {
   COMPLETED
 }
 
+enum EventType {
+  FAIR
+  TRAINING
+  WEBINAR
+  MATCHMAKING
+  WORKSHOP
+  CONFERENCE
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -157,6 +166,9 @@ model TradeFair {
   website       String?
   sectors       String[] @default([])
   tags          String[] @default([])
+  eventType     EventType @default(FAIR)
+  organizer     String?
+  registrationUrl String?
   isActive      Boolean  @default(true)
   scrapedAt     DateTime @default(now())
   createdAt     DateTime @default(now())

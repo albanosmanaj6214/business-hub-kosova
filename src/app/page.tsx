@@ -4,6 +4,7 @@ import { Footer } from '@/components/layout/footer'
 import { TradePulse } from '@/components/marketing/TradePulse'
 import { Button } from '@/components/ui/button'
 import { getServerT } from '@/lib/i18n-server'
+import { prisma } from '@/lib/prisma'
 import {
   Search,
   Calendar,
@@ -14,8 +15,20 @@ import {
   ArrowRight,
 } from 'lucide-react'
 
-export default function HomePage() {
+export const revalidate = 600
+
+async function getStats() {
+  const [grants, fairs, guides] = await Promise.all([
+    prisma.grant.count({ where: { isActive: true, deletedAt: null } }),
+    prisma.tradeFair.count({ where: { isActive: true, deletedAt: null, startDate: { gte: new Date() } } }),
+    prisma.exportGuide.count({ where: { isPublished: true, deletedAt: null } }),
+  ])
+  return { grants, fairs, guides }
+}
+
+export default async function HomePage() {
   const t = getServerT()
+  const counts = await getStats()
 
   const features = [
     { icon: Search, title: t('feat.grants.t'), description: t('feat.grants.d') },
@@ -26,9 +39,9 @@ export default function HomePage() {
   ]
 
   const stats = [
-    { value: '30+', label: t('stats.grants') },
-    { value: '15+', label: t('stats.fairs') },
-    { value: '20+', label: t('stats.countries') },
+    { value: String(counts.grants), label: t('stats.grants') },
+    { value: String(counts.fairs), label: t('stats.fairs') },
+    { value: String(counts.guides), label: t('stats.countries') },
     { value: '24/7', label: t('stats.ai') },
   ]
 
@@ -71,7 +84,7 @@ export default function HomePage() {
 
       <TradePulse />
 
-      {/* Stats */}
+      {/* Stats — live counters from DB */}
       <section className="bg-gray-50 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
