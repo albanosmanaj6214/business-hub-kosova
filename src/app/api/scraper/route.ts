@@ -7,6 +7,7 @@ import { scrapeMzhr } from '@/lib/scrapers/mzhr'
 import { scrapeMint } from '@/lib/scrapers/mint'
 import { scrapeKosme } from '@/lib/scrapers/kosme'
 import type { OpportunityInput } from '@/lib/scrapers/types'
+import { classifyGrantDeadline, classifyResultToUpdate } from '@/lib/classifiers/deadline-classifier'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -85,6 +86,21 @@ async function persistOpportunity(
     } else {
       await prisma.grant.create({ data })
       grant = 'created'
+    }
+    // Auto-classify newly-stored grants that still lack a deadline.
+    if (!data.deadline) {
+      const stored = await prisma.grant.findFirst({
+        where: { url: item.sourceUrl },
+        select: { id: true, title: true, titleSq: true, provider: true, url: true, classifiedAt: true },
+      })
+      if (stored && !stored.classifiedAt) {
+        try {
+          const r = await classifyGrantDeadline(stored)
+          await prisma.grant.update({ where: { id: stored.id }, data: classifyResultToUpdate(r) })
+        } catch (err) {
+          console.error('[classify] failed for', stored.id, err)
+        }
+      }
     }
   } else if (item.type === 'FAIR') {
     const websiteUrl = legacy.website ?? item.sourceUrl

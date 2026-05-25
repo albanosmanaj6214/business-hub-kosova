@@ -135,6 +135,9 @@ model Grant {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   deletedAt DateTime?
+  isOngoing            Boolean   @default(false)
+  classifiedAt         DateTime?
+  classificationSource String?
 
   @@index([deadline])
   @@index([isActive])

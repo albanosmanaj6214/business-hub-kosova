@@ -32,6 +32,7 @@ interface GrantRow {
   deadline: Date | null
   url: string | null
   tags: string[]
+  isOngoing: boolean
 }
 
 type GrantStatus = 'active' | 'expired' | 'no_deadline'
@@ -43,6 +44,7 @@ function extractYearFromTitle(title: string): number | null {
 }
 
 function classify(g: GrantRow, today: Date): GrantStatus {
+  if (g.isOngoing) return 'active'
   if (g.deadline) return g.deadline >= today ? 'active' : 'expired'
 
   const titleYear = extractYearFromTitle(`${g.title} ${g.titleSq ?? ''}`)
@@ -303,6 +305,7 @@ function GrantCard({ grant, today }: { grant: GrantRow; today: Date }) {
           status={status}
           today={today}
           titleYear={titleYear}
+          isOngoing={grant.isOngoing}
         />
 
         <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
@@ -340,12 +343,23 @@ function DeadlineRow({
   status,
   today,
   titleYear,
+  isOngoing,
 }: {
   deadline: Date | null
   status: GrantStatus
   today: Date
   titleYear: number | null
+  isOngoing: boolean
 }) {
+  if (isOngoing) {
+    return (
+      <div className="flex items-center gap-2 text-sm">
+        <Clock className="h-4 w-4 text-[#27AE60]" />
+        <span className="text-gray-700">Thirrje e hapur</span>
+        <Badge variant="success">E vazhdueshme</Badge>
+      </div>
+    )
+  }
   if (status === 'no_deadline') {
     return (
       <div className="flex items-center gap-2 text-sm">
