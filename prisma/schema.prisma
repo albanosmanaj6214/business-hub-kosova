@@ -134,6 +134,7 @@ model Grant {
   scrapedAt     DateTime  @default(now())
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@index([deadline])
   @@index([isActive])
@@ -156,6 +157,7 @@ model TradeFair {
   scrapedAt     DateTime @default(now())
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  deletedAt DateTime?
 
   @@index([startDate])
   @@index([isActive])
@@ -198,6 +200,7 @@ model ExportGuide {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
 
   @@index([country])
 }
