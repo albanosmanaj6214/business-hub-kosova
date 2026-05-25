@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { INCOTERMS } from '@/lib/export-terms'
 import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
+import { FloatingExpertCTA } from '@/components/contact/FloatingExpertCTA'
 import { ArrowLeft, Ship } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -71,11 +72,14 @@ export default function IncotermsPage() {
         <strong>Këshillë:</strong> Për fillestarët në eksport, <strong>FCA</strong> është më i sigurti dhe fleksibili. Shmang EXW (blerësi mund të mos arrijë t’i bëjë formalitetet doganore kosovare) dhe DDP (merr përsipër taksat e huaja që mund të mos i njohësh).
       </div>
 
-      <ExpertContactCard
+      <div id="expert-contact">
+        <ExpertContactCard
         variant="EXPORT_GUIDE"
         contextRef="Incoterms — këshillë për kontratë eksporti"
         source="dashboard-incoterms"
       />
+      </div>
+      <FloatingExpertCTA variant="EXPORT_GUIDE" />
     </div>
   )
 }

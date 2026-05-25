@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
+import { FloatingExpertCTA } from '@/components/contact/FloatingExpertCTA'
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -138,10 +139,13 @@ export default async function GuidesPage() {
         </>
       )}
 
-      <ExpertContactCard
+      <div id="expert-contact">
+        <ExpertContactCard
         variant="EXPORT_GUIDE"
         source="dashboard-guides-list"
       />
+      </div>
+      <FloatingExpertCTA variant="EXPORT_GUIDE" />
     </div>
   )
 }

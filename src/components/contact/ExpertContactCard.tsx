@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { CheckCircle2, Loader2, MessageSquare } from 'lucide-react'
 
@@ -71,6 +71,17 @@ export function ExpertContactCard({ variant, contextId, contextRef, source, clas
   const [done, setDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [form, setForm] = useState({ name: '', email: '', phone: '', company: '', message: '' })
+
+  useEffect(() => {
+    function handleHash() {
+      if (typeof window !== 'undefined' && window.location.hash === '#expert-contact') {
+        setOpen(true)
+      }
+    }
+    handleHash()
+    window.addEventListener('hashchange', handleHash)
+    return () => window.removeEventListener('hashchange', handleHash)
+  }, [])
 
   const copy = COPY[variant]
 

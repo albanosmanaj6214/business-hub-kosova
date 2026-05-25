@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { TERM_CATEGORIES } from '@/lib/export-terms'
 import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
+import { FloatingExpertCTA } from '@/components/contact/FloatingExpertCTA'
 import {
   Package, FileText, CreditCard, Truck, ShieldCheck, Handshake,
   Ship, ChevronDown, ArrowRight,
@@ -76,7 +77,10 @@ export default function TermsHubPage() {
         )
       })}
 
-      <ExpertContactCard variant="EXPORT_GUIDE" source="dashboard-terma" />
+      <div id="expert-contact">
+        <ExpertContactCard variant="EXPORT_GUIDE" source="dashboard-terma" />
+      </div>
+      <FloatingExpertCTA variant="EXPORT_GUIDE" />
     </div>
   )
 }

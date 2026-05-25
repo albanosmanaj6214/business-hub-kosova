@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
 import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
+import { FloatingExpertCTA } from '@/components/contact/FloatingExpertCTA'
 import { Badge } from '@/components/ui/badge'
 import { ExternalLink, Clock, Calendar, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
@@ -308,10 +309,13 @@ export default async function GrantsPage({
           ))}
         </>
       )}
-      <ExpertContactCard
+      <div id="expert-contact">
+        <ExpertContactCard
         variant="GRANT_APPLICATION"
         source="dashboard-grants-list"
       />
+      </div>
+      <FloatingExpertCTA variant="GRANT_APPLICATION" />
     </div>
   )
 }
