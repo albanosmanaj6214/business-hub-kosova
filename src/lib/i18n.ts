@@ -26,6 +26,7 @@ const M: Record<string, Dict> = {
   'nav.services':       { sq: 'Shërbimet',          en: 'Services',           de: 'Leistungen' },
   'nav.pricing':        { sq: 'Çmimet',             en: 'Pricing',            de: 'Preise' },
   'nav.about':          { sq: 'Rreth Nesh',         en: 'About',              de: 'Über uns' },
+  'nav.sectors':        { sq: 'Sektorët',           en: 'Sectors',            de: 'Sektoren' },
   'nav.login':          { sq: 'Hyr',                en: 'Sign in',            de: 'Anmelden' },
   'nav.register':       { sq: 'Regjistrohu',        en: 'Sign up',            de: 'Registrieren' },
   'nav.dashboard':      { sq: 'Dashboard',          en: 'Dashboard',          de: 'Dashboard' },

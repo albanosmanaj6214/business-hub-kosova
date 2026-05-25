@@ -26,6 +26,7 @@ export function Navbar() {
             <Link href="/#features" className="text-gray-600 hover:text-[#1B4F72] transition-colors">
               {t('nav.services')}
             </Link>
+            <Link href="/sectors" className="text-gray-600 hover:text-[#1B4F72] transition-colors">{t("nav.sectors")}</Link>
             <Link href="/pricing" className="text-gray-600 hover:text-[#1B4F72] transition-colors">
               {t('nav.pricing')}
             </Link>
@@ -72,6 +73,9 @@ export function Navbar() {
           <div className="px-4 py-3 space-y-2">
             <Link href="/#features" className="block py-2 text-gray-600" onClick={() => setIsOpen(false)}>
               {t('nav.services')}
+            </Link>
+            <Link href="/sectors" className="block py-2 text-gray-600" onClick={() => setIsOpen(false)}>
+              {t('nav.sectors')}
             </Link>
             <Link href="/pricing" className="block py-2 text-gray-600" onClick={() => setIsOpen(false)}>
               {t('nav.pricing')}
