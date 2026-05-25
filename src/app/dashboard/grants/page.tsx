@@ -66,7 +66,7 @@ export default async function GrantsPage({
   const showExpired = searchParams?.show === 'expired'
 
   const grants = (await prisma.grant.findMany({
-    where: { isActive: true },
+    where: { isActive: true, deletedAt: null },
     orderBy: [{ deadline: 'asc' }, { createdAt: 'desc' }],
   })) as GrantRow[]
 

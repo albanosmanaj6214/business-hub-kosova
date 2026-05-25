@@ -104,7 +104,7 @@ function CollapsibleSection({
 
 export default async function GuidePage({ params }: { params: { id: string } }) {
   const locale: Locale = getServerLocale()
-  const guide = await prisma.exportGuide.findUnique({ where: { id: params.id } })
+  const guide = await prisma.exportGuide.findFirst({ where: { id: params.id, deletedAt: null } })
   if (!guide) notFound()
   if (!guide.isPublished) {
     // fall back to legacy markdown view if no structured fields and not published

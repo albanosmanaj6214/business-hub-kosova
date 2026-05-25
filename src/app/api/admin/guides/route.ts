@@ -95,6 +95,7 @@ export async function GET() {
   const auth = await requireAdmin()
   if (auth !== true) return auth
   const guides = await prisma.exportGuide.findMany({
+    where: { deletedAt: null },
     select: {
       id: true,
       title: true,

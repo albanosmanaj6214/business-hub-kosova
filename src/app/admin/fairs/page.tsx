@@ -1,11 +1,12 @@
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { DeleteButton } from '@/components/admin/DeleteButton'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminFairsPage() {
-  const fairs = await prisma.tradeFair.findMany({ orderBy: { startDate: 'asc' } })
+  const fairs = await prisma.tradeFair.findMany({ where: { deletedAt: null }, orderBy: { startDate: 'asc' } })
 
   return (
     <div className="space-y-6">
@@ -20,6 +21,7 @@ export default async function AdminFairsPage() {
                   <th className="text-left p-4 font-medium text-gray-500">Vendndodhja</th>
                   <th className="text-left p-4 font-medium text-gray-500">Data</th>
                   <th className="text-left p-4 font-medium text-gray-500">Aktiv</th>
+                  <th className="w-12 p-4"></th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -29,6 +31,7 @@ export default async function AdminFairsPage() {
                     <td className="p-4 text-gray-600">{f.location}, {f.country}</td>
                     <td className="p-4 text-gray-500">{new Date(f.startDate).toLocaleDateString('sq-AL')} - {new Date(f.endDate).toLocaleDateString('sq-AL')}</td>
                     <td className="p-4"><Badge variant={f.isActive ? 'success' : 'danger'}>{f.isActive ? 'Po' : 'Jo'}</Badge></td>
+                    <td className="p-4 text-right"><DeleteButton entityPath="fairs" id={f.id} label={f.name} /></td>
                   </tr>
                 ))}
               </tbody>

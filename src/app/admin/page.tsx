@@ -8,9 +8,9 @@ export const dynamic = 'force-dynamic'
 export default async function AdminPage() {
   const [users, grants, fairs, guides, subs, attempts] = await Promise.all([
     prisma.user.count(),
-    prisma.grant.count({ where: { isActive: true } }),
-    prisma.tradeFair.count({ where: { isActive: true } }),
-    prisma.exportGuide.count({ where: { isPublished: true } }),
+    prisma.grant.count({ where: { isActive: true, deletedAt: null } }),
+    prisma.tradeFair.count({ where: { isActive: true, deletedAt: null } }),
+    prisma.exportGuide.count({ where: { isPublished: true, deletedAt: null } }),
     prisma.subscription.count({ where: { tier: { not: 'FREE' } } }),
     prisma.scrapeAttempt.findMany({
       orderBy: { startedAt: 'desc' },

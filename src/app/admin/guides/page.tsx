@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { DeleteButton } from '@/components/admin/DeleteButton'
 
 
 interface AdminGuide {
@@ -176,14 +177,17 @@ export default function AdminGuidesPage() {
                       </Badge>
                     </td>
                     <td className="p-3 text-right">
-                      <Button
-                        size="sm"
-                        variant={g.isPublished ? 'secondary' : 'default'}
-                        disabled={busy === `pub:${g.id}`}
-                        onClick={() => togglePublish(g)}
-                      >
-                        {g.isPublished ? 'Çpubliko' : 'Publiko'}
-                      </Button>
+                      <div className="inline-flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant={g.isPublished ? 'secondary' : 'default'}
+                          disabled={busy === `pub:${g.id}`}
+                          onClick={() => togglePublish(g)}
+                        >
+                          {g.isPublished ? 'Çpubliko' : 'Publiko'}
+                        </Button>
+                        <DeleteButton entityPath="guides" id={g.id} label={g.country} />
+                      </div>
                     </td>
                   </tr>
                 ))}

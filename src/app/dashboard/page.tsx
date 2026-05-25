@@ -24,20 +24,20 @@ export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
 
   const [grantsCount, fairsCount, guidesCount, unreadNotifs] = await Promise.all([
-    prisma.grant.count({ where: { isActive: true } }),
-    prisma.tradeFair.count({ where: { isActive: true, startDate: { gte: new Date() } } }),
-    prisma.exportGuide.count({ where: { isPublished: true } }),
+    prisma.grant.count({ where: { isActive: true, deletedAt: null } }),
+    prisma.tradeFair.count({ where: { isActive: true, deletedAt: null, startDate: { gte: new Date() } } }),
+    prisma.exportGuide.count({ where: { isPublished: true, deletedAt: null } }),
     prisma.notification.count({ where: { userId: session?.user?.id, isRead: false } }),
   ])
 
   const recentGrants = await prisma.grant.findMany({
-    where: { isActive: true, deadline: { gte: new Date() } },
+    where: { isActive: true, deletedAt: null, deadline: { gte: new Date() } },
     orderBy: { deadline: 'asc' },
     take: 5,
   })
 
   const upcomingFairs = await prisma.tradeFair.findMany({
-    where: { isActive: true, startDate: { gte: new Date() } },
+    where: { isActive: true, deletedAt: null, startDate: { gte: new Date() } },
     orderBy: { startDate: 'asc' },
     take: 5,
   })

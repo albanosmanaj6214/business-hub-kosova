@@ -1,11 +1,12 @@
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { DeleteButton } from '@/components/admin/DeleteButton'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminGrantsPage() {
-  const grants = await prisma.grant.findMany({ orderBy: { createdAt: 'desc' } })
+  const grants = await prisma.grant.findMany({ where: { deletedAt: null }, orderBy: { createdAt: 'desc' } })
 
   return (
     <div className="space-y-6">
@@ -26,6 +27,7 @@ export default async function AdminGrantsPage() {
                   <th className="text-left p-4 font-medium text-gray-500">Shuma</th>
                   <th className="text-left p-4 font-medium text-gray-500">Afati</th>
                   <th className="text-left p-4 font-medium text-gray-500">Aktiv</th>
+                  <th className="w-12 p-4"></th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -36,6 +38,7 @@ export default async function AdminGrantsPage() {
                     <td className="p-4 text-gray-600">{g.amount || '-'}</td>
                     <td className="p-4 text-gray-500">{g.deadline ? new Date(g.deadline).toLocaleDateString('sq-AL') : '-'}</td>
                     <td className="p-4"><Badge variant={g.isActive ? 'success' : 'danger'}>{g.isActive ? 'Po' : 'Jo'}</Badge></td>
+                    <td className="p-4 text-right"><DeleteButton entityPath="grants" id={g.id} label={g.title} /></td>
                   </tr>
                 ))}
               </tbody>

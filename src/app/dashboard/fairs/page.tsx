@@ -53,7 +53,7 @@ export default async function FairsPage({
   const showPast = searchParams?.show === 'past'
 
   const fairs = (await prisma.tradeFair.findMany({
-    where: { isActive: true },
+    where: { isActive: true, deletedAt: null },
     orderBy: { startDate: 'asc' },
   })) as FairRow[]
 

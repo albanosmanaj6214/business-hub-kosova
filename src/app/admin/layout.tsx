@@ -6,8 +6,9 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   Shield, Users, Search, Calendar, BookOpen, Bot, Bell, Inbox,
-  LayoutDashboard, Menu, X, ArrowLeft,
+  LayoutDashboard, Menu, X, ArrowLeft, Trash2,
 } from 'lucide-react'
+import { Toaster } from '@/components/admin/Toaster'
 
 const adminNav = [
   { name: 'Overview', href: '/admin', icon: LayoutDashboard },
@@ -18,6 +19,7 @@ const adminNav = [
   { name: 'AI Scraper', href: '/admin/scraper', icon: Bot },
   { name: 'Njoftimet', href: '/admin/notifications', icon: Bell },
   { name: 'Leads', href: '/admin/leads', icon: Inbox },
+  { name: 'Trash', href: '/admin/trash', icon: Trash2 },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -77,6 +79,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </h1>
         </header>
         <main className="p-4 lg:p-8">{children}</main>
+        <Toaster />
       </div>
     </div>
   )

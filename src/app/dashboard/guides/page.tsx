@@ -23,7 +23,7 @@ function previewFor(g: any, locale: Locale): string {
 export default async function GuidesPage() {
   const locale: Locale = getServerLocale()
   const guides = await prisma.exportGuide.findMany({
-    where: { isPublished: true },
+    where: { isPublished: true, deletedAt: null },
     orderBy: [{ flag: 'desc' }, { country: 'asc' }],
   })
 
