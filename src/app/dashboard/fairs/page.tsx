@@ -96,8 +96,19 @@ export default async function FairsPage({
 
   const sectorFilter = searchParams?.sector || ''
   const countryFilter = searchParams?.country || ''
-  const rawType = (searchParams?.type || '').toUpperCase() as EventType
-  const typeFilter: EventType | '' = EVENT_TYPE_ORDER.includes(rawType) ? rawType : ''
+  const rawType = (searchParams?.type || '').toUpperCase()
+  // Default = show only FAIR. ?type=ALL means show all event types. ?type=FAIR|TRAINING|... = specific.
+  const typeFilter: EventType | '' =
+    rawType === 'ALL'
+      ? ''
+      : EVENT_TYPE_ORDER.includes(rawType as EventType)
+        ? (rawType as EventType)
+        : 'FAIR'
+  // URL value used in href params to preserve current type across navigation:
+  //  - FAIR default → omit (clean URL)
+  //  - '' (all)     → 'ALL'
+  //  - other        → as-is
+  const typeForUrl = typeFilter === '' ? 'ALL' : typeFilter === 'FAIR' ? '' : typeFilter
 
   const matchesFilters = (f: FairRow) =>
     (!sectorFilter || f.sectors.includes(sectorFilter)) &&
@@ -106,7 +117,7 @@ export default async function FairsPage({
 
   const list = (showPast ? past : upcoming).filter(matchesFilters)
 
-  const baseFilters = { sector: sectorFilter, country: countryFilter, type: typeFilter || '' }
+  const baseFilters = { sector: sectorFilter, country: countryFilter, type: typeForUrl }
 
   const visibleSet = showPast ? past : upcoming
   const countByType = EVENT_TYPE_ORDER.reduce((acc, k) => {
@@ -119,19 +130,13 @@ export default async function FairsPage({
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Panaire dhe Evente</h1>
         <p className="text-gray-500 mt-1">
-          Panaire ndërkombëtare, trajnime, webinare dhe takime matchmaking, të verifikuara dhe relevante për eksportuesit kosovarë.
+          Panaire ndërkombëtare të verifikuara dhe relevante për eksportuesit kosovarë. Trajnime, webinare dhe matchmaking në tabet e tjera.
         </p>
       </div>
 
       {/* Primary tabs: event type */}
       <div className="-mx-4 lg:-mx-8 px-4 lg:px-8 border-b border-gray-200">
         <nav className="flex gap-1 overflow-x-auto pb-px" aria-label="Lloji i eventit">
-          <TypeTab
-            label="Të gjitha"
-            count={visibleSet.length}
-            href={`/dashboard/fairs${buildQuery({ sector: sectorFilter, country: countryFilter, show: showPast ? 'past' : '' })}`}
-            active={!typeFilter}
-          />
           {EVENT_TYPE_ORDER.map((tk) => (
             <TypeTab
               key={tk}
@@ -140,12 +145,18 @@ export default async function FairsPage({
               href={`/dashboard/fairs${buildQuery({
                 sector: sectorFilter,
                 country: countryFilter,
-                type: tk,
+                type: tk === 'FAIR' ? '' : tk,
                 show: showPast ? 'past' : '',
               })}`}
               active={typeFilter === tk}
             />
           ))}
+          <TypeTab
+            label="Të gjitha"
+            count={visibleSet.length}
+            href={`/dashboard/fairs${buildQuery({ sector: sectorFilter, country: countryFilter, type: 'ALL', show: showPast ? 'past' : '' })}`}
+            active={!typeFilter}
+          />
         </nav>
       </div>
 
@@ -171,7 +182,7 @@ export default async function FairsPage({
 
           <FilterPill
             label="Të gjithë sektorët"
-            href={`/dashboard/fairs${buildQuery({ country: countryFilter, type: typeFilter || '', show: showPast ? 'past' : '' })}`}
+            href={`/dashboard/fairs${buildQuery({ country: countryFilter, type: typeForUrl, show: showPast ? 'past' : '' })}`}
             active={!sectorFilter}
           />
           {allSectors.map((s) => (
@@ -181,7 +192,7 @@ export default async function FairsPage({
               href={`/dashboard/fairs${buildQuery({
                 sector: s,
                 country: countryFilter,
-                type: typeFilter || '',
+                type: typeForUrl,
                 show: showPast ? 'past' : '',
               })}`}
               active={sectorFilter === s}
@@ -195,7 +206,7 @@ export default async function FairsPage({
                 label="Të gjitha vendet"
                 href={`/dashboard/fairs${buildQuery({
                   sector: sectorFilter,
-                  type: typeFilter || '',
+                  type: typeForUrl,
                   show: showPast ? 'past' : '',
                 })}`}
                 active={!countryFilter}
@@ -207,7 +218,7 @@ export default async function FairsPage({
                   href={`/dashboard/fairs${buildQuery({
                     sector: sectorFilter,
                     country: c,
-                    type: typeFilter || '',
+                    type: typeForUrl,
                     show: showPast ? 'past' : '',
                   })}`}
                   active={countryFilter === c}
