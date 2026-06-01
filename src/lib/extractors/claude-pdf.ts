@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { PDFParse } from 'pdf-parse'
+import mammoth from 'mammoth'
 import * as cheerio from 'cheerio'
 import * as https from 'node:https'
 import * as http from 'node:http'
@@ -168,6 +169,21 @@ export async function extractFromPdf(opts: ExtractFromPdfOptions): Promise<Extra
   const text = (parsed.text ?? '').trim()
   if (!text) throw new Error(`PDF has no extractable text: ${opts.pdfUrl}`)
   return extractFromText(text, { context: opts.context, sourceUrl: opts.pdfUrl })
+}
+
+export async function extractFromDocx(opts: ExtractFromPdfOptions): Promise<ExtractedGrantFields> {
+  const buf = await fetchTolerant(opts.pdfUrl)
+  const result = await mammoth.extractRawText({ buffer: buf })
+  const text = (result.value ?? '').trim()
+  if (!text) throw new Error(`DOCX has no extractable text: ${opts.pdfUrl}`)
+  return extractFromText(text, { context: opts.context, sourceUrl: opts.pdfUrl })
+}
+
+/** Picks the right extractor based on URL extension. Falls back to PDF. */
+export async function extractFromDocument(opts: ExtractFromPdfOptions): Promise<ExtractedGrantFields> {
+  const lower = opts.pdfUrl.split('?')[0].toLowerCase()
+  if (lower.endsWith('.docx')) return extractFromDocx(opts)
+  return extractFromPdf(opts)
 }
 
 export interface ExtractFromHtmlPageOptions {

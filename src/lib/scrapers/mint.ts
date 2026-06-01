@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio'
 import { createHash } from 'crypto'
 import type { OpportunityInput, OpportunityType } from './types'
-import { extractFromPdf, fetchTextTolerant, mergeExtractedFields, enrichmentEnvFor } from '../extractors/claude-pdf'
+import { extractFromDocument, fetchTextTolerant, mergeExtractedFields, enrichmentEnvFor } from '../extractors/claude-pdf'
 
 const BASE_URL = 'https://mint.rks-gov.net'
 const LISTING_PATH = '/'
@@ -77,10 +77,12 @@ export async function scrapeMint(opts: ScrapeMintOptions = {}): Promise<Opportun
   const seen = new Set<string>()
   const items: OpportunityInput[] = []
 
-  $('a[href*=".pdf"]').each((_, el) => {
+  $('a[href]').each((_, el) => {
     const $a = $(el)
     const hrefRaw = ($a.attr('href') ?? '').trim()
     if (!hrefRaw) return
+    const lower = hrefRaw.split('?')[0].toLowerCase()
+    if (!(lower.endsWith('.pdf') || lower.endsWith('.docx'))) return
     const href = hrefRaw.startsWith('/') ? `${base}${hrefRaw}` : hrefRaw
     if (seen.has(href)) return
 
@@ -96,7 +98,7 @@ export async function scrapeMint(opts: ScrapeMintOptions = {}): Promise<Opportun
       type: c,
       title,
       description:
-        'Thirrje publike e Ministrisë së Industrisë, Ndërmarrësisë dhe Tregtisë. Detajet e plota (afati, vlera, kriteret) gjenden në dokumentin PDF.',
+        'Thirrje publike e Ministrisë së Industrisë, Ndërmarrësisë dhe Tregtisë. Detajet e plota (afati, vlera, kriteret) gjenden në dokumentin zyrtar të publikuar.',
       sourceUrl: href,
       legacy: {
         provider: 'Ministria e Industrisë, Ndërmarrësisë dhe Tregtisë (MINT)',
@@ -133,6 +135,6 @@ export async function scrapeMint(opts: ScrapeMintOptions = {}): Promise<Opportun
  * `sourceUrl` (the listing links straight to PDFs), so no detail-page step.
  */
 export async function enrichMintItem(item: OpportunityInput): Promise<void> {
-  const extracted = await extractFromPdf({ pdfUrl: item.sourceUrl, context: item.title })
+  const extracted = await extractFromDocument({ pdfUrl: item.sourceUrl, context: item.title })
   mergeExtractedFields(item, extracted)
 }

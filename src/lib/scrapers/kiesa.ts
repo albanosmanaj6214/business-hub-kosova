@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio'
 import { createHash } from 'crypto'
 import type { OpportunityInput, OpportunityType } from './types'
-import { extractFromPdf, fetchTextTolerant, mergeExtractedFields, enrichmentEnvFor } from '../extractors/claude-pdf'
+import { extractFromDocument, fetchTextTolerant, mergeExtractedFields, enrichmentEnvFor } from '../extractors/claude-pdf'
 
 const BASE_URL = 'https://kiesa.rks-gov.net'
 const LISTING_PATH = '/page.aspx?id=2,134'
@@ -159,16 +159,19 @@ export async function scrapeKiesa(opts: ScrapeKiesaOptions = {}): Promise<Opport
 export async function enrichKiesaItem(item: OpportunityInput): Promise<void> {
   const html = await fetchTextTolerant(item.sourceUrl)
   const $ = cheerio.load(html)
-  const pdfLinks: string[] = []
-  $('a[href$=".pdf"]').each((_, a) => {
+  const docLinks: string[] = []
+  $('a[href]').each((_, a) => {
     const h = $(a).attr('href')
     if (!h) return
-    pdfLinks.push(absoluteUrl(h))
+    const lower = h.split('?')[0].toLowerCase()
+    if (lower.endsWith('.pdf') || lower.endsWith('.docx')) {
+      docLinks.push(absoluteUrl(h))
+    }
   })
-  if (pdfLinks.length === 0) return
-  // Prefer the main thirrje PDF over annex declarations / forms.
+  if (docLinks.length === 0) return
+  // Prefer the main thirrje doc over annex declarations / forms.
   // KIESA detail pages typically list the main call first.
-  const extracted = await extractFromPdf({ pdfUrl: pdfLinks[0], context: item.title })
+  const extracted = await extractFromDocument({ pdfUrl: docLinks[0], context: item.title })
   mergeExtractedFields(item, extracted)
 }
 
