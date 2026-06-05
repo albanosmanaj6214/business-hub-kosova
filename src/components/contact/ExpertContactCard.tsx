@@ -6,30 +6,32 @@ import { CheckCircle2, Loader2, MessageSquare } from 'lucide-react'
 
 type Variant = 'GRANT_APPLICATION' | 'EXPORT_GUIDE' | 'FAIR_REGISTRATION' | 'CERTIFICATION' | 'CUSTOMS' | 'TRAINING' | 'INVESTOR_INQUIRY' | 'OTHER'
 
-const COPY: Record<Variant, { headline: string; sub: string; cta: string; messagePlaceholder: string }> = {
+const COPY: Record<Variant, { headline: string; sub: string; cta: string; messagePlaceholder: string; free?: string }> = {
   GRANT_APPLICATION: {
-    headline: 'Ke gjetur një grant që të intereson?',
+    headline: 'Ta plotësojmë aplikimin për grant?',
     sub: 'Nuk ke pse ta kalosh vetëm aplikimin. E njohim këtë thirrje dhe të ndihmojmë me dokumentet, projekt-propozimin dhe çdo hap deri në dorëzim. Na shkruaj, e shohim bashkë.',
-    cta: 'Dua ndihmë me aplikimin',
+    cta: 'Bisedo me ekspertin',
     messagePlaceholder: 'Tregona shkurt çfarë biznesi ke dhe çfarë ke në mendje. Pjesën tjetër e gjejmë bashkë.',
+    free: 'Konsultimi i parë falas',
   },
   EXPORT_GUIDE: {
-    headline: 'Ke një pyetje për këtë treg?',
+    headline: 'A ke pyetje për ndonjë treg?',
     sub: 'Nuk ke pse ta zbërthesh vetëm. Tregona çfarë prodhon dhe ku do të shkosh, e shohim bashkë hapat e parë. Bisedë e thjeshtë, pa pagesë dhe pa asnjë detyrim.',
-    cta: 'Fol me ekspertin tonë',
+    cta: 'Na kontakto',
     messagePlaceholder: 'Çfarë prodhon, në cilin treg po mendon, çfarë do të dije më parë.',
   },
   FAIR_REGISTRATION: {
-    headline: 'Po mendon për këtë panair?',
+    headline: 'Po mendon për ndonjë panair?',
     sub: 'Të rrimë pranë nga regjistrimi deri te dita e parë: aplikim për stenda KIESA, përgatitje materialesh dhe organizim. Na shkruaj para se të vendosësh.',
-    cta: 'Dua të marr pjesë',
+    cta: 'Kërko ndihmë',
     messagePlaceholder: 'A je regjistruar tashmë, çfarë sektori prezanton, çfarë ndihme të duhet.',
   },
   CERTIFICATION: {
-    headline: 'Po mendon për certifikim?',
-    sub: 'Të ndihmojmë të zgjedhësh certifikimin e duhur (ISO, HACCP, CE, BIO, Halal) dhe të lidhim me trupa certifikuese serioze. Pa pagesë për bisedën e parë.',
-    cta: 'Pyet për certifikimin',
+    headline: 'Ke pyetje për certifikimet?',
+    sub: 'Të ndihmojmë të zgjedhësh certifikimin e duhur (ISO, HACCP, CE, BIO, Halal) dhe të lidhim me trupa certifikuese serioze.',
+    cta: 'Pyet këtu',
     messagePlaceholder: 'Çfarë prodhon, ku eksporton ose synon, çfarë certifikate dyshon se të duhet.',
+    free: 'Falas',
   },
   CUSTOMS: {
     headline: 'Po has vështirësi në doganë?',
@@ -134,7 +136,14 @@ export function ExpertContactCard({ variant, contextId, contextRef, source, clas
           <MessageSquare className="h-5 w-5 text-[#1B4F72]" />
         </div>
         <div>
-          <h3 className="font-semibold text-gray-900">{copy.headline}</h3>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-semibold text-gray-900">{copy.headline}</h3>
+            {copy.free && (
+              <span className="inline-block rounded bg-[#27AE60]/15 text-[#27AE60] text-xs font-semibold px-2 py-0.5">
+                {copy.free}
+              </span>
+            )}
+          </div>
           <p className="text-sm text-gray-600 mt-1">{copy.sub}</p>
         </div>
       </div>

@@ -13,23 +13,47 @@ type Variant =
   | 'INVESTOR_INQUIRY'
   | 'OTHER'
 
-const SHORT: Record<Variant, { headline: string; cta: string }> = {
-  GRANT_APPLICATION:  { headline: 'Ke gjetur grant që të intereson?', cta: 'Dua ndihmë me aplikimin' },
-  EXPORT_GUIDE:       { headline: 'Ke pyetje për këtë treg?',          cta: 'Fol me ekspertin tonë' },
-  FAIR_REGISTRATION:  { headline: 'Po mendon për këtë panair?',        cta: 'Dua të marr pjesë' },
-  CERTIFICATION:      { headline: 'Po mendon për certifikim?',         cta: 'Pyet për certifikimin' },
-  CUSTOMS:            { headline: 'Vështirësi në doganë?',             cta: 'Pyet për doganën' },
-  TRAINING:           { headline: 'Po kërkon trajnimin e duhur?',      cta: 'Gjej trajnimin' },
-  INVESTOR_INQUIRY:   { headline: 'Looking into Kosovo?',              cta: 'Talk to us' },
-  OTHER:              { headline: 'Si mund të ndihmojmë?',             cta: 'Na shkruaj' },
+interface Copy {
+  headline: string
+  cta: string
+  freePrefix?: string // text before the highlighted "falas" chip
+  free?: boolean      // show the shaded "Falas" chip
 }
 
-// Spoken in the first person by the business owner, so the button reads like
-// their own decision. The subline names a real person so it feels like
-// reaching out to someone you trust, not filling a form.
-const TRUST_LINE = 'Të përgjigjet Albano, drejtpërdrejt. Pa pagesë.'
+const SHORT: Record<Variant, Copy> = {
+  GRANT_APPLICATION:  { headline: 'Ta plotësojmë aplikimin për grant?', cta: 'Bisedo me ekspertin', freePrefix: 'Konsultimi i parë', free: true },
+  CERTIFICATION:      { headline: 'Ke pyetje për certifikimet?',        cta: 'Pyet këtu', free: true },
+  FAIR_REGISTRATION:  { headline: 'Po mendon për ndonjë panair?',       cta: 'Kërko ndihmë' },
+  EXPORT_GUIDE:       { headline: 'A ke pyetje për ndonjë treg?',       cta: 'Na kontakto' },
+  CUSTOMS:            { headline: 'Vështirësi në doganë?',              cta: 'Pyet për doganën' },
+  TRAINING:           { headline: 'Po kërkon trajnimin e duhur?',       cta: 'Gjej trajnimin' },
+  INVESTOR_INQUIRY:   { headline: 'Looking into Kosovo?',               cta: 'Talk to us' },
+  OTHER:              { headline: 'Si mund të ndihmojmë?',              cta: 'Na shkruaj' },
+}
 
 const DISMISS_KEY = 'kbh-floating-cta-dismissed'
+
+function FreeChip() {
+  return (
+    <span className="inline-block rounded bg-[#27AE60]/15 text-[#27AE60] font-semibold px-1.5 py-px">
+      falas
+    </span>
+  )
+}
+
+function TrustLine({ copy }: { copy: Copy }) {
+  if (copy.free && copy.freePrefix) {
+    return (
+      <span>
+        {copy.freePrefix} <FreeChip />
+      </span>
+    )
+  }
+  if (copy.free) {
+    return <FreeChip />
+  }
+  return <span>Drejtpërdrejt me Albanon.</span>
+}
 
 interface Props {
   variant: Variant
@@ -54,7 +78,6 @@ export function FloatingExpertCTA({ variant }: Props) {
     const attach = () => {
       const dest = document.getElementById('expert-contact')
       if (!dest) {
-        // No inline card on this page: just show the prompt.
         setVisible(true)
         return
       }
@@ -64,7 +87,6 @@ export function FloatingExpertCTA({ variant }: Props) {
       )
       observer.observe(dest)
     }
-    // Wait a tick for the destination to mount.
     const t = setTimeout(attach, 250)
 
     return () => {
@@ -80,7 +102,6 @@ export function FloatingExpertCTA({ variant }: Props) {
     const dest = document.getElementById('expert-contact')
     if (dest) {
       dest.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      // Hash change triggers ExpertContactCard auto-open
       window.history.replaceState(null, '', '#expert-contact')
       window.dispatchEvent(new HashChangeEvent('hashchange'))
     }
@@ -117,7 +138,9 @@ export function FloatingExpertCTA({ variant }: Props) {
             </div>
             <div className="min-w-0 pr-4">
               <p className="text-sm font-semibold text-gray-900 leading-snug">{copy.headline}</p>
-              <p className="text-xs text-gray-500 mt-0.5 leading-snug">{TRUST_LINE}</p>
+              <p className="text-xs text-gray-500 mt-0.5 leading-snug">
+                <TrustLine copy={copy} />
+              </p>
             </div>
           </div>
           <button
@@ -153,7 +176,9 @@ export function FloatingExpertCTA({ variant }: Props) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-900 truncate leading-tight">{copy.headline}</p>
-            <p className="text-[11px] text-gray-500 truncate leading-tight">Drejtpërdrejt me Albanon. Pa pagesë.</p>
+            <p className="text-[11px] text-gray-500 truncate leading-tight">
+              <TrustLine copy={copy} />
+            </p>
           </div>
           <button
             onClick={handleClick}
