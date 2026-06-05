@@ -10,7 +10,6 @@ import {
   Calendar,
   BookOpen,
   Bell,
-  Zap,
   Users,
   ArrowRight,
 } from 'lucide-react'
@@ -54,10 +53,6 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32 relative">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm text-sm mb-6">
-              <Zap className="h-4 w-4 mr-2 text-[#F39C12]" />
-              {t('home.badge')}
-            </div>
             <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
               {t('home.title.1')}
               <span className="block text-[#F39C12]">{t('home.title.2')}</span>

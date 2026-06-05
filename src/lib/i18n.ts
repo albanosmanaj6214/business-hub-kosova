@@ -37,9 +37,9 @@ const M: Record<string, Dict> = {
   'home.title.1':       { sq: 'Mundësitë e zhvillimit,', en: 'Development opportunities,', de: 'Entwicklungschancen,' },
   'home.title.2':       { sq: 'të mbledhura në një vend.', en: 'gathered in one place.', de: 'gebündelt an einem Ort.' },
   'home.sub':           {
-    sq: 'Publikim i thirrjeve publike për financim dhe prezantim, përditësim i kalendarit të panaireve ndërkombëtare dhe i rregullave të eksportit.',
-    en: 'Public calls for financing and presentation, an updated international fair calendar, and current export rules.',
-    de: 'Öffentliche Aufrufe zu Finanzierung und Präsentation, ein aktualisierter Messekalender und aktuelle Exportvorschriften.',
+    sq: 'Publikimi i mundësive për financim, panaire ndërkombëtare dhe rregullave për eksport.',
+    en: 'Publishing opportunities for financing, international fairs, and export rules.',
+    de: 'Veröffentlichung von Möglichkeiten für Finanzierung, internationale Messen und Exportvorschriften.',
   },
   'home.cta.start':     { sq: 'Krijo llogarinë falas', en: 'Create free account', de: 'Kostenloses Konto erstellen' },
   'home.cta.pricing':   { sq: 'Shiko çmimet',       en: 'See pricing',        de: 'Preise ansehen' },
