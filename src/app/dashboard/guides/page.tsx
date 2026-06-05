@@ -57,8 +57,8 @@ export default async function GuidesPage() {
         <h1 className="text-2xl font-bold text-gray-900">{t('Udhëzues Eksporti', 'Export Guides')}</h1>
         <p className="text-gray-500 mt-1">
           {t(
-            'Çfarë i duhet kompanisë suaj për të eksportuar në çdo treg — dokumentet, çertifikatat, etiketimi dhe kontaktet kyçe. Të grupuara sipas zonës.',
-            'What your company needs to export to each market — documents, certifications, labelling, and key contacts. Grouped by region.',
+            'Çdo treg ka rregullat e veta. Këtu i gjen me fjalë të thjeshta gjërat që i duhen biznesit tënd për të eksportuar: dokumentet, çertifikatat, etiketimin dhe kontaktet kyçe. Nëse diçka nuk të del e qartë, na shkruaj. Jemi këtu për ty.',
+            'Every market has its own rules. Here, in plain words, is what your business needs to export: the documents, certifications, labelling, and key contacts. If anything is unclear, just write to us. We are here for you.',
           )}
         </p>
       </div>

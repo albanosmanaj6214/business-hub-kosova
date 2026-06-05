@@ -8,39 +8,39 @@ type Variant = 'GRANT_APPLICATION' | 'EXPORT_GUIDE' | 'FAIR_REGISTRATION' | 'CER
 
 const COPY: Record<Variant, { headline: string; sub: string; cta: string; messagePlaceholder: string }> = {
   GRANT_APPLICATION: {
-    headline: 'Të duhet ndihmë me këtë aplikim?',
-    sub: 'Ekspertët tanë e njohin këtë thirrje. Ju ndihmojmë me dokumentet, projekt-propozimin dhe shoqërimin deri në dorëzim.',
-    cta: 'Kërko ndihmë me aplikimin',
-    messagePlaceholder: 'Përshkruaj shkurt projektin që ke në mendje dhe çfarë ndihme të duhet (3-4 fjali).',
+    headline: 'Ke gjetur një grant që të intereson?',
+    sub: 'Nuk ke pse ta kalosh vetëm aplikimin. E njohim këtë thirrje dhe të ndihmojmë me dokumentet, projekt-propozimin dhe çdo hap deri në dorëzim. Na shkruaj, e shohim bashkë.',
+    cta: 'Dua ndihmë me aplikimin',
+    messagePlaceholder: 'Tregona shkurt çfarë biznesi ke dhe çfarë ke në mendje. Pjesën tjetër e gjejmë bashkë.',
   },
   EXPORT_GUIDE: {
-    headline: 'Po mendon për këtë treg?',
-    sub: 'Bisedo 1-në-1 me ekspertin tonë të eksportit. Sesion 60 minutësh me përgjigje konkrete për biznesin tënd.',
-    cta: 'Bisedo me ekspertin',
-    messagePlaceholder: 'Çfarë produktesh prodhon, çfarë synon në këtë treg, çfarë pyetjesh ke në mendje.',
+    headline: 'Ke një pyetje për këtë treg?',
+    sub: 'Nuk ke pse ta zbërthesh vetëm. Tregona çfarë prodhon dhe ku do të shkosh, e shohim bashkë hapat e parë. Bisedë e thjeshtë, pa pagesë dhe pa asnjë detyrim.',
+    cta: 'Fol me ekspertin tonë',
+    messagePlaceholder: 'Çfarë prodhon, në cilin treg po mendon, çfarë do të dije më parë.',
   },
   FAIR_REGISTRATION: {
-    headline: 'Po regjistrohesh në këtë panair?',
-    sub: 'Ju ndihmojmë me regjistrimin, aplikim për stenda KIESA, përgatitje të materialeve dhe organizim logjistik.',
-    cta: 'Kërko shoqërim për panairin',
+    headline: 'Po mendon për këtë panair?',
+    sub: 'Të rrimë pranë nga regjistrimi deri te dita e parë: aplikim për stenda KIESA, përgatitje materialesh dhe organizim. Na shkruaj para se të vendosësh.',
+    cta: 'Dua të marr pjesë',
     messagePlaceholder: 'A je regjistruar tashmë, çfarë sektori prezanton, çfarë ndihme të duhet.',
   },
   CERTIFICATION: {
     headline: 'Po mendon për certifikim?',
-    sub: 'Të ndihmojmë të zgjedhësh certifikimin e duhur (ISO, HACCP, CE, BIO, Halal) dhe të lidhim me trupa certifikuese.',
-    cta: 'Kërko këshilla për certifikim',
+    sub: 'Të ndihmojmë të zgjedhësh certifikimin e duhur (ISO, HACCP, CE, BIO, Halal) dhe të lidhim me trupa certifikuese serioze. Pa pagesë për bisedën e parë.',
+    cta: 'Pyet për certifikimin',
     messagePlaceholder: 'Çfarë prodhon, ku eksporton ose synon, çfarë certifikate dyshon se të duhet.',
   },
   CUSTOMS: {
-    headline: 'Po has vështirësi me procedurat doganore?',
-    sub: 'Të ndihmojmë me HS code, tarifa preferenciale, dokumentet doganore dhe procedurat për çdo treg destinacion.',
-    cta: 'Kërko këshilla doganore',
+    headline: 'Po has vështirësi në doganë?',
+    sub: 'Të ndihmojmë me HS code, tarifa preferenciale, dokumentet doganore dhe procedurat për çdo treg destinacion. Tregona ku ke ngecur.',
+    cta: 'Pyet për doganën',
     messagePlaceholder: 'Çfarë produkti, drejt cilit treg, çfarë problemi specifik ke.',
   },
   TRAINING: {
-    headline: 'Po kërkon trajnim të duhur?',
-    sub: 'Të rekomandojmë trajnimin më të mirë sipas sektorit dhe nivelit të biznesit tënd.',
-    cta: 'Kërko rekomandim trajnimi',
+    headline: 'Po kërkon trajnimin e duhur?',
+    sub: 'Të rekomandojmë trajnimin më të mirë sipas sektorit dhe nivelit të biznesit tënd. Pa shpenzuar kohë nëpër lista të gjata.',
+    cta: 'Gjej trajnimin',
     messagePlaceholder: 'Çfarë sektori, sa punonjës, çfarë tema ti interesojnë.',
   },
   INVESTOR_INQUIRY: {
@@ -51,8 +51,8 @@ const COPY: Record<Variant, { headline: string; sub: string; cta: string; messag
   },
   OTHER: {
     headline: 'Si mund të të ndihmojmë?',
-    sub: 'Lëre një mesazh dhe do të kontaktojmë brenda 24 orëve.',
-    cta: 'Kontakto ekspertin',
+    sub: 'Na lër një mesazh dhe të kontaktojmë sa më shpejt. Nëse është diçka urgjente, shkruaje në mesazh dhe e marrim përpara.',
+    cta: 'Na shkruaj',
     messagePlaceholder: 'Shkruaj çfarëdo që dëshiron të dimë.',
   },
 }
@@ -120,7 +120,7 @@ export function ExpertContactCard({ variant, contextId, contextRef, source, clas
           <CheckCircle2 className="h-6 w-6 text-[#27AE60] shrink-0 mt-0.5" />
           <div>
             <h3 className="font-semibold text-gray-900">Faleminderit, e morëm kërkesën.</h3>
-            <p className="text-sm text-gray-600 mt-1">Albano do të të kontaktojë brenda 24 orëve në email-in ose telefonin që na ke dhënë.</p>
+            <p className="text-sm text-gray-600 mt-1">Albano të kontakton personalisht sa më shpejt, në email-in ose telefonin që na ke dhënë.</p>
           </div>
         </div>
       </div>

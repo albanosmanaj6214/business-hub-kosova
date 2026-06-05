@@ -16,7 +16,7 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Grante', href: '/dashboard/grants', icon: Search },
   { name: 'Panaire', href: '/dashboard/fairs', icon: Calendar },
-  { name: 'Udhezues', href: '/dashboard/guides', icon: BookOpen },
+  { name: 'Udhëzues Eksporti', href: '/dashboard/guides', icon: BookOpen },
   { name: 'Termet e Eksportit', href: '/dashboard/terma', icon: GraduationCap },
   { name: 'Certifikime', href: '/dashboard/certifikime', icon: ShieldCheck },
   { name: 'Njoftime', href: '/dashboard/notifications', icon: Bell },
