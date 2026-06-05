@@ -52,7 +52,7 @@ function TrustLine({ copy }: { copy: Copy }) {
   if (copy.free) {
     return <FreeChip />
   }
-  return <span>Drejtpërdrejt me Albanon.</span>
+  return null
 }
 
 interface Props {
@@ -138,9 +138,11 @@ export function FloatingExpertCTA({ variant }: Props) {
             </div>
             <div className="min-w-0 pr-4">
               <p className="text-sm font-semibold text-gray-900 leading-snug">{copy.headline}</p>
-              <p className="text-xs text-gray-500 mt-0.5 leading-snug">
-                <TrustLine copy={copy} />
-              </p>
+              {copy.free && (
+                <p className="text-xs text-gray-500 mt-0.5 leading-snug">
+                  <TrustLine copy={copy} />
+                </p>
+              )}
             </div>
           </div>
           <button
@@ -176,9 +178,11 @@ export function FloatingExpertCTA({ variant }: Props) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-900 truncate leading-tight">{copy.headline}</p>
-            <p className="text-[11px] text-gray-500 truncate leading-tight">
-              <TrustLine copy={copy} />
-            </p>
+            {copy.free && (
+              <p className="text-[11px] text-gray-500 truncate leading-tight">
+                <TrustLine copy={copy} />
+              </p>
+            )}
           </div>
           <button
             onClick={handleClick}
