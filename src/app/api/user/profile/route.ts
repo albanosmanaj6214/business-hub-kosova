@@ -11,7 +11,7 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { name: true, companyName: true, sector: true, interests: true, language: true },
+    select: { name: true, companyName: true, sector: true, interests: true, language: true, onlyMySector: true },
   })
 
   return NextResponse.json({ user })
@@ -24,11 +24,20 @@ export async function PUT(req: Request) {
   }
 
   const body = await req.json()
-  const { name, companyName, sector, interests, language } = body
+  const { name, companyName, sector, interests, language, onlyMySector } = body
 
+  // Undefined fields are ignored by Prisma, so a partial update (e.g. just the
+  // onlyMySector toggle) leaves everything else untouched.
   const user = await prisma.user.update({
     where: { id: session.user.id },
-    data: { name, companyName, sector, interests, language },
+    data: {
+      name,
+      companyName,
+      sector,
+      interests,
+      language,
+      onlyMySector: typeof onlyMySector === 'boolean' ? onlyMySector : undefined,
+    },
   })
 
   return NextResponse.json({ user })

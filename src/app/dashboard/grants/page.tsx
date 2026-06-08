@@ -5,6 +5,8 @@ import { FloatingExpertCTA } from '@/components/contact/FloatingExpertCTA'
 import { Badge } from '@/components/ui/badge'
 import { ExternalLink, Clock, Calendar, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
+import { getSectorFilter, filterBySector } from '@/lib/sector-filter'
+import { SectorFilterToggle } from '@/components/dashboard/SectorFilterToggle'
 
 export const dynamic = 'force-dynamic'
 
@@ -49,6 +51,7 @@ interface GrantRow {
   isOngoing: boolean
   isActive: boolean
   audience: string | null
+  sectors: string[]
 }
 
 type GrantStatus = 'active' | 'expired' | 'no_deadline'
@@ -137,7 +140,8 @@ export default async function GrantsPage({
     orderBy: [{ deadline: 'asc' }, { createdAt: 'desc' }],
   })) as GrantRow[]
   // Fair-participation calls belong to /dashboard/fairs, not here.
-  const grants = grantsRaw.filter((g) => !isFairStandCall(g))
+  const sf = await getSectorFilter()
+  const grants = filterBySector(grantsRaw.filter((g) => !isFairStandCall(g)), sf)
 
   const today = kosovoToday()
 
@@ -208,6 +212,8 @@ export default async function GrantsPage({
           </Link>
         </div>
       </div>
+
+      <SectorFilterToggle prefOn={sf.prefOn} hasSector={sf.hasSector} sectorLabel={sf.label} />
 
       {!showAll && !showExpired && (
         <>

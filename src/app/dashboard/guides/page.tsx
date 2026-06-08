@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getSectorFilter, filterBySector } from '@/lib/sector-filter'
+import { SectorFilterToggle } from '@/components/dashboard/SectorFilterToggle'
 import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
 import { FloatingExpertCTA } from '@/components/contact/FloatingExpertCTA'
 import { prisma } from '@/lib/prisma'
@@ -36,10 +38,13 @@ function regionLabel(key: RegionKey, locale: Locale, short = false): string {
 
 export default async function GuidesPage() {
   const locale: Locale = getServerLocale()
-  const guides = await prisma.exportGuide.findMany({
+  const guidesRaw = await prisma.exportGuide.findMany({
     where: { isPublished: true, deletedAt: null },
     orderBy: [{ countryCode: "asc" }],
   })
+
+  const sf = await getSectorFilter()
+  const guides = filterBySector(guidesRaw, sf)
 
   const t = (sq: string, en: string) => locale === 'sq' ? sq : en
 
@@ -62,6 +67,8 @@ export default async function GuidesPage() {
           )}
         </p>
       </div>
+
+      <SectorFilterToggle prefOn={sf.prefOn} hasSector={sf.hasSector} sectorLabel={sf.label} />
 
       {guides.length === 0 ? (
         <Card>

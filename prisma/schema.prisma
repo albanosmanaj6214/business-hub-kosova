@@ -60,6 +60,7 @@ model User {
   language      String    @default("sq")
   role          Role      @default(USER)
   interests     String[]  @default([])
+  onlyMySector  Boolean   @default(false)
   emailVerified DateTime?
   image         String?
   createdAt     DateTime  @default(now())

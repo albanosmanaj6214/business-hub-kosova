@@ -32,6 +32,7 @@ export default function RegisterPage() {
     companyName: '',
     sector: '',
     interests: [] as string[],
+    onlyMySector: false,
     language: 'sq',
   })
 
@@ -71,6 +72,7 @@ export default function RegisterPage() {
           sector: form.sector,
           interests: form.interests,
           language: form.language,
+          onlyMySector: form.onlyMySector,
         }),
       })
 
@@ -204,6 +206,15 @@ export default function RegisterPage() {
                   <span className="text-sm font-medium">English</span>
                 </label>
               </div>
+            </div>
+
+            <div className="rounded-lg border border-gray-200 p-3">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" checked={form.onlyMySector} onChange={(e) => setForm({ ...form, onlyMySector: e.target.checked })} className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B4F72] focus:ring-[#2E86C1]" />
+                <span className="text-sm text-gray-700">Me trego vetem mundesite e industrise sime
+                  <span className="block text-xs text-gray-400 mt-0.5">Grante, panaire dhe udhezues vetem per sektorin qe zgjodhe. Mund ta ndryshosh kurdo te Cilesimet.</span>
+                </span>
+              </label>
             </div>
 
             <Button type="submit" className="w-full" size="lg" disabled={loading}>

@@ -159,3 +159,26 @@ export function sectorMatches(sector: SectorDef, tags: readonly string[]): boole
 export function inferSectorSlugs(tags: readonly string[]): SectorSlug[] {
   return SECTORS.filter((s) => sectorMatches(s, tags)).map((s) => s.slug)
 }
+
+// Bridge from the registration/settings sector label (a display string like
+// "Dru & Mobileri") to the canonical sector slug used across opportunities.
+export const REGISTER_SECTOR_SLUG: Record<string, SectorSlug | null> = {
+  'Prodhim Ushqimor': 'ushqim-dhe-pije',
+  'Bujqesi': 'ushqim-dhe-pije',
+  'Tekstile': 'tekstil-konfeksion',
+  'Ndertimtari': 'ndertim-materiale',
+  'Teknologji': 'tik',
+  'Metalurgji': 'metale-makineri',
+  'Minerale': 'ndertim-materiale',
+  'Dru & Mobileri': 'druri-mobilje',
+  'Plastike & Kimikate': 'kozmetike',
+  'Energji': null,
+  'Tjeter': null,
+}
+
+export function userSectorSlug(sector?: string | null): SectorSlug | null {
+  if (!sector) return null
+  if (sector in REGISTER_SECTOR_SLUG) return REGISTER_SECTOR_SLUG[sector]
+  if (sectorBySlug(sector)) return sector as SectorSlug
+  return inferSectorSlugs([sector])[0] ?? null
+}

@@ -30,6 +30,7 @@ export default function SettingsPage() {
     sector: '',
     interests: [] as string[],
     language: 'sq',
+    onlyMySector: false,
   })
 
   useEffect(() => {
@@ -43,6 +44,7 @@ export default function SettingsPage() {
             sector: data.user.sector || '',
             interests: data.user.interests || [],
             language: data.user.language || 'sq',
+            onlyMySector: data.user.onlyMySector || false,
           })
         }
       })
@@ -119,6 +121,15 @@ export default function SettingsPage() {
                   </label>
                 ))}
               </div>
+            </div>
+
+            <div className="rounded-lg border border-gray-200 p-3">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" checked={form.onlyMySector} onChange={(e) => setForm({ ...form, onlyMySector: e.target.checked })} className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B4F72] focus:ring-[#2E86C1]" />
+                <span className="text-sm text-gray-700">Me trego vetem mundesite e industrise sime
+                  <span className="block text-xs text-gray-400 mt-0.5">Grante, panaire dhe udhezues vetem per sektorin qe zgjedh. Mund ta ndryshosh kurdo.</span>
+                </span>
+              </label>
             </div>
 
             <Button type="submit" disabled={loading}>

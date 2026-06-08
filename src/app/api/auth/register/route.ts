@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { email, password, name, companyName, sector, interests, language } = body
+    const { email, password, name, companyName, sector, interests, language, onlyMySector } = body
 
     if (!email || !password) {
       return NextResponse.json(
@@ -33,6 +33,7 @@ export async function POST(req: Request) {
         sector,
         interests: interests || [],
         language: language || 'sq',
+        onlyMySector: !!onlyMySector,
         subscription: {
           create: {
             tier: 'FREE',

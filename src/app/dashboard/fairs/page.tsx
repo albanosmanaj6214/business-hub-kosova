@@ -5,6 +5,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Calendar, MapPin, ExternalLink, Clock, Globe } from 'lucide-react'
 import Link from 'next/link'
+import { getSectorFilter, filterBySector } from '@/lib/sector-filter'
+import { SectorFilterToggle } from '@/components/dashboard/SectorFilterToggle'
 
 export const dynamic = 'force-dynamic'
 
@@ -78,10 +80,13 @@ export default async function FairsPage({
 }) {
   const showPast = searchParams?.show === 'past'
 
-  const fairs = (await prisma.tradeFair.findMany({
+  const fairsRaw = (await prisma.tradeFair.findMany({
     where: { isActive: true, deletedAt: null },
     orderBy: { startDate: 'asc' },
   })) as FairRow[]
+
+  const sf = await getSectorFilter()
+  const fairs = filterBySector(fairsRaw, sf)
 
   const today = new Date()
   today.setUTCHours(0, 0, 0, 0)
@@ -133,6 +138,8 @@ export default async function FairsPage({
           Panaire ndërkombëtare të verifikuara dhe relevante për eksportuesit kosovarë. Trajnime, webinare dhe matchmaking në tabet e tjera.
         </p>
       </div>
+
+      <SectorFilterToggle prefOn={sf.prefOn} hasSector={sf.hasSector} sectorLabel={sf.label} />
 
       {/* Primary tabs: event type */}
       <div className="-mx-4 lg:-mx-8 px-4 lg:px-8 border-b border-gray-200">
