@@ -65,7 +65,7 @@ export default function LoginPage() {
             />
             <Input
               id="password"
-              label="Fjalekalimi"
+              label="Fjalëkalimi"
               type="password"
               placeholder="********"
               value={password}

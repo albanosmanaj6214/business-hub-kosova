@@ -98,6 +98,7 @@ const M: Record<string, Dict> = {
   'footer.phone':       { sq: '+383 49 814 069',    en: '+383 49 814 069',    de: '+383 49 814 069' },
   'footer.city':        { sq: 'Prishtinë, Kosovë',  en: 'Prishtina, Kosovo',  de: 'Prishtina, Kosovo' },
   'footer.email':       { sq: 'info@kosovabusinesses.aiaohub.com', en: 'info@kosovabusinesses.aiaohub.com', de: 'info@kosovabusinesses.aiaohub.com' },
+  'footer.pilot':       { sq: 'Platforma është në fazë pilot dhe zhvillohet vazhdimisht.', en: 'The platform is in a pilot phase and under continuous development.', de: 'Die Plattform befindet sich in einer Pilotphase und wird laufend weiterentwickelt.' },
 
   'pricing.title':      { sq: 'Çmimet',             en: 'Pricing',            de: 'Preise' },
   'pricing.sub':        {

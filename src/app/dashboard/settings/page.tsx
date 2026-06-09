@@ -16,7 +16,7 @@ const sectors = [
 const interestOptions = [
   { value: 'grants', label: 'Grante & Fonde' },
   { value: 'fairs', label: 'Panaire Tregtare' },
-  { value: 'guides', label: 'Udhezues Eksporti' },
+  { value: 'guides', label: 'Udhëzues Eksporti' },
   { value: 'consultations', label: 'Konsultime' },
 ]
 
@@ -78,7 +78,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Cilesimet</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Cilësimet</h1>
         <p className="text-gray-500 mt-1">Menaxhoni profilin dhe preferencat tuaja.</p>
       </div>
 
@@ -126,8 +126,8 @@ export default function SettingsPage() {
             <div className="rounded-lg border border-gray-200 p-3">
               <label className="flex items-start gap-3 cursor-pointer">
                 <input type="checkbox" checked={form.onlyMySector} onChange={(e) => setForm({ ...form, onlyMySector: e.target.checked })} className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B4F72] focus:ring-[#2E86C1]" />
-                <span className="text-sm text-gray-700">Me trego vetem mundesite e industrise sime
-                  <span className="block text-xs text-gray-400 mt-0.5">Grante, panaire dhe udhezues vetem per sektorin qe zgjedh. Mund ta ndryshosh kurdo.</span>
+                <span className="text-sm text-gray-700">Më trego vetëm mundësitë e industrisë sime
+                  <span className="block text-xs text-gray-400 mt-0.5">Grante, panaire dhe udhëzues vetëm për sektorin që zgjedh. Mund ta ndryshosh kurdo.</span>
                 </span>
               </label>
             </div>

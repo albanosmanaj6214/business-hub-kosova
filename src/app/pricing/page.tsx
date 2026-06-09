@@ -133,6 +133,12 @@ export default function PricingPage() {
             </p>
           </div>
 
+          <div className="max-w-3xl mx-auto mb-12 rounded-xl border border-[#1B4F72]/15 bg-[#1B4F72]/5 p-5 text-center">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              Platforma është duke u zhvilluar me qëllim që të jetë sa më e qasshme për bizneset kosovare. Për fazën fillestare, parashihet edhe mundësia e pilotimit me biznese të përzgjedhura, partnerë zhvillimorë, oda ekonomike dhe organizata që mbështesin sektorin privat.
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
             {plans.map((plan) => (
               <div

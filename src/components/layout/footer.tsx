@@ -60,8 +60,9 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-white/20 mt-8 pt-8 text-center text-gray-300 text-sm">
-          © {new Date().getFullYear()} Kosova Business Hub. {t('footer.rights')}
+        <div className="border-t border-white/20 mt-8 pt-8 text-center text-gray-300 text-sm space-y-1">
+          <p className="text-xs text-gray-400">{t('footer.pilot')}</p>
+          <p>© {new Date().getFullYear()} Kosova Business Hub. {t('footer.rights')}</p>
         </div>
       </div>
     </footer>

@@ -15,7 +15,7 @@ const adminNav = [
   { name: 'Perdoruesit', href: '/admin/users', icon: Users },
   { name: 'Grantet', href: '/admin/grants', icon: Search },
   { name: 'Panairet', href: '/admin/fairs', icon: Calendar },
-  { name: 'Udhezuesit', href: '/admin/guides', icon: BookOpen },
+  { name: 'Udhëzuesit', href: '/admin/guides', icon: BookOpen },
   { name: 'AI Scraper', href: '/admin/scraper', icon: Bot },
   { name: 'Njoftimet', href: '/admin/notifications', icon: Bell },
   { name: 'Leads', href: '/admin/leads', icon: Inbox },

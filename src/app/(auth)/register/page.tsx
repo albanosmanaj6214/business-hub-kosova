@@ -16,7 +16,7 @@ const sectors = [
 const interestOptions = [
   { value: 'grants', label: 'Grante & Fonde' },
   { value: 'fairs', label: 'Panaire Tregtare' },
-  { value: 'guides', label: 'Udhezues Eksporti' },
+  { value: 'guides', label: 'Udhëzues Eksporti' },
   { value: 'consultations', label: 'Konsultime' },
 ]
 
@@ -50,11 +50,11 @@ export default function RegisterPage() {
     setError('')
 
     if (form.password !== form.confirmPassword) {
-      setError('Fjalekalimi nuk perputhet')
+      setError('Fjalëkalimi nuk përputhet')
       return
     }
     if (form.password.length < 8) {
-      setError('Fjalekalimi duhet te kete se paku 8 karaktere')
+      setError('Fjalëkalimi duhet të ketë së paku 8 karaktere')
       return
     }
 
@@ -140,7 +140,7 @@ export default function RegisterPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 id="password"
-                label="Fjalekalimi"
+                label="Fjalëkalimi"
                 type="password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -148,7 +148,7 @@ export default function RegisterPage() {
               />
               <Input
                 id="confirmPassword"
-                label="Konfirmo Fjalekalimin"
+                label="Konfirmo Fjalëkalimin"
                 type="password"
                 value={form.confirmPassword}
                 onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
@@ -211,8 +211,8 @@ export default function RegisterPage() {
             <div className="rounded-lg border border-gray-200 p-3">
               <label className="flex items-start gap-3 cursor-pointer">
                 <input type="checkbox" checked={form.onlyMySector} onChange={(e) => setForm({ ...form, onlyMySector: e.target.checked })} className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B4F72] focus:ring-[#2E86C1]" />
-                <span className="text-sm text-gray-700">Me trego vetem mundesite e industrise sime
-                  <span className="block text-xs text-gray-400 mt-0.5">Grante, panaire dhe udhezues vetem per sektorin qe zgjodhe. Mund ta ndryshosh kurdo te Cilesimet.</span>
+                <span className="text-sm text-gray-700">Më trego vetëm mundësitë e industrisë sime
+                  <span className="block text-xs text-gray-400 mt-0.5">Grante, panaire dhe udhëzues vetëm për sektorin që zgjodhe. Mund ta ndryshosh kurdo te Cilësimet.</span>
                 </span>
               </label>
             </div>

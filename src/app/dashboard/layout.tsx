@@ -22,7 +22,7 @@ const navigation = [
   { name: 'Njoftime', href: '/dashboard/notifications', icon: Bell },
   { name: 'Konsultime', href: '/dashboard/bookings', icon: MessageSquare },
   { name: 'Abonimi', href: '/dashboard/subscription', icon: CreditCard },
-  { name: 'Cilesimet', href: '/dashboard/settings', icon: Settings },
+  { name: 'Cilësimet', href: '/dashboard/settings', icon: Settings },
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

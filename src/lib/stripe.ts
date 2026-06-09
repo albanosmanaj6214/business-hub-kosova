@@ -17,13 +17,13 @@ export const PLANS = {
     price: 9900,
     currency: 'eur',
     interval: 'month' as const,
-    features: ['Gjithcka ne Starter', 'Udhezues pa limit', 'AI njoftime', '2 konsultime/muaj'],
+    features: ['Gjithçka në Starter', 'Udhëzues pa limit', 'AI njoftime', '2 konsultime/muaj'],
   },
   ENTERPRISE: {
     name: 'Enterprise',
     price: 24900,
     currency: 'eur',
     interval: 'month' as const,
-    features: ['Gjithcka ne Professional', 'Konsultime pa limit', 'API akses', 'Suport prioritar'],
+    features: ['Gjithçka në Professional', 'Konsultime pa limit', 'API akses', 'Suport prioritar'],
   },
 }
