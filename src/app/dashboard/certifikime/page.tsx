@@ -114,7 +114,6 @@ export default function CertificationsPage({
 
 function CertificationCard({ cert }: { cert: Certification }) {
   const m = mandatoryLabel(cert.mandatory)
-  const cost = cert.costRange
   const dur = cert.durationMonths
 
   return (
@@ -163,35 +162,19 @@ function CertificationCard({ cert }: { cert: Certification }) {
       </div>
 
       {/* Stats strip */}
+      {/* Stats strip. "Kush e jep" / "Në Kosovë" / "Kosto" are placeholders ("--")
+          reserved as editable sponsor slots (a company can pay to appear here).
+          "Kohëzgjatja" stays real. */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-gray-100">
+        <Stat icon={<Building2 className="h-4 w-4" />} label="Kush e jep" value="--" />
+        <Stat icon={<MapPin className="h-4 w-4" />} label="Në Kosovë" value="--" />
+        <Stat icon={<Wallet className="h-4 w-4" />} label="Kosto" value="--" />
         <Stat
-          icon={<Building2 className="h-4 w-4" />}
-          label="Kush e jep"
-          value={cert.issuedBy[0] + (cert.issuedBy.length > 1 ? ` +${cert.issuedBy.length - 1}` : '')}
+          icon={<Clock className="h-4 w-4" />}
+          label="Kohëzgjatja"
+          value={dur ? `${dur.min}–${dur.max} muaj` : '--'}
+          note={dur?.note}
         />
-        {cert.issuedByKosovo && cert.issuedByKosovo.length > 0 && (
-          <Stat
-            icon={<MapPin className="h-4 w-4" />}
-            label="Në Kosovë"
-            value={cert.issuedByKosovo[0] + (cert.issuedByKosovo.length > 1 ? ` +${cert.issuedByKosovo.length - 1}` : '')}
-          />
-        )}
-        {cost && (
-          <Stat
-            icon={<Wallet className="h-4 w-4" />}
-            label="Kosto"
-            value={`€${cost.min.toLocaleString()}–${cost.max.toLocaleString()}`}
-            note={cost.note}
-          />
-        )}
-        {dur && (
-          <Stat
-            icon={<Clock className="h-4 w-4" />}
-            label="Kohëzgjatja"
-            value={`${dur.min}–${dur.max} muaj`}
-            note={dur.note}
-          />
-        )}
       </div>
 
       {/* Markets */}

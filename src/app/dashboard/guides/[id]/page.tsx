@@ -7,7 +7,6 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
   ArrowLeft,
-  ChevronDown,
   ExternalLink,
   CheckCircle2,
   CircleDashed,
@@ -73,6 +72,8 @@ function SectionHeader({ icon: Icon, title }: { icon: any; title: string }) {
   )
 }
 
+// Each guide section is shown as its own open box (no dropdowns) so the whole
+// guide reads top to bottom, like the export-terms cards.
 function CollapsibleSection({
   icon: Icon,
   title,
@@ -85,21 +86,18 @@ function CollapsibleSection({
   children: React.ReactNode
 }) {
   return (
-    <details className="mb-4 bg-white border border-gray-200 rounded-lg group overflow-hidden">
-      <summary className="cursor-pointer px-6 py-4 list-none flex items-center justify-between hover:bg-gray-50 transition-colors">
-        <div className="flex items-center gap-3">
-          <Icon className="h-5 w-5 text-[#1B4F72]" />
-          <h2 className="text-lg font-semibold text-[#1B4F72]">{title}</h2>
-          {typeof count === 'number' && count > 0 && (
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{count}</span>
-          )}
-        </div>
-        <ChevronDown className="h-5 w-5 text-gray-400 group-open:rotate-180 transition-transform" />
-      </summary>
-      <div className="px-6 pb-6 pt-2 border-t border-gray-100">
+    <section className="mb-6 bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <div className="px-6 py-4 flex items-center gap-3 border-b border-gray-100">
+        <Icon className="h-5 w-5 text-[#1B4F72] shrink-0" />
+        <h2 className="text-lg font-semibold text-[#1B4F72]">{title}</h2>
+        {typeof count === 'number' && count > 0 && (
+          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{count}</span>
+        )}
+      </div>
+      <div className="px-6 py-5">
         {children}
       </div>
-    </details>
+    </section>
   )
 }
 
