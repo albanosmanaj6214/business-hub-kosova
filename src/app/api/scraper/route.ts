@@ -9,6 +9,7 @@ import { scrapeKosme } from '@/lib/scrapers/kosme'
 import { scrapeOek } from '@/lib/scrapers/oek'
 import type { OpportunityInput } from '@/lib/scrapers/types'
 import { classifyGrantDeadline, classifyResultToUpdate } from '@/lib/classifiers/deadline-classifier'
+import { runRegistrySource, REGISTRY_KINDS, type RegistryRunResult } from '@/lib/scrapers/framework/runner'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -272,13 +273,32 @@ async function runAll(body: RunBody) {
   const dryRun = body.dryRun === true
   const targetCode = body.source?.toUpperCase()
 
-  const codes = targetCode
-    ? [targetCode]
+  // Custom scrapers (existing, untouched).
+  const customCodes = targetCode
+    ? (SCRAPERS[targetCode] ? [targetCode] : [])
     : Object.keys(SCRAPERS)
 
   const results: SourceRunResult[] = []
-  for (const code of codes) {
+  for (const code of customCodes) {
     results.push(await runOne(code, dryRun))
+  }
+
+  // Registry (adapter-driven) sources. Additive: never touches the custom path.
+  // A targeted code can run even if inactive (so admin "Run now" can test it).
+  const registry: RegistryRunResult[] = []
+  if (!dryRun) {
+    const where: any = targetCode
+      ? { code: targetCode, kind: { in: REGISTRY_KINDS } }
+      : { isActive: true, kind: { in: REGISTRY_KINDS } }
+    const regSources = await prisma.source.findMany({ where })
+    for (const s of regSources) {
+      if (SCRAPERS[s.code]) continue
+      registry.push(await runRegistrySource(s, targetCode ? 'MANUAL' : 'CRON'))
+    }
+  }
+
+  if (targetCode && customCodes.length === 0 && registry.length === 0) {
+    results.push({ code: targetCode, ok: false, error: `No scraper or registry adapter for ${targetCode}` })
   }
 
   const totals = results.reduce(
@@ -298,6 +318,7 @@ async function runAll(body: RunBody) {
   return NextResponse.json({
     mode: dryRun ? 'REAL_DRY_RUN' : 'REAL',
     sources: results,
+    registry,
     totals,
   })
 }

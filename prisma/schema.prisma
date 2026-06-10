@@ -320,6 +320,16 @@ model Source {
   strategies Json
   isActive   Boolean        @default(true)
   schedule   String?
+  // --- Source Registry / framework (additive) ---
+  kind          String?   // html | rss | wordpress | pdf | custom
+  orgCategory   String?   // government | municipality | donor | chamber | association
+  reliability   String?   @default("medium") // high | medium | low
+  publishMode   String    @default("review") // auto | review
+  frequency     String    @default("daily")  // daily | weekly
+  sectorsHint   String[]  @default([])
+  keywords      String[]  @default([])
+  selectors     Json?     // adapter config (feed url, list/item selectors, etc.)
+  lastCheckedAt DateTime?
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
 
@@ -349,6 +359,18 @@ model Opportunity {
   firstSeenAt DateTime          @default(now())
   lastSeenAt  DateTime          @default(now())
   attemptId   String?
+  // --- Framework fields (additive) ---
+  verificationStatus  String?   // auto_publish | needs_review | published | rejected
+  fingerprint         String?
+  publishedAt         DateTime?
+  amountMin           Int?
+  amountMax           Int?
+  supportTypes        String[]  @default([])
+  documents           Json?
+  attachments         Json?
+  originalTextSnippet String?   @db.Text
+  extractedFrom       String?
+  scrapedAt           DateTime?
 
   source  Source         @relation(fields: [sourceId], references: [id], onDelete: Cascade)
   attempt ScrapeAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
@@ -357,6 +379,8 @@ model Opportunity {
   @@index([type, status])
   @@index([deadline])
   @@index([lastSeenAt])
+  @@index([fingerprint])
+  @@index([verificationStatus])
 }
 
 model ScrapeAttempt {
