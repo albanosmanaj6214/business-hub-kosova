@@ -6,9 +6,10 @@ import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 import { Wordmark } from '@/components/brand/Wordmark'
+import { KonsulentiWidget, openKonsulenti } from '@/components/konsulenti/KonsulentiWidget'
 import {
   LayoutDashboard, Search, Calendar, BookOpen,
-  Bell, Settings, CreditCard, MessageSquare, Menu, X, GraduationCap,
+  Bell, Settings, CreditCard, MessageSquare, MessagesSquare, Menu, X, GraduationCap,
   LogOut, Shield, ChevronRight, ShieldCheck,
 } from 'lucide-react'
 
@@ -70,6 +71,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             )
           })}
 
+          <button
+            type="button"
+            onClick={() => { setSidebarOpen(false); openKonsulenti() }}
+            className="w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-[#1B4F72] hover:bg-[#1B4F72]/5 transition-colors"
+          >
+            <MessagesSquare className="h-5 w-5 mr-3" />
+            Konsulenti
+            <span className="ml-auto text-[10px] font-semibold tracking-wide bg-[#1B4F72]/10 text-[#1B4F72] px-1.5 py-0.5 rounded">RI</span>
+          </button>
+
           {session?.user?.role === 'ADMIN' && (
             <Link
               href="/admin"
@@ -120,6 +131,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {children}
         </main>
       </div>
+
+      <KonsulentiWidget />
     </div>
   )
 }
