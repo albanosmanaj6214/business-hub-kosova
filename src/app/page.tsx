@@ -45,7 +45,7 @@ export default async function HomePage() {
 
   // ---- Hero ----
   const hero = {
-    title1: { sq: 'Grantet, panairet dhe udhëzuesit e eksportit për bizneset e Kosovës', en: 'Grants, trade fairs, and export guides for Kosovo businesses', de: 'Förderaufrufe, Messen und Export-Leitfäden für Unternehmen im Kosovo' },
+    title1: { sq: 'Grantet, panairet dhe udhëzuesit e eksportit', en: 'Grants, trade fairs, and export guides', de: 'Förderaufrufe, Messen und Export-Leitfäden' },
     title2: { sq: 'në një platformë të vetme.', en: 'in one single platform.', de: 'auf einer einzigen Plattform.' },
     sub: {
       sq: 'Kosova Business Hub i ndihmon bizneset kosovare të gjejnë më shpejt mundësi financimi, panaire ndërkombëtare, rregulla eksporti dhe informata praktike për rritje në tregjet vendore dhe të jashtme.',
@@ -84,7 +84,7 @@ export default async function HomePage() {
 
   // ---- Who it is for ----
   const audienceTitle = { sq: 'Për kë është platforma?', en: 'Who the platform is for', de: 'Für wen die Plattform ist' }
-  const audienceSub = { sq: 'Ndërtuar për biznese kosovare që kërkojnë rritje, financim, ekspansion dhe qasje në tregje të reja.', en: 'Built for Kosovo businesses seeking growth, financing, expansion, and access to new markets.', de: 'Entwickelt für kosovarische Unternehmen, die Wachstum, Finanzierung, Expansion und Zugang zu neuen Märkten suchen.' }
+  const audienceSub = { sq: 'Ndërtuar për biznese kosovare që kërkojnë rritje, financim, ekspansion dhe qasje në tregje të reja.', en: 'Built  seeking growth, financing, expansion, and access to new markets.', de: 'Entwickelt für kosovarische Unternehmen, die Wachstum, Finanzierung, Expansion und Zugang zu neuen Märkten suchen.' }
   const audiences = [
     { icon: Factory, l: { sq: 'Biznese prodhuese', en: 'Manufacturers', de: 'Hersteller' } },
     { icon: Ship, l: { sq: 'Eksportues aktualë', en: 'Active exporters', de: 'Aktive Exporteure' } },
@@ -106,7 +106,7 @@ export default async function HomePage() {
 
   // ---- Impact / KPIs ----
   const impactTitle = { sq: 'Impakti që synojmë', en: 'The impact we aim for', de: 'Die angestrebte Wirkung' }
-  const impactBody = { sq: 'Kosova Business Hub synon të krijojë ndikim praktik dhe të matshëm te bizneset kosovare duke përmirësuar qasjen në informata, duke rritur pjesëmarrjen në mundësi financimi dhe duke i ndihmuar kompanitë të përgatiten më mirë për eksport.', en: 'Kosova Business Hub aims to create practical, measurable impact for Kosovo businesses by improving access to information, increasing participation in financing opportunities, and helping companies prepare better for export.', de: 'Kosova Business Hub will mit besserem Informationszugang, höherer Beteiligung an Finanzierungsmöglichkeiten und besserer Exportvorbereitung eine praktische, messbare Wirkung für kosovarische Unternehmen erzielen.' }
+  const impactBody = { sq: 'Kosova Business Hub synon të krijojë ndikim praktik dhe të matshëm te bizneset kosovare duke përmirësuar qasjen në informata, duke rritur pjesëmarrjen në mundësi financimi dhe duke i ndihmuar kompanitë të përgatiten më mirë për eksport.', en: 'Kosova Business Hub aims to create practical, measurable impact  by improving access to information, increasing participation in financing opportunities, and helping companies prepare better for export.', de: 'Kosova Business Hub will mit besserem Informationszugang, höherer Beteiligung an Finanzierungsmöglichkeiten und besserer Exportvorbereitung eine praktische, messbare Wirkung für kosovarische Unternehmen erzielen.' }
   const kpis = [
     { v: String(counts.users), l: { sq: 'Biznese të regjistruara', en: 'Registered businesses', de: 'Registrierte Unternehmen' } },
     { v: String(counts.grants), l: { sq: 'Grante e mundësi të publikuara', en: 'Grants and opportunities published', de: 'Veröffentlichte Förderungen und Chancen' } },
