@@ -251,21 +251,13 @@ export default async function HomePage() {
       </section>
 
       {/* Sources monitored */}
-      <section className="py-16">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#1B4F72]/10 mb-4">
-            <ShieldCheck className="h-6 w-6 text-[#1B4F72]" />
-          </div>
-          <h2 className="text-2xl md:text-3xl font-bold text-[#1B4F72] mb-3">{tx(sourcesTitle)}</h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">{tx(sourcesSub)}</p>
-          <div className="flex flex-wrap justify-center gap-2.5">
-            {sourceItems.map((s) => (
-              <span key={s} className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700">
-                <Landmark className="h-4 w-4 text-[#2E86C1]" />
-                {s}
-              </span>
-            ))}
-          </div>
+      <section className="py-8 border-y border-gray-100 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-xs font-semibold tracking-wider text-gray-500 uppercase mb-2">{tx(sourcesTitle)}</p>
+          <p className="text-sm text-gray-700 leading-relaxed">
+            <ShieldCheck className="inline h-4 w-4 text-[#2E86C1] mr-1.5 -mt-0.5" />
+            {sourceItems.slice(0, -1).join(', ')} {locale === 'de' ? 'und' : locale === 'en' ? 'and' : 'dhe'} {sourceItems[sourceItems.length - 1]}.
+          </p>
         </div>
       </section>
 
