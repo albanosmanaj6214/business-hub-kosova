@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { usePathname } from 'next/navigation'
 import { MessageCircle, X, Send, Loader2, Sparkles, Plus } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { cn } from '@/lib/utils'
@@ -52,6 +53,11 @@ export function KonsulentiWidget({ userName }: Props) {
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   const name = firstName(userName)
+  const pathname = usePathname()
+
+  useEffect(() => {
+    setOpen(false)
+  }, [pathname])
 
   useEffect(() => {
     ctxRef.current = {
@@ -158,6 +164,16 @@ export function KonsulentiWidget({ userName }: Props) {
           <MessageCircle className="h-6 w-6" />
           <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-amber-400 ring-2 ring-white animate-pulse" />
         </button>
+      )}
+
+      {open && (
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          aria-label="Mbyll Asistentin KBH"
+          tabIndex={-1}
+          className="fixed inset-0 z-20 bg-black/20 transition-opacity"
+        />
       )}
 
       <div
