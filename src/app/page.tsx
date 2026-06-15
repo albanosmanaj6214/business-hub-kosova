@@ -5,7 +5,8 @@ import { TradePulse } from '@/components/marketing/TradePulse'
 import { Button } from '@/components/ui/button'
 import { getServerT, getServerLocale } from '@/lib/i18n-server'
 import type { Locale } from '@/lib/i18n'
-import { prisma } from '@/lib/prisma'
+import { prisma } from "@/lib/prisma"
+import { countActiveGrants } from "@/lib/active-grants"
 import { SECTORS } from '@/lib/sectors'
 import {
   Search, Calendar, BookOpen, ArrowRight,
@@ -20,7 +21,7 @@ interface Tri { sq: string; en: string; de: string }
 
 async function getStats() {
   const [grants, fairs, guides, users, sources] = await Promise.all([
-    prisma.grant.count({ where: { isActive: true, deletedAt: null } }),
+    countActiveGrants(),
     prisma.tradeFair.count({ where: { isActive: true, deletedAt: null, startDate: { gte: new Date() } } }),
     prisma.exportGuide.count({ where: { isPublished: true, deletedAt: null } }),
     prisma.user.count(),

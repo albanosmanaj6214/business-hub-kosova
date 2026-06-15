@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { prisma } from "@/lib/prisma"
+import { countActiveGrants } from "@/lib/active-grants"
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Search, Calendar, BookOpen, Bell, Clock, RefreshCw, CheckCircle2, AlertTriangle } from 'lucide-react'
@@ -24,7 +25,7 @@ export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
 
   const [grantsCount, fairsCount, guidesCount, unreadNotifs] = await Promise.all([
-    prisma.grant.count({ where: { isActive: true, deletedAt: null } }),
+    countActiveGrants(),
     prisma.tradeFair.count({ where: { isActive: true, deletedAt: null, startDate: { gte: new Date() } } }),
     prisma.exportGuide.count({ where: { isPublished: true, deletedAt: null } }),
     prisma.notification.count({ where: { userId: session?.user?.id, isRead: false } }),
