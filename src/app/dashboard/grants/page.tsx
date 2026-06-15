@@ -170,9 +170,9 @@ export default async function GrantsPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Databaza e Granteve</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Grantet për biznesin tënd</h1>
           <p className="text-gray-500 mt-1">
-            Grante dhe fonde për bizneset e Kosovës. Sortuar sipas afatit më të afërt.
+            Mundësi financimi nga institucionet e Kosovës dhe partnerët ndërkombëtarë. Më të afërtat dalin të parat.
           </p>
         </div>
         <div className="flex gap-2 text-sm">

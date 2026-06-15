@@ -74,11 +74,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <button
             type="button"
             onClick={() => { setSidebarOpen(false); openKonsulenti() }}
-            className="w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-[#1B4F72] hover:bg-[#1B4F72]/5 transition-colors"
+            className="w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium bg-gradient-to-r from-[#1B4F72] to-[#2E86C1] text-white shadow-sm hover:shadow-md hover:from-[#143a55] hover:to-[#1B6FA5] transition-all"
           >
             <MessagesSquare className="h-5 w-5 mr-3" />
-            Konsulenti
-            <span className="ml-auto text-[10px] font-semibold tracking-wide bg-[#1B4F72]/10 text-[#1B4F72] px-1.5 py-0.5 rounded">RI</span>
+            Asistenti KBH
+            <span className="ml-auto text-[10px] font-bold tracking-wider bg-amber-400 text-[#1B4F72] px-2 py-0.5 rounded-full shadow-sm animate-pulse">E RE</span>
           </button>
 
           {session?.user?.role === 'ADMIN' && (
@@ -132,7 +132,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
       </div>
 
-      <KonsulentiWidget />
+      <KonsulentiWidget userName={session?.user?.name} />
     </div>
   )
 }

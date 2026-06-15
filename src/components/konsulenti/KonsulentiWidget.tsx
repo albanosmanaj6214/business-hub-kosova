@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { MessageCircle, X, Send, Loader2, Sparkles } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 import { cn } from '@/lib/utils'
 
 interface ChatMessage {
@@ -29,7 +30,16 @@ export function openKonsulenti() {
   ctxRef.current?.open()
 }
 
-export function KonsulentiWidget() {
+interface Props {
+  userName?: string | null
+}
+
+function firstName(name?: string | null): string {
+  if (!name) return ''
+  return name.trim().split(/\s+/)[0] || ''
+}
+
+export function KonsulentiWidget({ userName }: Props) {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
@@ -37,8 +47,11 @@ export function KonsulentiWidget() {
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [usage, setUsage] = useState<{ used: number; limit: number; tier: string | null } | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [historyLoaded, setHistoryLoaded] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  const name = firstName(userName)
 
   useEffect(() => {
     ctxRef.current = {
@@ -56,7 +69,8 @@ export function KonsulentiWidget() {
   }, [])
 
   useEffect(() => {
-    if (!open || !sessionId || messages.length > 0) return
+    if (!open || !sessionId || historyLoaded) return
+    setHistoryLoaded(true)
     fetch(`/api/konsulenti/chat?sessionId=${encodeURIComponent(sessionId)}`)
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
@@ -67,7 +81,7 @@ export function KonsulentiWidget() {
         }
       })
       .catch(() => {})
-  }, [open, sessionId, messages.length])
+  }, [open, sessionId, historyLoaded])
 
   useEffect(() => {
     if (open && scrollRef.current) {
@@ -79,12 +93,19 @@ export function KonsulentiWidget() {
     if (open && inputRef.current) inputRef.current.focus()
   }, [open])
 
+  const appendUnique = useCallback((m: ChatMessage) => {
+    setMessages((prev) => {
+      const last = prev[prev.length - 1]
+      if (last && last.role === m.role && last.content === m.content) return prev
+      return [...prev, m]
+    })
+  }, [])
+
   const send = useCallback(async (text: string) => {
     const trimmed = text.trim()
     if (!trimmed || sending) return
     setErrorMsg(null)
-    const localUserMsg: ChatMessage = { id: `tmp-${Date.now()}`, role: 'user', content: trimmed }
-    setMessages((m) => [...m, localUserMsg])
+    appendUnique({ id: `u-${Date.now()}`, role: 'user', content: trimmed })
     setInput('')
     setSending(true)
     try {
@@ -107,36 +128,42 @@ export function KonsulentiWidget() {
         if (typeof window !== 'undefined') window.localStorage.setItem('konsulenti.sessionId', data.sessionId)
       }
       if (data.usage) setUsage(data.usage)
-      setMessages((m) => [...m, { id: `a-${Date.now()}`, role: 'assistant', content: data.reply || '' }])
+      appendUnique({ id: `a-${Date.now()}`, role: 'assistant', content: data.reply || '' })
     } catch {
       setErrorMsg('Lidhja u prish. Provo prap.')
     } finally {
       setSending(false)
     }
-  }, [sessionId, sending])
+  }, [sessionId, sending, appendUnique])
 
   const startNewSession = () => {
     setMessages([])
     setSessionId(null)
+    setHistoryLoaded(true)
     setErrorMsg(null)
     if (typeof window !== 'undefined') window.localStorage.removeItem('konsulenti.sessionId')
   }
+
+  const welcomeName = name ? `, ${name}` : ''
 
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        aria-label={open ? 'Mbyll Konsulentin' : 'Hap Konsulentin'}
-        className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full bg-[#1B4F72] text-white shadow-lg hover:bg-[#143a55] flex items-center justify-center transition"
+        aria-label={open ? 'Mbyll Asistentin KBH' : 'Hap Asistentin KBH'}
+        className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full bg-[#1B4F72] text-white shadow-lg hover:bg-[#143a55] flex items-center justify-center transition group"
       >
         {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
+        {!open && (
+          <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-amber-400 ring-2 ring-white animate-pulse" />
+        )}
       </button>
 
       <div
         className={cn(
-          'fixed inset-y-0 right-0 z-30 w-full sm:w-[420px] bg-white border-l border-gray-200 shadow-xl flex flex-col transition-transform duration-200',
-          open ? 'translate-x-0' : 'translate-x-full',
+          'fixed inset-y-0 left-0 z-30 w-full sm:w-[420px] bg-white border-r border-gray-200 shadow-xl flex flex-col transition-transform duration-200',
+          open ? 'translate-x-0' : '-translate-x-full',
         )}
         aria-hidden={!open}
       >
@@ -144,7 +171,7 @@ export function KonsulentiWidget() {
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5" />
             <div>
-              <h2 className="text-sm font-semibold leading-tight">Konsulenti</h2>
+              <h2 className="text-sm font-semibold leading-tight">Asistenti KBH</h2>
               <p className="text-[11px] opacity-90 leading-tight">Pyetje për grante, panaire, eksport</p>
             </div>
           </div>
@@ -160,8 +187,8 @@ export function KonsulentiWidget() {
           {messages.length === 0 ? (
             <div className="space-y-3">
               <div className="bg-white border border-gray-200 rounded-2xl p-4 text-sm text-gray-700">
-                <p className="font-medium text-gray-900 mb-1">Mirë se erdhe.</p>
-                <p>Më pyet për grante aktive, panaire ndërkombëtare, certifikime ose si të eksportosh në një shtet konkret. Përgjigjem me të dhëna të vërteta nga platforma.</p>
+                <p className="font-medium text-gray-900 mb-1">Mirë se erdhe{welcomeName}.</p>
+                <p>Më pyet për grantet aktive, panairet ndërkombëtare, certifikime ose si të eksportosh në një shtet. Të përgjigjem me të dhënat nga platforma direkt këtu.</p>
               </div>
               <div className="space-y-2">
                 <p className="text-[11px] uppercase tracking-wide text-gray-500 font-medium">Provo</p>
@@ -181,13 +208,27 @@ export function KonsulentiWidget() {
               <div key={m.id} className={cn('flex', m.role === 'user' ? 'justify-end' : 'justify-start')}>
                 <div
                   className={cn(
-                    'max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm whitespace-pre-wrap leading-relaxed',
+                    'max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed',
                     m.role === 'user'
-                      ? 'bg-[#1B4F72] text-white rounded-br-sm'
+                      ? 'bg-[#1B4F72] text-white rounded-br-sm whitespace-pre-wrap'
                       : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm',
                   )}
                 >
-                  {m.content}
+                  {m.role === 'assistant' ? (
+                    <div className="prose prose-sm max-w-none prose-p:my-1.5 prose-ul:my-1.5 prose-ol:my-1.5 prose-li:my-0.5 prose-strong:text-gray-900 prose-a:text-[#1B4F72] prose-a:font-medium prose-headings:text-gray-900 prose-headings:font-semibold prose-h3:text-sm prose-h3:mt-2 prose-h3:mb-1">
+                      <ReactMarkdown
+                        components={{
+                          a: ({ href, children }) => (
+                            <a href={href} className="text-[#1B4F72] underline underline-offset-2 hover:text-[#143a55]" target={href?.startsWith('http') ? '_blank' : undefined} rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}>{children}</a>
+                          ),
+                        }}
+                      >
+                        {m.content}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    m.content
+                  )}
                 </div>
               </div>
             ))

@@ -15,17 +15,36 @@ const MONTHLY_LIMIT_FREE = 10
 const MONTHLY_LIMIT_STARTER = 30
 const MONTHLY_LIMIT_PROFESSIONAL = 200
 
-function systemInstruction(ctx: UserContext): string {
+function firstName(name?: string | null): string {
+  if (!name) return ''
+  return name.trim().split(/\s+/)[0] || ''
+}
+
+function systemInstruction(ctx: UserContext, userName: string | null): string {
+  const fn = firstName(userName)
   return [
-    'Ti je "Konsulenti" i Kosova Business Hub: një partner praktik për eksport, grante, panaire dhe certifikime për bizneset e Kosovës.',
+    'Ti je "Asistenti KBH" i Kosova Business Hub: partner praktik për grante, panaire, eksport dhe certifikime për bizneset e Kosovës.',
     'Përgjigju gjithmonë në gjuhën në të cilën të drejtohet përdoruesi. Default: shqip.',
-    'Ton: i drejtpërdrejtë, i ngrohtë, konkret. Pa lëvdata. Pa formula gjenerike. Pa em-dash. Pa fjalët "asistent virtual", "AI", "robot".',
-    'Para se të rekomandosh diçka konkrete (grant, panair, dokument), THIRR një tool për të marrë të dhëna të vërteta nga baza. Mos shpik fakte.',
-    'Kur sjell një grant ose panair, jep titullin, ofruesin, afatin (në shqip: "18 Qershor 2026"), shumën, dhe një rresht përse i shkon biznesit. Vendos linkun "Detaje" me URL-në që kthen tool-i.',
-    'Nëse pyetja del jashtë temës (politikë, kuriozitete personale), kthe bisedën në mënyrë miqësore te tema e biznesit.',
-    'Nëse user-i ka sektor në profil, prioritizoji rezultatet që i shkojnë. Nëse nuk e ka caktuar, mund ta pyesësh.',
-    'Kur përdoruesi pyet "çfarë grantesh kam?" ose "ku të aplikoj?", thirr searchGrants me ose pa filtrim sipas sektorit.',
-    ctx.sector ? `Sektori i regjistruar i përdoruesit: ${ctx.sector}.` : '',
+    'Ton: i drejtpërdrejtë, miqësor, konkret. Pa lëvdata. Pa em-dash. Pa fjalët "asistent virtual", "AI", "robot".',
+    fn ? `Drejtohu përdoruesit me emër (${fn}) herë pas here, jo në çdo fjali.` : '',
+    '',
+    'RREGULLA TË FORMATIMIT (e rëndësishme):',
+    '- Mbaje përgjigjen të SHKURTËR: maksimumi 6–10 rreshta totale.',
+    '- Përdor markdown: **bold** për tituj/emra grantesh, listë me `- ` për pikat.',
+    '- Mos shpjego gjithçka. Sill 3–5 pika kryesore. Detajet i lë në link.',
+    '- Çdo grant/panair/udhëzues përfundo me një link "[Detaje](URL)" duke përdorur URL-në që ka kthyer tool-i (detailUrl).',
+    '- Nëse pergjigjja del e gjatë, sill kryesoret + një rresht "Më shumë te [faqja]([URL])".',
+    '',
+    'RREGULLA TË TË DHËNAVE:',
+    '- Para se të rekomandosh diçka konkrete, THIRR një tool. Mos shpik fakte, mos shpik shifra.',
+    '- Çdo grant: titull (bold), ofruesi, afati shqip ("18 Qershor 2026"), shuma, dhe lidhja Detaje.',
+    '- Çdo panair: emër (bold), data, qyteti/shteti, tipi (FAIR/MATCHMAKING), lidhja.',
+    '- Nëse user-i ka sektor në profil, prioritizo ato që i shkojnë. Nëse jo, kërko të zgjedhë.',
+    '- Pyetje jashtë temës (politikë etj.): kthe bisedën miqësisht te biznesi.',
+    '',
+    'KONTEKSTI I PËRDORUESIT:',
+    fn ? `Emri: ${fn}.` : '',
+    ctx.sector ? `Sektori: ${ctx.sector}.` : 'Sektori nuk është caktuar në profil.',
     ctx.companyName ? `Kompania: ${ctx.companyName}.` : '',
     ctx.interests.length ? `Interesat: ${ctx.interests.join(', ')}.` : '',
     `Data e sotme: ${new Date().toISOString().slice(0, 10)}.`,
@@ -132,7 +151,7 @@ export async function POST(req: NextRequest) {
         model: MODEL,
         contents: currentContents,
         config: {
-          systemInstruction: systemInstruction(ctx),
+          systemInstruction: systemInstruction(ctx, user.name),
           tools: [{ functionDeclarations: TOOL_DECLARATIONS as unknown as never[] }],
           temperature: 0.4,
         },
@@ -143,7 +162,12 @@ export async function POST(req: NextRequest) {
       const calls = parts.filter((p) => p.functionCall).map((p) => p.functionCall!)
 
       if (calls.length === 0) {
-        assistantText = parts.map((p) => p.text || '').join('').trim()
+        const texts = parts.map((p) => (p.text || '').trim()).filter(Boolean)
+        const unique: string[] = []
+        for (const t of texts) {
+          if (unique[unique.length - 1] !== t) unique.push(t)
+        }
+        assistantText = unique.join('\n').trim()
         break
       }
 
