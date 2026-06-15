@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { MessageCircle, X, Send, Loader2, Sparkles } from 'lucide-react'
+import { MessageCircle, X, Send, Loader2, Sparkles, Plus } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { cn } from '@/lib/utils'
 
@@ -148,17 +148,17 @@ export function KonsulentiWidget({ userName }: Props) {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-label={open ? 'Mbyll Asistentin KBH' : 'Hap Asistentin KBH'}
-        className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full bg-[#1B4F72] text-white shadow-lg hover:bg-[#143a55] flex items-center justify-center transition group"
-      >
-        {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
-        {!open && (
+      {!open && (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Hap Asistentin KBH"
+          className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full bg-[#1B4F72] text-white shadow-lg hover:bg-[#143a55] flex items-center justify-center transition"
+        >
+          <MessageCircle className="h-6 w-6" />
           <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-amber-400 ring-2 ring-white animate-pulse" />
-        )}
-      </button>
+        </button>
+      )}
 
       <div
         className={cn(
@@ -175,9 +175,20 @@ export function KonsulentiWidget({ userName }: Props) {
               <p className="text-[11px] opacity-90 leading-tight">Pyetje për grante, panaire, eksport</p>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <button onClick={startNewSession} className="text-[11px] px-2 py-1 rounded hover:bg-white/10" title="Bisedë e re">E re</button>
-            <button onClick={() => setOpen(false)} className="p-1 rounded hover:bg-white/10" aria-label="Mbyll">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={startNewSession}
+              className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-full bg-white/15 hover:bg-white/25 ring-1 ring-white/30 transition"
+              title="Fillo bisedë të re"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Bisedë e re
+            </button>
+            <button
+              onClick={() => setOpen(false)}
+              className="p-1.5 rounded-full hover:bg-white/15 transition"
+              aria-label="Mbyll"
+            >
               <X className="h-4 w-4" />
             </button>
           </div>
