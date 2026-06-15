@@ -350,7 +350,7 @@ function Section({
       {paginate && grants.length > 12 ? (
         <PaginatedGrid
           resetKey={title}
-          loadMoreLabel={(_v, remaining, step) => `Shfaq ${step} grante të tjera (${remaining} të mbetura)`}
+          itemNoun="grante të tjera"
         >
           {cards}
         </PaginatedGrid>

@@ -255,7 +255,7 @@ export default async function FairsPage({
       ) : (
         <PaginatedGrid
           resetKey={`${typeFilter}|${sectorFilter}|${countryFilter}|${showPast ? 'past' : 'up'}`}
-          loadMoreLabel={(_v, remaining, step) => `Shfaq ${step} evente të tjera (${remaining} të mbetura)`}
+          itemNoun="evente të tjera"
         >
           {list.map((fair) => (
             <FairCard key={fair.id} fair={fair} today={today} past={showPast} />
