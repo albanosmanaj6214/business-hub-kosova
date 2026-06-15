@@ -4,6 +4,7 @@ import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
 import { Badge } from '@/components/ui/badge'
 import { ExternalLink, Clock, Calendar, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
+import { PaginatedGrid } from '@/components/dashboard/PaginatedGrid'
 
 export const dynamic = 'force-dynamic'
 
@@ -272,6 +273,7 @@ export default async function GrantsPage({
                   icon={<Clock className="h-5 w-5 text-gray-500" />}
                   grants={expiredByYear.get(y)!}
                   today={today}
+                  paginate
                 />
               ))}
             </>
@@ -304,6 +306,7 @@ export default async function GrantsPage({
               icon={<Clock className="h-5 w-5 text-gray-500" />}
               grants={expiredByYear.get(y)!}
               today={today}
+              paginate
             />
           ))}
         </>
@@ -324,13 +327,18 @@ function Section({
   grants,
   today,
   note,
+  paginate = false,
 }: {
   title: string
   icon: React.ReactNode
   grants: GrantRow[]
   today: Date
   note?: string
+  paginate?: boolean
 }) {
+  const cards = grants.map((grant) => (
+    <GrantCard key={grant.id} grant={grant} today={today} />
+  ))
   return (
     <section className="space-y-3">
       <div className="flex items-center gap-2">
@@ -339,11 +347,16 @@ function Section({
         <span className="text-sm text-gray-500">· {grants.length}</span>
       </div>
       {note && <p className="text-xs text-gray-500 -mt-2">{note}</p>}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {grants.map((grant) => (
-          <GrantCard key={grant.id} grant={grant} today={today} />
-        ))}
-      </div>
+      {paginate && grants.length > 12 ? (
+        <PaginatedGrid
+          resetKey={title}
+          loadMoreLabel={(_v, remaining, step) => `Shfaq ${step} grante të tjera (${remaining} të mbetura)`}
+        >
+          {cards}
+        </PaginatedGrid>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{cards}</div>
+      )}
     </section>
   )
 }

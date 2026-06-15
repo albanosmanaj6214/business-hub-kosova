@@ -6,6 +6,7 @@ import { Calendar, MapPin, ExternalLink, Clock, Globe } from 'lucide-react'
 import Link from 'next/link'
 import { getSectorFilter, filterBySector } from '@/lib/sector-filter'
 import { SectorFilterToggle } from '@/components/dashboard/SectorFilterToggle'
+import { PaginatedGrid } from '@/components/dashboard/PaginatedGrid'
 
 export const dynamic = 'force-dynamic'
 
@@ -140,6 +141,9 @@ export default async function FairsPage({
 
       <SectorFilterToggle prefOn={sf.prefOn} hasSector={sf.hasSector} sectorLabel={sf.label} />
 
+      {/* Sticky filter stack */}
+      <div className="sticky top-16 z-10 -mx-4 lg:-mx-8 px-4 lg:px-8 py-3 bg-gray-50/95 backdrop-blur border-b border-gray-200 space-y-3">
+
       {/* Primary tabs: event type */}
       <div className="-mx-4 lg:-mx-8 px-4 lg:px-8 border-b border-gray-200">
         <nav className="flex gap-1 overflow-x-auto pb-px" aria-label="Lloji i eventit">
@@ -235,6 +239,9 @@ export default async function FairsPage({
         </div>
       )}
 
+      </div>
+      {/* /sticky filter stack */}
+
       {list.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center">
@@ -246,11 +253,14 @@ export default async function FairsPage({
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <PaginatedGrid
+          resetKey={`${typeFilter}|${sectorFilter}|${countryFilter}|${showPast ? 'past' : 'up'}`}
+          loadMoreLabel={(_v, remaining, step) => `Shfaq ${step} evente të tjera (${remaining} të mbetura)`}
+        >
           {list.map((fair) => (
             <FairCard key={fair.id} fair={fair} today={today} past={showPast} />
           ))}
-        </div>
+        </PaginatedGrid>
       )}
       <div id="expert-contact">
         <ExpertContactCard
