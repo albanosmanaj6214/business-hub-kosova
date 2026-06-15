@@ -212,7 +212,7 @@ async function getGuide(args: Record<string, unknown>) {
 
   const guide = await prisma.exportGuide.findFirst({
     where: { countryCode: code, isPublished: true, deletedAt: null },
-    select: { countryCode: true, country: true, titleSq: true, title: true, contentSq: true, content: true, marketOverview: true, customs: true, requiredDocs: true, certifications: true },
+    select: { id: true, countryCode: true, country: true, titleSq: true, title: true, contentSq: true, content: true, marketOverview: true, customs: true, requiredDocs: true, certifications: true },
   })
   if (!guide) return { found: false, message: `Nuk ka udhëzues të publikuar për ${code}.` }
 
@@ -227,7 +227,7 @@ async function getGuide(args: Record<string, unknown>) {
     customs: simplifyCustoms(guide.customs as Json | null),
     requiredDocs: simplifyDocs(guide.requiredDocs as Json | null),
     certifications: simplifyCerts(guide.certifications as Json | null),
-    detailUrl: `/dashboard/guides/${(guide.countryCode || '').toLowerCase()}`,
+    detailUrl: `/dashboard/guides/${guide.id}`,
   }
 }
 
