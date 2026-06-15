@@ -152,7 +152,7 @@ export function KonsulentiWidget({ userName }: Props) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? 'Mbyll Asistentin KBH' : 'Hap Asistentin KBH'}
-        className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full bg-[#1B4F72] text-white shadow-lg hover:bg-[#143a55] flex items-center justify-center transition group"
+        className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full bg-[#1B4F72] text-white shadow-lg hover:bg-[#143a55] flex items-center justify-center transition group"
       >
         {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
         {!open && (
@@ -162,8 +162,8 @@ export function KonsulentiWidget({ userName }: Props) {
 
       <div
         className={cn(
-          'fixed inset-y-0 left-0 z-30 w-full sm:w-[420px] bg-white border-r border-gray-200 shadow-xl flex flex-col transition-transform duration-200',
-          open ? 'translate-x-0' : '-translate-x-full',
+          'fixed inset-y-0 right-0 z-30 w-full sm:w-[420px] bg-white border-l border-gray-200 shadow-xl flex flex-col transition-transform duration-200',
+          open ? "translate-x-0" : "translate-x-full",
         )}
         aria-hidden={!open}
       >

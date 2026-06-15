@@ -5,7 +5,6 @@ import {
   type Certification,
 } from '@/lib/export-certifications'
 import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
-import { FloatingExpertCTA } from '@/components/contact/FloatingExpertCTA'
 import { Badge } from '@/components/ui/badge'
 import {
   Award, Utensils, ShieldCheck, Leaf, Heart, Shirt, Trees, Zap,
@@ -107,7 +106,6 @@ export default function CertificationsPage({
       <div id="expert-contact">
         <ExpertContactCard variant="CERTIFICATION" source="dashboard-certifikime" />
       </div>
-      <FloatingExpertCTA variant="CERTIFICATION" />
     </div>
   )
 }

@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { getSectorFilter, filterBySector } from '@/lib/sector-filter'
 import { SectorFilterToggle } from '@/components/dashboard/SectorFilterToggle'
 import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
-import { FloatingExpertCTA } from '@/components/contact/FloatingExpertCTA'
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -152,7 +151,6 @@ export default async function GuidesPage() {
         source="dashboard-guides-list"
       />
       </div>
-      <FloatingExpertCTA variant="EXPORT_GUIDE" />
     </div>
   )
 }

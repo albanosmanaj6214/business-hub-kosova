@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
-import { FloatingExpertCTA } from '@/components/contact/FloatingExpertCTA'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
@@ -358,7 +357,6 @@ export default async function GuidePage({ params }: { params: { id: string } }) 
         className="mt-8"
       />
       </div>
-      <FloatingExpertCTA variant="EXPORT_GUIDE" />
     </div>
   )
 }
