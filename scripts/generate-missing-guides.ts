@@ -74,6 +74,25 @@ const PRESETS: Preset[] = [
   { code: 'IN', sq: 'Indi', en: 'India', flag: '🇮🇳', region: 'asia' },
   { code: 'JP', sq: 'Japoni', en: 'Japan', flag: '🇯🇵', region: 'asia' },
   { code: 'KR', sq: 'Korea e Jugut', en: 'South Korea', flag: '🇰🇷', region: 'asia' },
+  // SE Asia
+  { code: 'SG', sq: 'Singapor', en: 'Singapore', flag: '🇸🇬', region: 'asia' },
+  { code: 'VN', sq: 'Vietnam', en: 'Vietnam', flag: '🇻🇳', region: 'asia' },
+  { code: 'TH', sq: 'Tajlandë', en: 'Thailand', flag: '🇹🇭', region: 'asia' },
+  { code: 'ID', sq: 'Indonezi', en: 'Indonesia', flag: '🇮🇩', region: 'asia' },
+  { code: 'MY', sq: 'Malajzi', en: 'Malaysia', flag: '🇲🇾', region: 'asia' },
+  // Africa
+  { code: 'ZA', sq: 'Afrika e Jugut', en: 'South Africa', flag: '🇿🇦', region: 'africa' },
+  { code: 'GH', sq: 'Ganë', en: 'Ghana', flag: '🇬🇭', region: 'africa' },
+  { code: 'NG', sq: 'Nigeri', en: 'Nigeria', flag: '🇳🇬', region: 'africa' },
+  { code: 'MA', sq: 'Marok', en: 'Morocco', flag: '🇲🇦', region: 'africa' },
+  { code: 'KE', sq: 'Kenia', en: 'Kenya', flag: '🇰🇪', region: 'africa' },
+  // Americas (LatAm)
+  { code: 'BR', sq: 'Brazil', en: 'Brazil', flag: '🇧🇷', region: 'latam' },
+  { code: 'MX', sq: 'Meksikë', en: 'Mexico', flag: '🇲🇽', region: 'latam' },
+  { code: 'AR', sq: 'Argjentinë', en: 'Argentina', flag: '🇦🇷', region: 'latam' },
+  { code: 'CL', sq: 'Kili', en: 'Chile', flag: '🇨🇱', region: 'latam' },
+  // Oceania
+  { code: 'NZ', sq: 'Zelanda e Re', en: 'New Zealand', flag: '🇳🇿', region: 'oceania' },
 ]
 
 const PARALLEL = 4   // 4 concurrent Haiku+web_search streams; gentle to rate limits
