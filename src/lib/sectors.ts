@@ -33,7 +33,7 @@ export const SECTORS: SectorDef[] = [
     },
     variants: [
       'ushqim dhe pije', 'ushqim & pije', 'ushqim', 'food & beverage', 'food and beverages',
-      'beverages', 'wine', 'food technology', 'agri-food', 'agribusiness', 'agriculture',
+      'beverages', 'food & beverages', 'food and beverage', 'wine', 'food technology', 'agri-food', 'agribusiness', 'agriculture',
       'mish', 'bulmet', 'mjaltë', 'fruta & perime', 'fruta', 'perime', 'verë',
       'konserva', 'pastiçeri', 'erëza', 'vaj', 'peshk', 'kafshë',
     ],
@@ -51,7 +51,7 @@ export const SECTORS: SectorDef[] = [
       de: 'Hersteller von Bekleidung, technischen Textilien, Leder und Accessoires.',
     },
     variants: [
-      'tekstil-konfeksion', 'tekstil dhe konfeksion', 'tekstil', 'textile', 'textiles',
+      'tekstil-konfeksion', 'tekstil dhe konfeksion', 'tekstil', 'textile', 'textiles', 'textiles & apparel', 'textile & apparel', 'apparel',
       'fashion', 'leather', 'lëkurë',
     ],
   },
@@ -68,7 +68,7 @@ export const SECTORS: SectorDef[] = [
       de: 'Holzindustrie, Möbel, Bodenbeläge und Forstprodukte.',
     },
     variants: [
-      'druri dhe mobilje', 'druri-mobilje', 'dru dhe mobilje', 'druri', 'wood',
+      'druri dhe mobilje', 'druri-mobilje', 'dru dhe mobilje', 'druri', 'wood', 'wood & furniture', 'wood and furniture',
       'forestry', 'furniture', 'mobilje',
     ],
   },
@@ -85,7 +85,7 @@ export const SECTORS: SectorDef[] = [
       de: 'Metallverarbeitung, Industriemaschinen, Elektronik und Ersatzteile.',
     },
     variants: [
-      'metale dhe makineri', 'metale e makineri', 'metalpunues', 'metale', 'machinery',
+      'metale dhe makineri', 'metale e makineri', 'metalpunues', 'metale', 'machinery', 'metals & machinery', 'metals and machinery',
       'industrial', 'electronics', 'electrical',
     ],
   },
@@ -151,7 +151,13 @@ function normalizeToken(s: string): string {
 export function sectorMatches(sector: SectorDef, tags: readonly string[]): boolean {
   const variants = new Set(sector.variants.map(normalizeToken))
   for (const t of tags) {
-    if (variants.has(normalizeToken(t))) return true
+    const norm = normalizeToken(t)
+    if (variants.has(norm)) return true
+    // Bilingual tags like "Ushqim dhe pije / Food & Beverages" must match either side.
+    const parts = norm.split(/\s*[\/,|]\s*/).filter(Boolean)
+    for (const p of parts) {
+      if (variants.has(p)) return true
+    }
   }
   return false
 }

@@ -126,7 +126,7 @@ export default function SettingsPage() {
             <div className="rounded-lg border border-gray-200 p-3">
               <label className="flex items-start gap-3 cursor-pointer">
                 <input type="checkbox" checked={form.onlyMySector} onChange={(e) => setForm({ ...form, onlyMySector: e.target.checked })} className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B4F72] focus:ring-[#2E86C1]" />
-                <span className="text-sm text-gray-700">Më trego vetëm mundësitë e industrisë sime
+                <span className="text-sm text-gray-700">Shfaq për industrinë time
                   <span className="block text-xs text-gray-400 mt-0.5">Grante, panaire dhe udhëzues vetëm për sektorin që zgjedh. Mund ta ndryshosh kurdo.</span>
                 </span>
               </label>

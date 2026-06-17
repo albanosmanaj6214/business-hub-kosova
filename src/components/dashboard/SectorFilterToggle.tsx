@@ -53,7 +53,7 @@ export function SectorFilterToggle({ prefOn, hasSector, sectorLabel }: Props) {
       <div className="flex items-center gap-2.5 min-w-0">
         <SlidersHorizontal className="h-4 w-4 text-[#1B4F72] shrink-0" />
         <p className="text-sm text-gray-700 min-w-0">
-          Më trego vetëm mundësitë e industrisë sime
+          Shfaq për industrinë time
           {sectorLabel ? <span className="font-semibold text-[#1B4F72]"> ({sectorLabel})</span> : null}
         </p>
       </div>
