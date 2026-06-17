@@ -32,7 +32,9 @@ export type RegionKey =
   | 'WB'
   | 'EUROPE_OTHER'
   | 'MENA'
+  | 'SSA'
   | 'NA'
+  | 'LATAM'
   | 'APAC'
 
 export const REGION_ORDER: RegionKey[] = [
@@ -41,7 +43,9 @@ export const REGION_ORDER: RegionKey[] = [
   'WB',
   'EUROPE_OTHER',
   'MENA',
+  'SSA',
   'NA',
+  'LATAM',
   'APAC',
 ]
 
@@ -103,6 +107,14 @@ export const REGION_LABELS: Record<RegionKey, RegionLabel> = {
     shortEn: 'N. America',
     shortDe: 'Nordamerika',
   },
+  SSA: {
+    sq: 'Afrika Subsahariane',
+    en: 'Sub-Saharan Africa',
+    de: 'Subsahara-Afrika',
+    shortSq: 'Afrikë',
+    shortEn: 'Africa',
+    shortDe: 'Afrika',
+  },
   APAC: {
     sq: 'Azia-Paqësori',
     en: 'Asia-Pacific',
@@ -110,6 +122,14 @@ export const REGION_LABELS: Record<RegionKey, RegionLabel> = {
     shortSq: 'Azi-Paqësor',
     shortEn: 'Asia-Pac',
     shortDe: 'Asien-Pazifik',
+  },
+  LATAM: {
+    sq: 'Amerika Latine',
+    en: 'Latin America',
+    de: 'Lateinamerika',
+    shortSq: 'Amer. Latine',
+    shortEn: 'LatAm',
+    shortDe: 'LatAm',
   },
 }
 
@@ -127,7 +147,15 @@ const SETS: Record<RegionKey, Set<string>> = {
     'IL', 'EG', 'MA', 'TN', 'DZ', 'LY',
     'JO', 'LB', 'SY', 'IQ',
   ]),
-  NA: new Set(['US', 'CA', 'MX']),
+  SSA: new Set([
+    'ZA', 'NG', 'GH', 'KE', 'ET', 'TZ', 'UG', 'RW', 'SN', 'CI',
+    'CM', 'CD', 'AO', 'MZ', 'ZM', 'ZW', 'BW', 'NA', 'SO',
+  ]),
+  NA: new Set(['US', 'CA']),
+  LATAM: new Set([
+    'MX', 'BR', 'AR', 'CL', 'CO', 'PE', 'UY', 'EC', 'BO', 'VE',
+    'PY', 'CR', 'PA', 'DO', 'GT', 'HN', 'SV', 'NI', 'CU',
+  ]),
   APAC: new Set([
     'CN', 'IN', 'JP', 'KR', 'SG', 'MY', 'TH', 'VN', 'ID',
     'PH', 'AU', 'NZ', 'TW', 'HK', 'PK', 'BD', 'LK', 'KZ',
