@@ -66,6 +66,12 @@ export default async function GuidesPage() {
           )}
         </p>
       </div>
+          <Link
+            href="/dashboard/checklist"
+            className="hidden sm:inline-flex items-center gap-2 rounded-lg border border-[#1B4F72]/30 bg-[#1B4F72]/5 hover:bg-[#1B4F72]/10 text-[#1B4F72] text-sm font-medium px-3 py-2 transition-colors"
+          >
+            Checklist eksporti sipas tregut →
+          </Link>
 
       <SectorFilterToggle prefOn={sf.prefOn} hasSector={sf.hasSector} sectorLabel={sf.label} />
 

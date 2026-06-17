@@ -23,6 +23,12 @@ export default function TermsHubPage() {
           Gjuha e tregtisë ndërkombëtare, e shpjeguar thjesht, me shembuj kosovarë. Zgjidh një temë dhe hape për ta lexuar të plotë.
         </p>
       </div>
+          <Link
+            href="/dashboard/terma/hs-code"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#1B4F72] hover:bg-[#2E86C1] text-white text-sm font-medium px-4 py-2 transition-colors"
+          >
+            HS Code Finder →
+          </Link>
 
       {/* Featured: Incoterms */}
       <Link href="/dashboard/terma/incoterms" className="block group">
