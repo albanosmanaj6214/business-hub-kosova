@@ -1,6 +1,4 @@
 import Link from 'next/link'
-import { getSectorFilter, filterBySector } from '@/lib/sector-filter'
-import { SectorFilterToggle } from '@/components/dashboard/SectorFilterToggle'
 import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
@@ -42,8 +40,7 @@ export default async function GuidesPage() {
     orderBy: [{ countryCode: "asc" }],
   })
 
-  const sf = await getSectorFilter()
-  const guides = filterBySector(guidesRaw, sf)
+  const guides = guidesRaw
 
   const t = (sq: string, en: string) => locale === 'sq' ? sq : en
 
@@ -72,8 +69,6 @@ export default async function GuidesPage() {
           >
             Checklist eksporti sipas tregut →
           </Link>
-
-      <SectorFilterToggle prefOn={sf.prefOn} hasSector={sf.hasSector} sectorLabel={sf.label} />
 
       {guides.length === 0 ? (
         <Card>
