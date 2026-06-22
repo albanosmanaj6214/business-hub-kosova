@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     // sectors[] is the new canonical input. Accept the legacy `sector` string
     // as a fallback for old clients but always store the canonical slug array.
     const normalisedSectors: string[] = Array.isArray(sectors)
-      ? Array.from(new Set(sectors.filter((s: unknown): s is string => typeof s === 'string' && !!sectorBySlug(s))))
+      ? Array.from(new Set(sectors.filter((s: unknown): s is string => typeof s === "string" && !!sectorBySlug(s)))).slice(0, 1)
       : []
     if (normalisedSectors.length === 0) {
       return NextResponse.json(

@@ -29,7 +29,7 @@ export async function PUT(req: Request) {
 
   // Normalise sectors[] to canonical slugs only. Drops unknown entries silently.
   const normalisedSectors = Array.isArray(sectors)
-    ? Array.from(new Set(sectors.filter((s: unknown): s is string => typeof s === 'string' && !!sectorBySlug(s))))
+    ? Array.from(new Set(sectors.filter((s: unknown): s is string => typeof s === "string" && !!sectorBySlug(s)))).slice(0, 1)
     : undefined
 
   // Tri-state female ownership. true/false set the column; explicit null clears it;
