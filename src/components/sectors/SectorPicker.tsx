@@ -48,7 +48,7 @@ export function SectorPicker({ value, onChange }: Props) {
           Sektori i biznesit <span className="text-red-500">*</span>
         </label>
         <p className="text-xs text-gray-500 mb-2">
-          Zgjidh sektorin që përshkruan më mirë biznesin tënd. Platforma do të personalizohet sipas tij.
+          Zgjidh sektorin që përshkruan biznesin tënd.
         </p>
         <select
           id="sector-select"

@@ -97,31 +97,21 @@ export default function SettingsPage() {
             <Input id="name" label="Emri" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             <Input id="company" label="Kompania" value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} />
 
-            <div>
-              <p className="text-xs text-gray-500 mb-3">
-                KBH përshtatet me sektorin tënd. Grantet, panairet, certifikimet dhe udhëzuesit përfshijnë vetëm ato që janë të rëndësishëm për ty.
-              </p>
-              <SectorPicker
-                value={form.sectors}
-                onChange={(next) => setForm({ ...form, sectors: next })}
-              />
-            </div>
+            <SectorPicker
+              value={form.sectors}
+              onChange={(next) => setForm({ ...form, sectors: next })}
+            />
 
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <label className="flex items-start gap-3 cursor-pointer">
+              <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={form.femaleOwnership === true}
                   onChange={(e) => setForm({ ...form, femaleOwnership: e.target.checked ? true : false })}
-                  className="mt-1 h-4 w-4 rounded border-gray-300 text-[#1B4F72] focus:ring-[#2E86C1]"
+                  className="h-4 w-4 rounded border-gray-300 text-[#1B4F72] focus:ring-[#2E86C1]"
                 />
-                <span className="text-sm text-gray-700">
-                  <span className="font-medium block text-gray-900">
-                    Biznesi ka pronësi ose bashkëpronësi grash?
-                  </span>
-                  <span className="block text-xs text-gray-500 mt-1">
-                    Kjo na ndihmon t&apos;ju tregojmë grante dhe trajnime specifike për gratë ndërmarrëse.
-                  </span>
+                <span className="text-sm font-medium text-gray-900">
+                  Nëse biznesi ka pronësi ose bashkëpronësi të gjinisë femërore
                 </span>
               </label>
             </div>

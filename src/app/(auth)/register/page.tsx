@@ -38,6 +38,7 @@ export default function RegisterPage() {
     sectors: [] as string[],
     interests: [] as string[],
     language: 'sq',
+    femaleOwnership: false,
   })
 
   const toggleInterest = (value: string) => {
@@ -84,6 +85,7 @@ export default function RegisterPage() {
           sectors: form.sectors,
           interests: form.interests,
           language: form.language,
+          femaleOwnership: form.femaleOwnership,
           onlyMySector: true,
           turnstileToken,
         }),
@@ -179,10 +181,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">Krijo llogari</h2>
-          <p className="text-center text-sm text-gray-500 mb-6">
-            Zgjedh sektorin e biznesit. KBH do t&apos;i përshtasë grantet, panairet, certifikimet dhe udhëzuesit me ty.
-          </p>
+          <h2 className="text-2xl font-bold text-gray-900 text-center mb-6">Krijo llogari</h2>
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
@@ -236,11 +235,23 @@ export default function RegisterPage() {
               />
             </div>
 
-            <div>
-              <SectorPicker
-                value={form.sectors}
-                onChange={(next) => setForm({ ...form, sectors: next })}
-              />
+            <SectorPicker
+              value={form.sectors}
+              onChange={(next) => setForm({ ...form, sectors: next })}
+            />
+
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.femaleOwnership}
+                  onChange={(e) => setForm({ ...form, femaleOwnership: e.target.checked })}
+                  className="h-4 w-4 rounded border-gray-300 text-[#1B4F72] focus:ring-[#2E86C1]"
+                />
+                <span className="text-sm font-medium text-gray-900">
+                  Nëse biznesi ka pronësi ose bashkëpronësi të gjinisë femërore
+                </span>
+              </label>
             </div>
 
             <div>
