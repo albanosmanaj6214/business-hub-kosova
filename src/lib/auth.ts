@@ -3,6 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import { PrismaAdapter } from '@next-auth/prisma-adapter'
 import { prisma } from './prisma'
 import { compare } from 'bcryptjs'
+import { verifyTurnstile } from './turnstile'
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -20,10 +21,25 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
+        // Turnstile token forwarded by the client login form. NextAuth lists
+        // it here so it shows up in `credentials` for verification.
+        turnstileToken: { label: 'Turnstile', type: 'text' },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error('Email dhe fjalëkalimi janë të detyrueshme')
+        }
+
+        // CAPTCHA gate. Verify before any DB work so we cannot be used as a
+        // password-oracle by skipping the widget.
+        const ip =
+          (req?.headers?.['cf-connecting-ip'] as string | undefined) ||
+          (req?.headers?.['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
+          (req?.headers?.['x-real-ip'] as string | undefined) ||
+          undefined
+        const captcha = await verifyTurnstile(credentials.turnstileToken, ip)
+        if (!captcha.success) {
+          throw new Error(captcha.error || 'Verifikimi i sigurisë dështoi.')
         }
 
         const user = await prisma.user.findUnique({
@@ -39,6 +55,11 @@ export const authOptions: NextAuthOptions = {
 
         if (!isPasswordValid) {
           throw new Error('Fjalëkalimi nuk është i saktë')
+        }
+
+        if (!user.emailVerified) {
+          // Surface a specific code so the login UI can show the "send again" button.
+          throw new Error('Email-i nuk është verifikuar. Kontrollo kutinë postare.')
         }
 
         return {

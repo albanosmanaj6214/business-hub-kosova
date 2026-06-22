@@ -52,6 +52,8 @@ interface GrantRow {
   isOngoing: boolean
   isActive: boolean
   audience: string | null
+  // For female-only filtering in filterPersonalized.
+  forFemaleOwned: boolean
 }
 
 type GrantStatus = 'active' | 'expired' | 'no_deadline'

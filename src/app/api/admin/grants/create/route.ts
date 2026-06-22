@@ -22,6 +22,8 @@ const Body = z.object({
   // Empty = universal (shows to everyone).
   targetSectors: z.array(z.string().max(60)).default([]),
   tags: z.array(z.string().max(60)).default([]),
+  // When true, only users where User.femaleOwnership=true see this grant.
+  forFemaleOwned: z.boolean().default(false),
   isActive: z.boolean().default(true),
   // When true, insert a Notification row for every user whose sectors intersect
   // with targetSectors[]. Skipped silently when targetSectors is empty.
@@ -63,6 +65,7 @@ export async function POST(req: Request) {
     sectors: d.sectors,
     targetSectors,
     tags: [...(d.tags ?? []), 'manual-admin'],
+    forFemaleOwned: d.forFemaleOwned,
     isActive,
   }
 

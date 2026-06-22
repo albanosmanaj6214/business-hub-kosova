@@ -8,15 +8,17 @@ import { Bell, Check, Loader2 } from 'lucide-react'
 interface Props {
   grantId: string
   initialTargetSectors: string[]
+  initialForFemaleOwned?: boolean
 }
 
 // Inline editor for Grant.targetSectors[] in the admin grants list. Mirrors
 // FairSectorEditor; kept separate so the routes stay typed-per-entity.
-export function GrantSectorEditor({ grantId, initialTargetSectors }: Props) {
+export function GrantSectorEditor({ grantId, initialTargetSectors, initialForFemaleOwned = false }: Props) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [target, setTarget] = useState<string[]>(initialTargetSectors)
   const [notify, setNotify] = useState(false)
+  const [forFemaleOwned, setForFemaleOwned] = useState<boolean>(initialForFemaleOwned)
   const [pending, startTransition] = useTransition()
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState<number | null>(null)
@@ -31,7 +33,7 @@ export function GrantSectorEditor({ grantId, initialTargetSectors }: Props) {
       const res = await fetch(`/api/admin/grants/${grantId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetSectors: target, notifySector: notify }),
+        body: JSON.stringify({ targetSectors: target, notifySector: notify, forFemaleOwned }),
       })
       if (!res.ok) throw new Error('save failed')
       setSavedAt(Date.now())
@@ -93,6 +95,17 @@ export function GrantSectorEditor({ grantId, initialTargetSectors }: Props) {
           </span>
         </label>
       )}
+      <label className="flex items-start gap-2 cursor-pointer pt-2 border-t border-gray-100">
+        <input
+          type="checkbox"
+          checked={forFemaleOwned}
+          onChange={(e) => setForFemaleOwned(e.target.checked)}
+          className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B4F72]"
+        />
+        <span className="text-gray-700">
+          Vetëm për bizneset me pronësi gra
+        </span>
+      </label>
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -105,7 +118,7 @@ export function GrantSectorEditor({ grantId, initialTargetSectors }: Props) {
         </button>
         <button
           type="button"
-          onClick={() => { setOpen(false); setTarget(initialTargetSectors); setNotify(false) }}
+          onClick={() => { setOpen(false); setTarget(initialTargetSectors); setNotify(false); setForFemaleOwned(initialForFemaleOwned) }}
           className="text-gray-500 hover:text-gray-700"
         >
           Anulo

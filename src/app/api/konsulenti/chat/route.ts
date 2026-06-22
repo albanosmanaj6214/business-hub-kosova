@@ -58,6 +58,11 @@ function systemInstruction(ctx: UserContext, userName: string | null): string {
       : 'Sektori nuk është caktuar në profil.',
     ctx.companyName ? `Kompania: ${ctx.companyName}.` : '',
     ctx.interests.length ? `Interesat: ${ctx.interests.join(', ')}.` : '',
+    ctx.femaleOwnership === true
+      ? 'Pronësia: biznes me pronësi/bashkëpronësi grash. Kur ka mundësi specifike për gratë ndërmarrëse (grante, trajnime, panaire), prioritizoi dhe shënoji qartë në përgjigje.'
+      : ctx.femaleOwnership === false
+        ? 'Pronësia gra: jo. Mos sill mundësi që kërkojnë pronësi grash.'
+        : 'Pronësia gra: e padeklaruar. Mos sill mundësi që kërkojnë pronësi grash; nëse pyetet, ftoje të deklarojë në /dashboard/settings.',
     `Data e sotme: ${new Date().toISOString().slice(0, 10)}.`,
   ].filter(Boolean).join('\n')
 }
@@ -140,6 +145,7 @@ export async function POST(req: NextRequest) {
     interests: user.interests,
     companyName: user.companyName,
     language: user.language || 'sq',
+    femaleOwnership: typeof user.femaleOwnership === 'boolean' ? user.femaleOwnership : null,
   }
 
   const history = (chatSession.messages || [])

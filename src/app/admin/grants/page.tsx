@@ -49,7 +49,7 @@ export default async function AdminGrantsPage() {
                     <td className="p-4 text-gray-600">{g.amount || '-'}</td>
                     <td className="p-4 text-gray-500">{g.deadline ? new Date(g.deadline).toLocaleDateString('sq-AL') : '-'}</td>
                     <td className="p-4">
-                      <GrantSectorEditor grantId={g.id} initialTargetSectors={g.targetSectors} />
+                      <GrantSectorEditor grantId={g.id} initialTargetSectors={g.targetSectors} initialForFemaleOwned={g.forFemaleOwned} />
                     </td>
                     <td className="p-4">
                       <div className="flex flex-col gap-1 items-start">
@@ -60,6 +60,7 @@ export default async function AdminGrantsPage() {
                         ) : (
                           <Badge variant="danger">Joaktiv</Badge>
                         )}
+                        {g.forFemaleOwned && <Badge variant="secondary">Pronësi gra</Badge>}
                         {g.tags?.includes('legacy_synthetic') && <Badge variant="danger">synthetic (fshehur)</Badge>}
                         {g.audience === 'civil_society' && <Badge variant="warning">OJF (fshehur)</Badge>}
                         {g.audience === 'mixed' && <Badge variant="secondary">Mikse</Badge>}

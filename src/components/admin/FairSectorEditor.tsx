@@ -8,16 +8,18 @@ import { Bell, Check, Loader2 } from 'lucide-react'
 interface Props {
   fairId: string
   initialTargetSectors: string[]
+  initialForFemaleOwned?: boolean
 }
 
 // Inline editor for TradeFair.targetSectors[]. Used on the admin fairs list to
 // avoid a separate edit page. Includes the "notify sector" affordance described
 // in the personalization v1 spec.
-export function FairSectorEditor({ fairId, initialTargetSectors }: Props) {
+export function FairSectorEditor({ fairId, initialTargetSectors, initialForFemaleOwned = false }: Props) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [target, setTarget] = useState<string[]>(initialTargetSectors)
   const [notify, setNotify] = useState(false)
+  const [forFemaleOwned, setForFemaleOwned] = useState<boolean>(initialForFemaleOwned)
   const [pending, startTransition] = useTransition()
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState<number | null>(null)
@@ -32,7 +34,7 @@ export function FairSectorEditor({ fairId, initialTargetSectors }: Props) {
       const res = await fetch(`/api/admin/fairs/${fairId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetSectors: target, notifySector: notify }),
+        body: JSON.stringify({ targetSectors: target, notifySector: notify, forFemaleOwned }),
       })
       if (!res.ok) throw new Error('save failed')
       setSavedAt(Date.now())
@@ -94,6 +96,17 @@ export function FairSectorEditor({ fairId, initialTargetSectors }: Props) {
           </span>
         </label>
       )}
+      <label className="flex items-start gap-2 cursor-pointer pt-2 border-t border-gray-100">
+        <input
+          type="checkbox"
+          checked={forFemaleOwned}
+          onChange={(e) => setForFemaleOwned(e.target.checked)}
+          className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B4F72]"
+        />
+        <span className="text-gray-700">
+          Vetëm për bizneset me pronësi gra
+        </span>
+      </label>
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -106,7 +119,7 @@ export function FairSectorEditor({ fairId, initialTargetSectors }: Props) {
         </button>
         <button
           type="button"
-          onClick={() => { setOpen(false); setTarget(initialTargetSectors); setNotify(false) }}
+          onClick={() => { setOpen(false); setTarget(initialTargetSectors); setNotify(false); setForFemaleOwned(initialForFemaleOwned) }}
           className="text-gray-500 hover:text-gray-700"
         >
           Anulo

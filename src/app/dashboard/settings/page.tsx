@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Loader2, Save } from 'lucide-react'
-import { SectorMultiSelect } from '@/components/sectors/SectorMultiSelect'
+import { SectorPicker } from '@/components/sectors/SectorPicker'
 
 const interestOptions = [
   { value: 'grants', label: 'Grante & Fonde' },
@@ -24,6 +24,8 @@ export default function SettingsPage() {
     sectors: [] as string[],
     interests: [] as string[],
     language: 'sq',
+    // Tri-state: null means "not declared". Persisted as such to the API.
+    femaleOwnership: null as boolean | null,
   })
 
   useEffect(() => {
@@ -37,6 +39,7 @@ export default function SettingsPage() {
             sectors: data.user.sectors || [],
             interests: data.user.interests || [],
             language: data.user.language || 'sq',
+            femaleOwnership: typeof data.user.femaleOwnership === 'boolean' ? data.user.femaleOwnership : null,
           })
         }
       })
@@ -95,16 +98,32 @@ export default function SettingsPage() {
             <Input id="company" label="Kompania" value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} />
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Sektori i biznesit
-              </label>
-              <p className="text-xs text-gray-500 mb-2">
-                KBH përshtatet me sektorin tënd. Grantet, panairet, certifikimet dhe udhëzuesit përfshijnë vetëm ato që janë të rëndësishëm për ty. Mund të zgjedhësh më shumë se një.
+              <p className="text-xs text-gray-500 mb-3">
+                KBH përshtatet me sektorin tënd. Grantet, panairet, certifikimet dhe udhëzuesit përfshijnë vetëm ato që janë të rëndësishëm për ty.
               </p>
-              <SectorMultiSelect
+              <SectorPicker
                 value={form.sectors}
                 onChange={(next) => setForm({ ...form, sectors: next })}
               />
+            </div>
+
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.femaleOwnership === true}
+                  onChange={(e) => setForm({ ...form, femaleOwnership: e.target.checked ? true : false })}
+                  className="mt-1 h-4 w-4 rounded border-gray-300 text-[#1B4F72] focus:ring-[#2E86C1]"
+                />
+                <span className="text-sm text-gray-700">
+                  <span className="font-medium block text-gray-900">
+                    Biznesi ka pronësi ose bashkëpronësi grash?
+                  </span>
+                  <span className="block text-xs text-gray-500 mt-1">
+                    Kjo na ndihmon t&apos;ju tregojmë grante dhe trajnime specifike për gratë ndërmarrëse.
+                  </span>
+                </span>
+              </label>
             </div>
 
             <div>

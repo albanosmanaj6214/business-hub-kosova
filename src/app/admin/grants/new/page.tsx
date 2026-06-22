@@ -43,13 +43,15 @@ interface FormState {
   // The "show in dashboard" toggle exists for UX clarity, but the effect is
   // already governed by targetSectors. We keep it as a no-op confirmation.
   showInDashboard: boolean
+  // When true, only users with User.femaleOwnership=true see this grant.
+  forFemaleOwned: boolean
 }
 
 const EMPTY: FormState = {
   title: '', titleSq: '', provider: '', url: '',
   description: '', descriptionSq: '', amount: '', currency: 'EUR',
   deadline: '', eligibility: '', sectors: [], targetSectors: [], tags: [],
-  notifySector: false, showInDashboard: true,
+  notifySector: false, showInDashboard: true, forFemaleOwned: false,
 }
 
 export default function NewGrantPage() {
@@ -323,6 +325,25 @@ export default function NewGrantPage() {
                   </label>
                 </div>
               )}
+
+              <div className="rounded-lg border border-pink-200 bg-pink-50/40 p-3">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.forFemaleOwned}
+                    onChange={(e) => setForm({ ...form, forFemaleOwned: e.target.checked })}
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B4F72] focus:ring-[#2E86C1]"
+                  />
+                  <span className="text-sm text-gray-700">
+                    <span className="font-medium block text-gray-900">
+                      Vetëm për bizneset me pronësi gra
+                    </span>
+                    <span className="block text-xs text-gray-500 mt-0.5">
+                      Granti i shfaqet vetëm përdoruesve që kanë deklaruar pronësi ose bashkëpronësi grash në profil.
+                    </span>
+                  </span>
+                </label>
+              </div>
 
               <ChipInput
                 label="Etiketat e brendshme"

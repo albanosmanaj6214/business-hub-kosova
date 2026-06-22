@@ -72,6 +72,8 @@ interface FairRow {
   eventType: EventType
   organizer: string | null
   registrationUrl: string | null
+  // For female-only filtering in filterPersonalized.
+  forFemaleOwned: boolean
 }
 
 export default async function FairsPage({

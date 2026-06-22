@@ -212,23 +212,26 @@ export function hasNoSector(
   return userSectorSlugs(user).length === 0
 }
 
-// Deep personalization filter.
+// Deep personalization filter (v2 semantics).
 //
 // Rules:
-//  - Universal item (empty targetSectors[] OR `cross-cutting` tag): always shows.
-//  - Otherwise: shows when item.targetSectors[] intersects user.sectors[].
+//  - `cross-cutting` tag: always shows (explicit universal opt-in).
+//  - Non-empty targetSectors[]: shows when it intersects user.sectors[].
+//  - Empty targetSectors[] without `cross-cutting` tag: NOT shown in
+//    personalized view. The user must use ?all=1 to see uncategorized items.
 //
-// `userSectors` may be empty — that means the user has not picked a sector,
-// in which case we show everything (no useful filter to apply).
+// `userSectors` may be empty: the caller has not picked a sector. In that case
+// we show everything (no useful filter to apply); the filter only activates
+// once the user has at least one sector.
 export function matchesUserSectors(
   item: { targetSectors?: readonly string[] | null; tags?: readonly string[] | null },
   userSectors: readonly string[],
 ): boolean {
   if (!userSectors || userSectors.length === 0) return true
-  const target = item.targetSectors ?? []
   const tags = item.tags ?? []
-  if (target.length === 0) return true
   if (tags.includes('cross-cutting')) return true
+  const target = item.targetSectors ?? []
+  if (target.length === 0) return false
   for (const t of target) {
     if (userSectors.includes(t)) return true
   }

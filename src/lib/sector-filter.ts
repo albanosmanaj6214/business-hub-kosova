@@ -16,6 +16,9 @@ export interface PersonalizationCtx {
   // True when filtering is active for this request.
   // (= hasSector && !overrideOff)
   active: boolean
+  // Tri-state female ownership read from the user profile. `null` = not declared.
+  // Used to hide female-only opportunities from users who did not opt in.
+  femaleOwnership: boolean | null
 }
 
 const EMPTY: PersonalizationCtx = {
@@ -24,6 +27,7 @@ const EMPTY: PersonalizationCtx = {
   userSectors: [],
   label: '',
   active: false,
+  femaleOwnership: null,
 }
 
 // Reads the logged-in user's sectors[] once, server-side, and combines with the
@@ -35,7 +39,7 @@ export async function getPersonalization(opts?: { all?: boolean }): Promise<Pers
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { sector: true, sectors: true },
+    select: { sector: true, sectors: true, femaleOwnership: true },
   })
 
   const slugs = userSectorSlugs(user || {})
@@ -48,6 +52,7 @@ export async function getPersonalization(opts?: { all?: boolean }): Promise<Pers
     userSectors: slugs,
     label: sectorsLabel(slugs),
     active: hasSector && !overrideOff,
+    femaleOwnership: typeof user?.femaleOwnership === 'boolean' ? user.femaleOwnership : null,
   }
 }
 
@@ -55,11 +60,24 @@ export async function getPersonalization(opts?: { all?: boolean }): Promise<Pers
 // ?all=1 override is active or the user has no sectors picked.
 //
 // "Cross-cutting" tags + empty targetSectors[] always pass through (= universal).
+//
+// Female-ownership rule (independent of sectors and not bypassed by ?all=1):
+//   - Items with `forFemaleOwned=true` are hidden from users where
+//     `ctx.femaleOwnership !== true`. Undeclared and explicit-no users do not
+//     see female-only opportunities, since the targeting would be misleading.
 export function filterPersonalized<
-  T extends { targetSectors?: readonly string[] | null; tags?: readonly string[] | null },
+  T extends {
+    targetSectors?: readonly string[] | null;
+    tags?: readonly string[] | null;
+    forFemaleOwned?: boolean | null;
+  },
 >(items: T[], ctx: PersonalizationCtx): T[] {
-  if (!ctx.active) return items
-  return items.filter((i) => matchesUserSectors(i, ctx.userSectors))
+  const womenSafe = ctx.femaleOwnership === true
+  const filteredByGender = womenSafe
+    ? items
+    : items.filter((i) => i.forFemaleOwned !== true)
+  if (!ctx.active) return filteredByGender
+  return filteredByGender.filter((i) => matchesUserSectors(i, ctx.userSectors))
 }
 
 // -----------------------------------------------------------------------------

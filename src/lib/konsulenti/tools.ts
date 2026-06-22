@@ -11,6 +11,9 @@ export interface UserContext {
   interests: string[]
   companyName: string | null
   language: string
+  // Tri-state female ownership self-declaration. `null` = not declared.
+  // When true, Asistenti highlights female-targeted grants/trainings.
+  femaleOwnership: boolean | null
 }
 
 function kosovoToday(): Date {
@@ -128,14 +131,17 @@ async function searchGrants(args: Record<string, unknown>, ctx: UserContext) {
       } : {}),
       ...(provider ? { provider: { contains: provider, mode: 'insensitive' } } : {}),
     },
-    select: { id: true, title: true, titleSq: true, descriptionSq: true, description: true, provider: true, amount: true, deadline: true, isOngoing: true, url: true, sectors: true, targetSectors: true, tags: true },
+    select: { id: true, title: true, titleSq: true, descriptionSq: true, description: true, provider: true, amount: true, deadline: true, isOngoing: true, url: true, sectors: true, targetSectors: true, tags: true, forFemaleOwned: true },
     orderBy: [{ deadline: 'asc' }, { createdAt: 'desc' }],
     // Cast a wider net because we'll trim by sector below.
     take: limit * 3,
   })
 
+  const womenSafe = ctx.femaleOwnership === true
   const filtered = grants.filter((g) => {
     if (isFairStandCall(g)) return false
+    // Female-only grants are hidden from users who did not declare female ownership.
+    if (g.forFemaleOwned && !womenSafe) return false
     if (g.isOngoing) return true
     if (!g.deadline) return false
     if (g.deadline < today) return false
@@ -157,12 +163,14 @@ async function searchGrants(args: Record<string, unknown>, ctx: UserContext) {
       isOngoing: g.isOngoing,
       sectors: g.sectors,
       targetSectors: g.targetSectors,
+      forFemaleOwned: g.forFemaleOwned,
       summary: (g.descriptionSq || g.description || '').slice(0, 240),
       externalUrl: g.url,
       detailUrl: '/dashboard/grants',
     })),
     userSectors: ctx.sectors,
     userSectorLabel: sectorsLabel(ctx.sectors),
+    femaleOwnership: ctx.femaleOwnership,
   }
 }
 
@@ -191,14 +199,18 @@ async function searchFairs(args: Record<string, unknown>, ctx: UserContext) {
       } : {}),
       ...(country ? { country: { contains: country, mode: 'insensitive' } } : {}),
     },
-    select: { id: true, name: true, nameSq: true, country: true, location: true, sectors: true, targetSectors: true, tags: true, startDate: true, endDate: true, website: true, registrationUrl: true, eventType: true },
+    select: { id: true, name: true, nameSq: true, country: true, location: true, sectors: true, targetSectors: true, tags: true, startDate: true, endDate: true, website: true, registrationUrl: true, eventType: true, forFemaleOwned: true },
     orderBy: { startDate: 'asc' },
     // Cast a wider net because we'll trim by sector below.
     take: limit * 3,
   })
 
-  // Personalization: strict for fairs/events.
+  const womenSafe = ctx.femaleOwnership === true
+
+  // Personalization: strict for fairs/events. Female-only events hidden from
+  // users who did not declare female ownership.
   const personalized = fairs
+    .filter((f) => womenSafe || !f.forFemaleOwned)
     .filter((f) => matchesUserSectors(f, ctx.sectors))
     .slice(0, limit)
 
@@ -211,6 +223,7 @@ async function searchFairs(args: Record<string, unknown>, ctx: UserContext) {
       location: f.location,
       sectors: f.sectors,
       targetSectors: f.targetSectors,
+      forFemaleOwned: f.forFemaleOwned,
       type: f.eventType,
       startDate: f.startDate.toISOString().slice(0, 10),
       endDate: f.endDate.toISOString().slice(0, 10),
@@ -220,6 +233,7 @@ async function searchFairs(args: Record<string, unknown>, ctx: UserContext) {
     })),
     userSectors: ctx.sectors,
     userSectorLabel: sectorsLabel(ctx.sectors),
+    femaleOwnership: ctx.femaleOwnership,
   }
 }
 

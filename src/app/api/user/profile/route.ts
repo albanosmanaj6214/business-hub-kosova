@@ -12,7 +12,7 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { name: true, companyName: true, sector: true, sectors: true, interests: true, language: true, onlyMySector: true },
+    select: { name: true, companyName: true, sector: true, sectors: true, interests: true, language: true, onlyMySector: true, femaleOwnership: true },
   })
 
   return NextResponse.json({ user })
@@ -25,12 +25,19 @@ export async function PUT(req: Request) {
   }
 
   const body = await req.json()
-  const { name, companyName, sector, sectors, interests, language, onlyMySector } = body
+  const { name, companyName, sector, sectors, interests, language, onlyMySector, femaleOwnership } = body
 
   // Normalise sectors[] to canonical slugs only. Drops unknown entries silently.
   const normalisedSectors = Array.isArray(sectors)
     ? Array.from(new Set(sectors.filter((s: unknown): s is string => typeof s === 'string' && !!sectorBySlug(s))))
     : undefined
+
+  // Tri-state female ownership. true/false set the column; explicit null clears it;
+  // undefined leaves the existing value untouched (partial update safety).
+  let femaleOwnershipUpdate: boolean | null | undefined
+  if (femaleOwnership === true || femaleOwnership === false) femaleOwnershipUpdate = femaleOwnership
+  else if (femaleOwnership === null) femaleOwnershipUpdate = null
+  else femaleOwnershipUpdate = undefined
 
   // Undefined fields are ignored by Prisma, so a partial update (e.g. just the
   // onlyMySector toggle) leaves everything else untouched.
@@ -44,6 +51,7 @@ export async function PUT(req: Request) {
       interests,
       language,
       onlyMySector: typeof onlyMySector === 'boolean' ? onlyMySector : undefined,
+      femaleOwnership: femaleOwnershipUpdate,
     },
   })
 

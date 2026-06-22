@@ -65,6 +65,12 @@ model User {
   role          Role      @default(USER)
   interests     String[]  @default([])
   onlyMySector  Boolean   @default(false)
+  // Female-ownership self-declaration. Tri-state:
+  //   true  = user declared the business has female ownership/co-ownership.
+  //   false = user declared it explicitly does NOT.
+  //   null  = user has not declared (default for legacy rows + skipped onboarding).
+  // Filtering rule: female-targeted Grants/Fairs only surface to users with `true`.
+  femaleOwnership Boolean?
   emailVerified DateTime?
   image         String?
   createdAt     DateTime  @default(now())
@@ -149,6 +155,9 @@ model Grant {
   // A `cross-cutting` tag overrides this and always shows it as universal.
   targetSectors String[]  @default([])
   tags          String[]  @default([])
+  // When true, this grant is restricted to businesses with female ownership.
+  // Only users where `User.femaleOwnership=true` see it in the dashboard.
+  forFemaleOwned Boolean  @default(false)
   isActive      Boolean   @default(true)
   scrapedAt     DateTime  @default(now())
   createdAt     DateTime  @default(now())
@@ -178,6 +187,9 @@ model TradeFair {
   // Canonical sector slugs this fair targets. See Grant.targetSectors for semantics.
   targetSectors String[] @default([])
   tags          String[] @default([])
+  // When true, this fair/event is restricted to businesses with female ownership.
+  // Only users where `User.femaleOwnership=true` see it in the dashboard.
+  forFemaleOwned Boolean @default(false)
   eventType     EventType @default(FAIR)
   organizer     String?
   registrationUrl String?

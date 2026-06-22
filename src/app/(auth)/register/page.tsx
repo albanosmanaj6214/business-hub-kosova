@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
+import { Turnstile, TurnstileInstance } from '@marsidev/react-turnstile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Loader2 } from 'lucide-react'
+import { Loader2, MailCheck } from 'lucide-react'
 import { Wordmark } from '@/components/brand/Wordmark'
-import { SectorMultiSelect } from '@/components/sectors/SectorMultiSelect'
+import { SectorPicker } from '@/components/sectors/SectorPicker'
 
 const interestOptions = [
   { value: 'grants', label: 'Grante & Fonde' },
@@ -16,10 +16,19 @@ const interestOptions = [
   { value: 'consultations', label: 'Konsultime' },
 ]
 
+// Public site key. Exposed at build time via NEXT_PUBLIC_*. If absent we
+// fall back to Cloudflare's "always passes" test key so dev/local still works.
+const TURNSTILE_SITE_KEY =
+  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'
+
 export default function RegisterPage() {
-  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null)
+  const [resending, setResending] = useState(false)
+  const [resendMsg, setResendMsg] = useState('')
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const turnstileRef = useRef<TurnstileInstance | null>(null)
   const [form, setForm] = useState({
     email: '',
     password: '',
@@ -56,6 +65,10 @@ export default function RegisterPage() {
       setError('Zgjidh të paktën një sektor për biznesin tënd')
       return
     }
+    if (!turnstileToken) {
+      setError('Prit pak derisa të kalojë verifikimi i sigurisë.')
+      return
+    }
 
     setLoading(true)
 
@@ -72,6 +85,7 @@ export default function RegisterPage() {
           interests: form.interests,
           language: form.language,
           onlyMySector: true,
+          turnstileToken,
         }),
       })
 
@@ -79,15 +93,80 @@ export default function RegisterPage() {
 
       if (!res.ok) {
         setError(data.error || 'Gabim gjate regjistrimit')
+        // Turnstile tokens are single-use server-side. Reset so the user
+        // can retry without reloading the page.
+        turnstileRef.current?.reset()
+        setTurnstileToken(null)
         setLoading(false)
         return
       }
 
-      router.push('/login?registered=true')
+      setSubmittedEmail(form.email)
+      setLoading(false)
     } catch {
       setError('Gabim gjate regjistrimit')
+      turnstileRef.current?.reset()
+      setTurnstileToken(null)
       setLoading(false)
     }
+  }
+
+  const handleResend = async () => {
+    if (!submittedEmail) return
+    setResending(true)
+    setResendMsg('')
+    try {
+      const res = await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: submittedEmail }),
+      })
+      const data = await res.json()
+      setResendMsg(data.message || (res.ok ? 'Email-i u ridërgua.' : 'Gabim gjatë ridërgimit.'))
+    } catch {
+      setResendMsg('Gabim rrjeti gjatë ridërgimit.')
+    } finally {
+      setResending(false)
+    }
+  }
+
+  if (submittedEmail) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#1B4F72] to-[#2E86C1] flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <Link href="/" className="inline-flex items-center text-white">
+              <Wordmark size="lg" variant="inverse" />
+            </Link>
+          </div>
+          <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+            <MailCheck className="h-12 w-12 text-[#2E86C1] mx-auto mb-4" />
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">Kontrollo email-in</h1>
+            <p className="text-sm text-gray-600 mb-6">
+              Të dërguam një email te <span className="font-medium text-gray-900">{submittedEmail}</span>.
+              Kliko linkun në të për të aktivizuar llogarinë.
+            </p>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleResend}
+              disabled={resending}
+            >
+              {resending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Dërgo prap email-in
+            </Button>
+            {resendMsg && (
+              <p className="text-xs text-gray-500 mt-3">{resendMsg}</p>
+            )}
+            <p className="text-center text-sm text-gray-500 mt-6">
+              <Link href="/login" className="text-[#2E86C1] font-medium hover:underline">
+                Kthehu te Hyrja
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -158,13 +237,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Sektori i biznesit <span className="text-red-500">*</span>
-              </label>
-              <SectorMultiSelect
+              <SectorPicker
                 value={form.sectors}
                 onChange={(next) => setForm({ ...form, sectors: next })}
-                helperText="Mund të zgjedhësh disa sektorë nëse biznesi yt mbulon më shumë se një."
               />
             </div>
 
@@ -206,7 +281,23 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" size="lg" disabled={loading}>
+            <div className="flex justify-center pt-2">
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={TURNSTILE_SITE_KEY}
+                options={{ theme: 'light', size: 'normal' }}
+                onSuccess={(token) => setTurnstileToken(token)}
+                onError={() => setTurnstileToken(null)}
+                onExpire={() => setTurnstileToken(null)}
+              />
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={loading || !turnstileToken}
+            >
               {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Regjistrohu
             </Button>

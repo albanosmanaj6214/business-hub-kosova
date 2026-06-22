@@ -36,9 +36,14 @@ export default async function AdminFairsPage() {
                     <td className="p-4 text-gray-600">{f.location}, {f.country}</td>
                     <td className="p-4 text-gray-500">{new Date(f.startDate).toLocaleDateString('sq-AL')} - {new Date(f.endDate).toLocaleDateString('sq-AL')}</td>
                     <td className="p-4">
-                      <FairSectorEditor fairId={f.id} initialTargetSectors={f.targetSectors} />
+                      <FairSectorEditor fairId={f.id} initialTargetSectors={f.targetSectors} initialForFemaleOwned={f.forFemaleOwned} />
                     </td>
-                    <td className="p-4"><Badge variant={f.isActive ? 'success' : 'danger'}>{f.isActive ? 'Po' : 'Jo'}</Badge></td>
+                    <td className="p-4">
+                      <div className="flex flex-col gap-1 items-start">
+                        <Badge variant={f.isActive ? 'success' : 'danger'}>{f.isActive ? 'Po' : 'Jo'}</Badge>
+                        {f.forFemaleOwned && <Badge variant="secondary">Pronësi gra</Badge>}
+                      </div>
+                    </td>
                     <td className="p-4 text-right"><DeleteButton entityPath="fairs" id={f.id} label={f.name} /></td>
                   </tr>
                 ))}

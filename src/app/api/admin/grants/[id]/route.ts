@@ -20,7 +20,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
 
-  let body: { targetSectors?: unknown; notifySector?: unknown } = {}
+  let body: { targetSectors?: unknown; notifySector?: unknown; forFemaleOwned?: unknown } = {}
   try { body = await req.json() } catch { return NextResponse.json({ error: 'invalid json' }, { status: 400 }) }
 
   const rawTarget = Array.isArray(body.targetSectors)
@@ -32,7 +32,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
   const grant = await prisma.grant.update({
     where: { id: params.id },
-    data: { targetSectors },
+    data: {
+      targetSectors,
+      // Optional: only update when explicitly sent as a boolean.
+      forFemaleOwned: typeof body.forFemaleOwned === 'boolean' ? body.forFemaleOwned : undefined,
+    },
   })
 
   let notified = 0
