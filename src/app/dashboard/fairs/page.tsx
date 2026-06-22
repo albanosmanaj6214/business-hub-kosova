@@ -4,8 +4,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Calendar, MapPin, ExternalLink, Clock, Globe } from 'lucide-react'
 import Link from 'next/link'
-import { getSectorFilter, filterBySector } from '@/lib/sector-filter'
-import { SectorFilterToggle } from '@/components/dashboard/SectorFilterToggle'
+import { getPersonalization, filterPersonalized } from '@/lib/sector-filter'
+import { PersonalizationBanner } from '@/components/dashboard/PersonalizationBanner'
 import { PaginatedGrid } from '@/components/dashboard/PaginatedGrid'
 
 export const dynamic = 'force-dynamic'
@@ -67,6 +67,7 @@ interface FairRow {
   endDate: Date
   website: string | null
   sectors: string[]
+  targetSectors: string[]
   tags: string[]
   eventType: EventType
   organizer: string | null
@@ -76,17 +77,18 @@ interface FairRow {
 export default async function FairsPage({
   searchParams,
 }: {
-  searchParams?: { sector?: string; country?: string; show?: string; type?: string }
+  searchParams?: { sector?: string; country?: string; show?: string; type?: string; all?: string }
 }) {
   const showPast = searchParams?.show === 'past'
+  const allOverride = searchParams?.all === '1'
 
   const fairsRaw = (await prisma.tradeFair.findMany({
     where: { isActive: true, deletedAt: null },
     orderBy: { startDate: 'asc' },
   })) as FairRow[]
 
-  const sf = await getSectorFilter()
-  const fairs = filterBySector(fairsRaw, sf)
+  const pers = await getPersonalization({ all: allOverride })
+  const fairs = filterPersonalized(fairsRaw, pers)
 
   const today = new Date()
   today.setUTCHours(0, 0, 0, 0)
@@ -122,7 +124,7 @@ export default async function FairsPage({
 
   const list = (showPast ? past : upcoming).filter(matchesFilters)
 
-  const baseFilters = { sector: sectorFilter, country: countryFilter, type: typeForUrl }
+  const baseFilters = { sector: sectorFilter, country: countryFilter, type: typeForUrl, all: allOverride ? '1' : '' }
 
   const visibleSet = showPast ? past : upcoming
   const countByType = EVENT_TYPE_ORDER.reduce((acc, k) => {
@@ -139,7 +141,18 @@ export default async function FairsPage({
         </p>
       </div>
 
-      <SectorFilterToggle prefOn={sf.prefOn} hasSector={sf.hasSector} sectorLabel={sf.label} />
+      <PersonalizationBanner
+        active={pers.active}
+        label={pers.label}
+        hasSector={pers.hasSector}
+        pathname="/dashboard/fairs"
+        preserveParams={{
+          sector: searchParams?.sector,
+          country: searchParams?.country,
+          type: searchParams?.type,
+          show: searchParams?.show,
+        }}
+      />
 
       {/* Sticky filter stack */}
       <div className="sticky top-16 z-10 -mx-4 lg:-mx-8 px-4 lg:px-8 py-3 bg-gray-50/95 backdrop-blur border-b border-gray-200 space-y-3">
@@ -157,6 +170,7 @@ export default async function FairsPage({
                 country: countryFilter,
                 type: tk === 'FAIR' ? '' : tk,
                 show: showPast ? 'past' : '',
+                all: allOverride ? '1' : '',
               })}`}
               active={typeFilter === tk}
             />
@@ -164,7 +178,7 @@ export default async function FairsPage({
           <TypeTab
             label="Të gjitha"
             count={visibleSet.length}
-            href={`/dashboard/fairs${buildQuery({ sector: sectorFilter, country: countryFilter, type: 'ALL', show: showPast ? 'past' : '' })}`}
+            href={`/dashboard/fairs${buildQuery({ sector: sectorFilter, country: countryFilter, type: 'ALL', show: showPast ? 'past' : '', all: allOverride ? '1' : '' })}`}
             active={!typeFilter}
           />
         </nav>
@@ -192,7 +206,7 @@ export default async function FairsPage({
 
           <FilterPill
             label="Të gjithë sektorët"
-            href={`/dashboard/fairs${buildQuery({ country: countryFilter, type: typeForUrl, show: showPast ? 'past' : '' })}`}
+            href={`/dashboard/fairs${buildQuery({ country: countryFilter, type: typeForUrl, show: showPast ? 'past' : '', all: allOverride ? '1' : '' })}`}
             active={!sectorFilter}
           />
           {allSectors.map((s) => (
@@ -204,6 +218,7 @@ export default async function FairsPage({
                 country: countryFilter,
                 type: typeForUrl,
                 show: showPast ? 'past' : '',
+                all: allOverride ? '1' : '',
               })}`}
               active={sectorFilter === s}
             />
@@ -218,6 +233,7 @@ export default async function FairsPage({
                   sector: sectorFilter,
                   type: typeForUrl,
                   show: showPast ? 'past' : '',
+                  all: allOverride ? '1' : '',
                 })}`}
                 active={!countryFilter}
               />
@@ -230,6 +246,7 @@ export default async function FairsPage({
                     country: c,
                     type: typeForUrl,
                     show: showPast ? 'past' : '',
+                    all: allOverride ? '1' : '',
                   })}`}
                   active={countryFilter === c}
                 />

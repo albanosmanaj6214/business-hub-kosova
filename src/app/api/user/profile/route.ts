@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { sectorBySlug } from '@/lib/sectors'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -11,7 +12,7 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { name: true, companyName: true, sector: true, interests: true, language: true, onlyMySector: true },
+    select: { name: true, companyName: true, sector: true, sectors: true, interests: true, language: true, onlyMySector: true },
   })
 
   return NextResponse.json({ user })
@@ -24,7 +25,12 @@ export async function PUT(req: Request) {
   }
 
   const body = await req.json()
-  const { name, companyName, sector, interests, language, onlyMySector } = body
+  const { name, companyName, sector, sectors, interests, language, onlyMySector } = body
+
+  // Normalise sectors[] to canonical slugs only. Drops unknown entries silently.
+  const normalisedSectors = Array.isArray(sectors)
+    ? Array.from(new Set(sectors.filter((s: unknown): s is string => typeof s === 'string' && !!sectorBySlug(s))))
+    : undefined
 
   // Undefined fields are ignored by Prisma, so a partial update (e.g. just the
   // onlyMySector toggle) leaves everything else untouched.
@@ -34,6 +40,7 @@ export async function PUT(req: Request) {
       name,
       companyName,
       sector,
+      sectors: normalisedSectors,
       interests,
       language,
       onlyMySector: typeof onlyMySector === 'boolean' ? onlyMySector : undefined,

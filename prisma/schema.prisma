@@ -57,6 +57,10 @@ model User {
   name          String?
   companyName   String?
   sector        String?
+  // Canonical multi-sector list (slugs from src/lib/sectors.ts). Default behaviour
+  // across the platform is to filter content by these. The legacy `sector` column
+  // is kept for one release as a fallback bridge and will be dropped in a follow-up.
+  sectors       String[]  @default([])
   language      String    @default("sq")
   role          Role      @default(USER)
   interests     String[]  @default([])
@@ -140,6 +144,10 @@ model Grant {
   url           String?
   country       String?
   sectors       String[]  @default([])
+  // Canonical sector slugs this opportunity targets. Empty array = universal
+  // (shows to everyone). Non-empty = shows only to users whose sectors[] intersect.
+  // A `cross-cutting` tag overrides this and always shows it as universal.
+  targetSectors String[]  @default([])
   tags          String[]  @default([])
   isActive      Boolean   @default(true)
   scrapedAt     DateTime  @default(now())
@@ -167,6 +175,8 @@ model TradeFair {
   endDate       DateTime
   website       String?
   sectors       String[] @default([])
+  // Canonical sector slugs this fair targets. See Grant.targetSectors for semantics.
+  targetSectors String[] @default([])
   tags          String[] @default([])
   eventType     EventType @default(FAIR)
   organizer     String?
@@ -195,6 +205,9 @@ model ExportGuide {
   countryCode String?  @unique // ISO 3166-1 alpha-2 (e.g. "DE", "US")
   flag        String? // emoji or short code
   sectors     String[] @default([])
+  // Canonical sector slugs this guide targets. Empty = universal (most guides are
+  // country-scoped, not sector-scoped, so default is empty).
+  targetSectors String[] @default([])
   tags        String[] @default([])
   isPublished Boolean  @default(true)
 

@@ -5,13 +5,9 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Globe2, Loader2 } from 'lucide-react'
-
-const sectors = [
-  'Prodhim Ushqimor', 'Tekstile', 'Ndertimtari', 'Teknologji',
-  'Bujqesi', 'Energji', 'Minerale', 'Metalurgji', 'Dru & Mobileri',
-  'Plastike & Kimikate', 'Tjeter',
-]
+import { Loader2 } from 'lucide-react'
+import { Wordmark } from '@/components/brand/Wordmark'
+import { SectorMultiSelect } from '@/components/sectors/SectorMultiSelect'
 
 const interestOptions = [
   { value: 'grants', label: 'Grante & Fonde' },
@@ -30,9 +26,8 @@ export default function RegisterPage() {
     confirmPassword: '',
     name: '',
     companyName: '',
-    sector: '',
+    sectors: [] as string[],
     interests: [] as string[],
-    onlyMySector: false,
     language: 'sq',
   })
 
@@ -57,6 +52,10 @@ export default function RegisterPage() {
       setError('Fjalëkalimi duhet të ketë së paku 8 karaktere')
       return
     }
+    if (form.sectors.length === 0) {
+      setError('Zgjidh të paktën një sektor për biznesin tënd')
+      return
+    }
 
     setLoading(true)
 
@@ -69,10 +68,10 @@ export default function RegisterPage() {
           password: form.password,
           name: form.name,
           companyName: form.companyName,
-          sector: form.sector,
+          sectors: form.sectors,
           interests: form.interests,
           language: form.language,
-          onlyMySector: form.onlyMySector,
+          onlyMySector: true,
         }),
       })
 
@@ -95,14 +94,16 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#1B4F72] to-[#2E86C1] flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center space-x-2 text-white">
-            <Globe2 className="h-10 w-10" />
-            <span className="text-2xl font-bold">Business Hub Kosova</span>
+          <Link href="/" className="inline-flex items-center text-white">
+            <Wordmark size="lg" variant="inverse" />
           </Link>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h2 className="text-2xl font-bold text-gray-900 text-center mb-6">Krijo Llogari</h2>
+          <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">Krijo llogari</h2>
+          <p className="text-center text-sm text-gray-500 mb-6">
+            Zgjedh sektorin e biznesit. KBH do t&apos;i përshtasë grantet, panairet, certifikimet dhe udhëzuesit me ty.
+          </p>
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
@@ -157,17 +158,14 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Sektori</label>
-              <select
-                value={form.sector}
-                onChange={(e) => setForm({ ...form, sector: e.target.value })}
-                className="w-full h-10 rounded-lg border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E86C1]"
-              >
-                <option value="">Zgjidhni sektorin</option>
-                {sectors.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Sektori i biznesit <span className="text-red-500">*</span>
+              </label>
+              <SectorMultiSelect
+                value={form.sectors}
+                onChange={(next) => setForm({ ...form, sectors: next })}
+                helperText="Mund të zgjedhësh disa sektorë nëse biznesi yt mbulon më shumë se një."
+              />
             </div>
 
             <div>
@@ -206,15 +204,6 @@ export default function RegisterPage() {
                   <span className="text-sm font-medium">English</span>
                 </label>
               </div>
-            </div>
-
-            <div className="rounded-lg border border-gray-200 p-3">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input type="checkbox" checked={form.onlyMySector} onChange={(e) => setForm({ ...form, onlyMySector: e.target.checked })} className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B4F72] focus:ring-[#2E86C1]" />
-                <span className="text-sm text-gray-700">Shfaq për industrinë time
-                  <span className="block text-xs text-gray-400 mt-0.5">Grante, panaire dhe udhëzues vetëm për sektorin që zgjodhe. Mund ta ndryshosh kurdo te Cilësimet.</span>
-                </span>
-              </label>
             </div>
 
             <Button type="submit" className="w-full" size="lg" disabled={loading}>

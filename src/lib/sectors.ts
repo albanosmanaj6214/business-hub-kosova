@@ -188,3 +188,58 @@ export function userSectorSlug(sector?: string | null): SectorSlug | null {
   if (sectorBySlug(sector)) return sector as SectorSlug
   return inferSectorSlugs([sector])[0] ?? null
 }
+
+// ----------------------------------------------------------------------------
+// Personalization v1 helpers
+// ----------------------------------------------------------------------------
+
+// Coerce a free-text user.sector + new sectors[] array into a canonical slug list.
+// Reading-side helper for the bridge period while we still have both columns.
+export function userSectorSlugs(
+  user: { sector?: string | null; sectors?: readonly string[] | null },
+): SectorSlug[] {
+  if (user.sectors && user.sectors.length) {
+    return user.sectors.filter((s): s is SectorSlug => !!sectorBySlug(s))
+  }
+  const legacy = userSectorSlug(user.sector ?? null)
+  return legacy ? [legacy] : []
+}
+
+// True when the user has no canonical sector picked yet.
+export function hasNoSector(
+  user: { sector?: string | null; sectors?: readonly string[] | null },
+): boolean {
+  return userSectorSlugs(user).length === 0
+}
+
+// Deep personalization filter.
+//
+// Rules:
+//  - Universal item (empty targetSectors[] OR `cross-cutting` tag): always shows.
+//  - Otherwise: shows when item.targetSectors[] intersects user.sectors[].
+//
+// `userSectors` may be empty — that means the user has not picked a sector,
+// in which case we show everything (no useful filter to apply).
+export function matchesUserSectors(
+  item: { targetSectors?: readonly string[] | null; tags?: readonly string[] | null },
+  userSectors: readonly string[],
+): boolean {
+  if (!userSectors || userSectors.length === 0) return true
+  const target = item.targetSectors ?? []
+  const tags = item.tags ?? []
+  if (target.length === 0) return true
+  if (tags.includes('cross-cutting')) return true
+  for (const t of target) {
+    if (userSectors.includes(t)) return true
+  }
+  return false
+}
+
+// Returns a human-readable Albanian label for a list of slugs, e.g.
+// ['druri-mobilje', 'tik'] -> 'Druri dhe mobilje, TIK dhe shërbime dixhitale'.
+export function sectorsLabel(slugs: readonly string[]): string {
+  return slugs
+    .map((s) => sectorBySlug(s)?.sq)
+    .filter(Boolean)
+    .join(', ')
+}

@@ -5,13 +5,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Loader2, Save } from 'lucide-react'
-
-
-const sectors = [
-  'Prodhim Ushqimor', 'Tekstile', 'Ndertimtari', 'Teknologji',
-  'Bujqesi', 'Energji', 'Minerale', 'Metalurgji', 'Dru & Mobileri',
-  'Plastike & Kimikate', 'Tjeter',
-]
+import { SectorMultiSelect } from '@/components/sectors/SectorMultiSelect'
 
 const interestOptions = [
   { value: 'grants', label: 'Grante & Fonde' },
@@ -21,16 +15,15 @@ const interestOptions = [
 ]
 
 export default function SettingsPage() {
-  
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [error, setError] = useState('')
   const [form, setForm] = useState({
     name: '',
     companyName: '',
-    sector: '',
+    sectors: [] as string[],
     interests: [] as string[],
     language: 'sq',
-    onlyMySector: false,
   })
 
   useEffect(() => {
@@ -41,10 +34,9 @@ export default function SettingsPage() {
           setForm({
             name: data.user.name || '',
             companyName: data.user.companyName || '',
-            sector: data.user.sector || '',
+            sectors: data.user.sectors || [],
             interests: data.user.interests || [],
             language: data.user.language || 'sq',
-            onlyMySector: data.user.onlyMySector || false,
           })
         }
       })
@@ -52,18 +44,29 @@ export default function SettingsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
+
+    if (form.sectors.length === 0) {
+      setError('Zgjidh të paktën një sektor.')
+      return
+    }
+
     setLoading(true)
     setSaved(false)
 
-    await fetch('/api/user/profile', {
+    const res = await fetch('/api/user/profile', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
     })
 
     setLoading(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 3000)
+    if (res.ok) {
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    } else {
+      setError('Nuk u ruajt. Provo sërish.')
+    }
   }
 
   const toggleInterest = (value: string) => {
@@ -87,16 +90,21 @@ export default function SettingsPage() {
           <h2 className="font-semibold text-gray-900">Informacioni i Profilit</h2>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <Input id="name" label="Emri" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             <Input id="company" label="Kompania" value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} />
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Sektori</label>
-              <select value={form.sector} onChange={(e) => setForm({ ...form, sector: e.target.value })} className="w-full h-10 rounded-lg border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E86C1]">
-                <option value="">Zgjidhni sektorin</option>
-                {sectors.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Sektori i biznesit
+              </label>
+              <p className="text-xs text-gray-500 mb-2">
+                KBH përshtatet me sektorin tënd. Grantet, panairet, certifikimet dhe udhëzuesit përfshijnë vetëm ato që janë të rëndësishëm për ty. Mund të zgjedhësh më shumë se një.
+              </p>
+              <SectorMultiSelect
+                value={form.sectors}
+                onChange={(next) => setForm({ ...form, sectors: next })}
+              />
             </div>
 
             <div>
@@ -123,14 +131,11 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="rounded-lg border border-gray-200 p-3">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input type="checkbox" checked={form.onlyMySector} onChange={(e) => setForm({ ...form, onlyMySector: e.target.checked })} className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B4F72] focus:ring-[#2E86C1]" />
-                <span className="text-sm text-gray-700">Shfaq për industrinë time
-                  <span className="block text-xs text-gray-400 mt-0.5">Grante, panaire dhe udhëzues vetëm për sektorin që zgjedh. Mund ta ndryshosh kurdo.</span>
-                </span>
-              </label>
-            </div>
+            {error && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {error}
+              </div>
+            )}
 
             <Button type="submit" disabled={loading}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
