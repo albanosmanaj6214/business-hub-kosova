@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { GoogleGenAI } from '@google/genai'
 import { TOOL_DECLARATIONS, runTool, UserContext } from '@/lib/konsulenti/tools'
+import { userSectorSlugs, sectorsLabel } from '@/lib/sectors'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 30
@@ -52,7 +53,9 @@ function systemInstruction(ctx: UserContext, userName: string | null): string {
     '',
     'KONTEKSTI I PËRDORUESIT:',
     fn ? `Emri: ${fn}.` : '',
-    ctx.sector ? `Sektori: ${ctx.sector}.` : 'Sektori nuk është caktuar në profil.',
+    ctx.sectors.length
+      ? `Sektorët: ${sectorsLabel(ctx.sectors)} (${ctx.sectors.join(', ')}).`
+      : 'Sektori nuk është caktuar në profil.',
     ctx.companyName ? `Kompania: ${ctx.companyName}.` : '',
     ctx.interests.length ? `Interesat: ${ctx.interests.join(', ')}.` : '',
     `Data e sotme: ${new Date().toISOString().slice(0, 10)}.`,
@@ -132,7 +135,8 @@ export async function POST(req: NextRequest) {
 
   const ctx: UserContext = {
     userId,
-    sector: user.sector,
+    // Personalization v1: canonical slug list. Empty when user hasn't picked.
+    sectors: userSectorSlugs(user),
     interests: user.interests,
     companyName: user.companyName,
     language: user.language || 'sq',

@@ -25,6 +25,10 @@ export interface Certification {
   durationMonths?: { min: number; max: number; note?: string }
   marketAccess?: string[]            // which markets / buyer categories want this
   related?: string[]                 // related certifications (slugs)
+  // Personalization v1: canonical sector slugs this cert targets. Empty array =
+  // universal (shows for all users; e.g. ISO 9001 applies to every industry).
+  // Non-empty = shows only to users whose sectors[] intersects.
+  targetSectors?: string[]
 }
 
 export interface CertificationCategory {
@@ -33,6 +37,9 @@ export interface CertificationCategory {
   icon: string                       // lucide-react icon name
   description?: string
   certifications: Certification[]
+  // Personalization v1: when a cert in this category has no `targetSectors` of
+  // its own, the category default fills in. Empty/undefined = universal.
+  targetSectors?: string[]
 }
 
 export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
@@ -111,6 +118,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
     title: 'Siguria e Ushqimit',
     icon: 'Utensils',
     description: 'Sektori kryesor i eksportit të Kosovës. Pa këto certifikime, ushqimi nuk shitet ligjërisht në BE dhe asnjë zinxhir i madh nuk do ta blejë.',
+    targetSectors: ['ushqim-dhe-pije'],
     certifications: [
       {
         slug: 'haccp',
@@ -314,6 +322,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
   {
     id: 'organike',
     title: 'BIO & Organike',
+    targetSectors: ['ushqim-dhe-pije'],
     icon: 'Leaf',
     description: 'Tregu organik është rritja më e shpejtë në BE. Konsumatorët gjermanë, austriakë, dhe nordikë paguajnë 30–80% më shumë për produkte BIO të certifikuara.',
     certifications: [
@@ -353,6 +362,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
   {
     id: 'religjioze',
     title: 'Certifikime Religjioze',
+    targetSectors: ['ushqim-dhe-pije', 'kozmetike'],
     icon: 'Heart',
     description: 'Hapin tregje që ndryshe janë të mbyllura — Lindjen e Mesme (1.8 miliardë konsumatorë myslimanë) dhe komunitetet hebreje në SHBA/Europë.',
     certifications: [
@@ -392,6 +402,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
   {
     id: 'tekstil',
     title: 'Tekstil & Veshje',
+    targetSectors: ['tekstil-konfeksion'],
     icon: 'Shirt',
     description: 'Industria e tekstilit në Kosovë po rritet (rritje 15% në 2024). Certifikimet janë kyçe për të hyrë te markat e mëdha të modës.',
     certifications: [
@@ -430,6 +441,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
   {
     id: 'druri',
     title: 'Druri & Letra',
+    targetSectors: ['druri-mobilje'],
     icon: 'Trees',
     description: 'BE ka rregulla strikte për origjinën e drurit (EUTR / EUDR i ri). Pa certifikim, druri ilegal nuk hyn në BE.',
     certifications: [
@@ -579,6 +591,40 @@ export function allCertifications(): Certification[] {
 
 export function findCertification(slug: string): Certification | undefined {
   return allCertifications().find((c) => c.slug === slug)
+}
+
+// Effective targetSectors for a cert: prefer the cert's own list, fall back to
+// the category's list, default to [] (universal).
+export function certTargetSectors(
+  cert: Certification,
+  category: CertificationCategory,
+): string[] {
+  return cert.targetSectors ?? category.targetSectors ?? []
+}
+
+// Personalization filter. Returns the same shape as CERTIFICATION_CATEGORIES,
+// dropping individual certs that don't match userSectors. A category whose
+// certs are all dropped is removed entirely.
+//
+// Rules:
+//  - Empty userSectors[] = pass-through, no filtering.
+//  - A cert with empty effective targetSectors = universal, always shows.
+//  - Otherwise: shows when effective targetSectors intersects userSectors.
+export function filterCertCategoriesByUserSectors(
+  categories: CertificationCategory[],
+  userSectors: readonly string[],
+): CertificationCategory[] {
+  if (!userSectors || userSectors.length === 0) return categories
+  return categories
+    .map((cat) => {
+      const next = cat.certifications.filter((c) => {
+        const ts = certTargetSectors(c, cat)
+        if (ts.length === 0) return true
+        return ts.some((s) => userSectors.includes(s))
+      })
+      return { ...cat, certifications: next }
+    })
+    .filter((cat) => cat.certifications.length > 0)
 }
 
 export function mandatoryLabel(level: MandatoryLevel): { label: string; tone: 'danger' | 'warning' | 'success' } {

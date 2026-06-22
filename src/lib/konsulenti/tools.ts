@@ -1,11 +1,13 @@
 import { Type } from '@google/genai'
 import { prisma } from '@/lib/prisma'
-import { allCertifications } from '@/lib/export-certifications'
+import { CERTIFICATION_CATEGORIES, filterCertCategoriesByUserSectors, certTargetSectors } from '@/lib/export-certifications'
 import { INCOTERMS } from '@/lib/export-terms'
+import { matchesUserSectors, sectorsLabel } from '@/lib/sectors'
 
 export interface UserContext {
   userId: string
-  sector: string | null
+  // Personalization v1: canonical sector slugs the user has picked. May be empty.
+  sectors: string[]
   interests: string[]
   companyName: string | null
   language: string
@@ -96,7 +98,7 @@ export async function runTool(name: string, args: Record<string, unknown>, ctx: 
     case 'searchGrants': return searchGrants(args, ctx)
     case 'searchFairs': return searchFairs(args, ctx)
     case 'getGuide': return getGuide(args)
-    case 'searchCertifications': return searchCertifications(args)
+    case 'searchCertifications': return searchCertifications(args, ctx)
     case 'lookupIncoterm': return lookupIncoterm(args)
     default: return { error: `Tool i panjohur: ${name}` }
   }
@@ -126,9 +128,10 @@ async function searchGrants(args: Record<string, unknown>, ctx: UserContext) {
       } : {}),
       ...(provider ? { provider: { contains: provider, mode: 'insensitive' } } : {}),
     },
-    select: { id: true, title: true, titleSq: true, descriptionSq: true, description: true, provider: true, amount: true, deadline: true, isOngoing: true, url: true, sectors: true },
+    select: { id: true, title: true, titleSq: true, descriptionSq: true, description: true, provider: true, amount: true, deadline: true, isOngoing: true, url: true, sectors: true, targetSectors: true, tags: true },
     orderBy: [{ deadline: 'asc' }, { createdAt: 'desc' }],
-    take: limit * 2,
+    // Cast a wider net because we'll trim by sector below.
+    take: limit * 3,
   })
 
   const filtered = grants.filter((g) => {
@@ -138,7 +141,10 @@ async function searchGrants(args: Record<string, unknown>, ctx: UserContext) {
     if (g.deadline < today) return false
     if (deadlineCap && g.deadline > deadlineCap) return false
     return true
-  }).slice(0, limit)
+  })
+    // Personalization: keep universal + cross-cutting + sector matches.
+    .filter((g) => matchesUserSectors(g, ctx.sectors))
+    .slice(0, limit)
 
   return {
     count: filtered.length,
@@ -150,15 +156,17 @@ async function searchGrants(args: Record<string, unknown>, ctx: UserContext) {
       deadline: g.deadline ? g.deadline.toISOString().slice(0, 10) : null,
       isOngoing: g.isOngoing,
       sectors: g.sectors,
+      targetSectors: g.targetSectors,
       summary: (g.descriptionSq || g.description || '').slice(0, 240),
       externalUrl: g.url,
       detailUrl: '/dashboard/grants',
     })),
-    userSector: ctx.sector,
+    userSectors: ctx.sectors,
+    userSectorLabel: sectorsLabel(ctx.sectors),
   }
 }
 
-async function searchFairs(args: Record<string, unknown>, _ctx: UserContext) {
+async function searchFairs(args: Record<string, unknown>, ctx: UserContext) {
   const keywords = typeof args.keywords === 'string' ? args.keywords.trim() : ''
   const country = typeof args.country === 'string' ? args.country.trim() : ''
   const monthsAhead = typeof args.monthsAhead === 'number' ? args.monthsAhead : 12
@@ -183,19 +191,26 @@ async function searchFairs(args: Record<string, unknown>, _ctx: UserContext) {
       } : {}),
       ...(country ? { country: { contains: country, mode: 'insensitive' } } : {}),
     },
-    select: { id: true, name: true, nameSq: true, country: true, location: true, sectors: true, startDate: true, endDate: true, website: true, registrationUrl: true, eventType: true },
+    select: { id: true, name: true, nameSq: true, country: true, location: true, sectors: true, targetSectors: true, tags: true, startDate: true, endDate: true, website: true, registrationUrl: true, eventType: true },
     orderBy: { startDate: 'asc' },
-    take: limit,
+    // Cast a wider net because we'll trim by sector below.
+    take: limit * 3,
   })
 
+  // Personalization: strict for fairs/events.
+  const personalized = fairs
+    .filter((f) => matchesUserSectors(f, ctx.sectors))
+    .slice(0, limit)
+
   return {
-    count: fairs.length,
-    fairs: fairs.map((f) => ({
+    count: personalized.length,
+    fairs: personalized.map((f) => ({
       id: f.id,
       name: f.nameSq || f.name,
       country: f.country,
       location: f.location,
       sectors: f.sectors,
+      targetSectors: f.targetSectors,
       type: f.eventType,
       startDate: f.startDate.toISOString().slice(0, 10),
       endDate: f.endDate.toISOString().slice(0, 10),
@@ -203,6 +218,8 @@ async function searchFairs(args: Record<string, unknown>, _ctx: UserContext) {
       registrationUrl: f.registrationUrl,
       detailUrl: '/dashboard/fairs',
     })),
+    userSectors: ctx.sectors,
+    userSectorLabel: sectorsLabel(ctx.sectors),
   }
 }
 
@@ -276,25 +293,38 @@ function simplifyCerts(v: Json | null) {
   })
 }
 
-function searchCertifications(args: Record<string, unknown>) {
+function searchCertifications(args: Record<string, unknown>, ctx: UserContext) {
   const industry = typeof args.industry === 'string' ? args.industry.trim().toLowerCase() : ''
   const limit = Math.min(Math.max(Number(args.limit) || 6, 1), 12)
-  const all = allCertifications()
+
+  // Personalization-by-default: when the user has sectors, scope categories first.
+  const personalizedCats = ctx.sectors.length > 0
+    ? filterCertCategoriesByUserSectors(CERTIFICATION_CATEGORIES, ctx.sectors)
+    : CERTIFICATION_CATEGORIES
+
+  // Flatten with category context preserved so we can compute effective targets.
+  const flat = personalizedCats.flatMap((cat) =>
+    cat.certifications.map((c) => ({ c, cat })),
+  )
+
   const filtered = industry
-    ? all.filter((c) => c.industries.some((i) => i.toLowerCase().includes(industry) || industry.includes(i.toLowerCase())))
-    : all
+    ? flat.filter(({ c }) => c.industries.some((i) => i.toLowerCase().includes(industry) || industry.includes(i.toLowerCase())))
+    : flat
+
   return {
     count: filtered.length,
-    certifications: filtered.slice(0, limit).map((c) => ({
+    certifications: filtered.slice(0, limit).map(({ c, cat }) => ({
       slug: c.slug,
       name: c.name,
       fullNameSq: c.fullNameSq || c.fullName || null,
       whatIs: c.whatIs.slice(0, 240),
       mandatory: c.mandatory,
       industries: c.industries,
+      targetSectors: certTargetSectors(c, cat),
       marketAccess: c.marketAccess || [],
       detailUrl: `/dashboard/certifikime#${c.slug}`,
     })),
+    userSectors: ctx.sectors,
   }
 }
 

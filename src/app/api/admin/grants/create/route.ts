@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { sectorBySlug, sectorsLabel } from '@/lib/sectors'
 
 const Body = z.object({
   title: z.string().min(3).max(300),
@@ -17,8 +18,14 @@ const Body = z.object({
   deadline: z.string().optional().nullable(),  // YYYY-MM-DD
   eligibility: z.string().max(2000).optional().nullable(),
   sectors: z.array(z.string().max(60)).default([]),
+  // Personalization v1: canonical sector slugs this grant targets.
+  // Empty = universal (shows to everyone).
+  targetSectors: z.array(z.string().max(60)).default([]),
   tags: z.array(z.string().max(60)).default([]),
   isActive: z.boolean().default(true),
+  // When true, insert a Notification row for every user whose sectors intersect
+  // with targetSectors[]. Skipped silently when targetSectors is empty.
+  notifySector: z.boolean().default(false),
 })
 
 export async function POST(req: Request) {
@@ -36,6 +43,11 @@ export async function POST(req: Request) {
   const deadlineDate = d.deadline ? new Date(d.deadline + 'T23:59:59Z') : null
   const isActive = deadlineDate ? deadlineDate.getTime() > Date.now() : d.isActive
 
+  // Personalization v1: only accept known canonical sector slugs in targetSectors.
+  const targetSectors = Array.from(new Set(
+    (d.targetSectors ?? []).filter((s) => !!sectorBySlug(s)),
+  ))
+
   const data = {
     title: d.title,
     titleSq: d.titleSq ?? null,
@@ -49,6 +61,7 @@ export async function POST(req: Request) {
     deadline: deadlineDate,
     eligibility: d.eligibility ?? null,
     sectors: d.sectors,
+    targetSectors,
     tags: [...(d.tags ?? []), 'manual-admin'],
     isActive,
   }
@@ -61,7 +74,32 @@ export async function POST(req: Request) {
     result = await prisma.grant.create({ data })
   }
 
-  return NextResponse.json({ ok: true, id: result.id, mode: existing ? 'updated' : 'created' })
+  // Notify users whose sectors intersect targetSectors[] when the admin opted in.
+  let notified = 0
+  if (d.notifySector && targetSectors.length > 0) {
+    const users = await prisma.user.findMany({
+      where: { sectors: { hasSome: targetSectors } },
+      select: { id: true, language: true },
+    })
+    if (users.length) {
+      const title = `Grant i ri për sektorin: ${sectorsLabel(targetSectors)}`
+      const message = (d.titleSq || d.title).slice(0, 240)
+      await prisma.notification.createMany({
+        data: users.map((u) => ({
+          userId: u.id,
+          type: 'GRANT' as const,
+          title,
+          titleSq: title,
+          message,
+          messageSq: message,
+          link: '/dashboard/grants',
+        })),
+      })
+      notified = users.length
+    }
+  }
+
+  return NextResponse.json({ ok: true, id: result.id, mode: existing ? 'updated' : 'created', notified })
 }
 
 // Helper: GET list of distinct existing providers for autocomplete

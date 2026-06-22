@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge'
 import {
   ArrowLeft, Sparkles, Loader2, CheckCircle2, AlertTriangle, X, Plus,
 } from 'lucide-react'
+import { SectorMultiSelect } from '@/components/sectors/SectorMultiSelect'
+import { inferSectorSlugs } from '@/lib/sectors'
 
 interface ExtractedFields {
   deadline: string | null
@@ -34,13 +36,20 @@ interface FormState {
   deadline: string
   eligibility: string
   sectors: string[]
+  // Canonical sector slugs. Empty array = universal (shows to everyone).
+  targetSectors: string[]
   tags: string[]
+  notifySector: boolean
+  // The "show in dashboard" toggle exists for UX clarity, but the effect is
+  // already governed by targetSectors. We keep it as a no-op confirmation.
+  showInDashboard: boolean
 }
 
 const EMPTY: FormState = {
   title: '', titleSq: '', provider: '', url: '',
   description: '', descriptionSq: '', amount: '', currency: 'EUR',
-  deadline: '', eligibility: '', sectors: [], tags: [],
+  deadline: '', eligibility: '', sectors: [], targetSectors: [], tags: [],
+  notifySector: false, showInDashboard: true,
 }
 
 export default function NewGrantPage() {
@@ -82,6 +91,7 @@ export default function NewGrantPage() {
         if (max) return `€${max.toLocaleString()}`
         return ''
       })()
+      const extractedSectors = e.sectors ?? []
       setForm({
         ...EMPTY,
         url,
@@ -92,7 +102,10 @@ export default function NewGrantPage() {
         currency: e.currency ?? 'EUR',
         deadline: data.deadlineISO ?? '',
         eligibility: e.eligibility ?? '',
-        sectors: e.sectors ?? [],
+        sectors: extractedSectors,
+        // Best-guess canonical mapping from the AI free-text sectors. Admin can
+        // override before publishing.
+        targetSectors: inferSectorSlugs(extractedSectors),
       })
       setStep('edit')
     } catch (err) {
@@ -241,17 +254,80 @@ export default function NewGrantPage() {
               <Textarea label="Pranueshmëria (kush mund të aplikojë)" value={form.eligibility} onChange={(v) => setForm({ ...form, eligibility: v })} rows={3} />
 
               <ChipInput
-                label="Sektorët"
+                label="Sektorët (etiketa origjinale)"
                 values={form.sectors}
                 placeholder="p.sh. bujqësi, IT, industri kreative..."
                 onAdd={(v) => addChip('sectors', v)}
                 onRemove={(i) => removeChip('sectors', i)}
               />
 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Sektorët që e shohin këtë grant
+                </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Zgjidh sektorët kanonikë të platformës. Nëse nuk zgjedh asnjë, granti shihet nga të gjithë (universal). Përdor &quot;Të gjithë sektorët&quot; për thirrje që janë për të gjithë bizneset.
+                </p>
+                <div className="flex items-center gap-2 mb-2">
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, targetSectors: [] })}
+                    className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                      form.targetSectors.length === 0
+                        ? 'bg-[#1B4F72] text-white border-[#1B4F72]'
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-[#2E86C1]'
+                    }`}
+                  >
+                    Të gjithë sektorët
+                  </button>
+                  <span className="text-xs text-gray-400">
+                    {form.targetSectors.length} të zgjedhur
+                  </span>
+                </div>
+                <SectorMultiSelect
+                  value={form.targetSectors}
+                  onChange={(next) => setForm({ ...form, targetSectors: next })}
+                  size="sm"
+                />
+              </div>
+
+              {form.targetSectors.length > 0 && (
+                <div className="rounded-lg border border-[#1B4F72]/15 bg-[#1B4F72]/5 p-3 space-y-2">
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.showInDashboard}
+                      onChange={(e) => setForm({ ...form, showInDashboard: e.target.checked })}
+                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B4F72] focus:ring-[#2E86C1]"
+                    />
+                    <span className="text-sm text-gray-700">
+                      Shfaqe në dashboard të atyre bizneseve
+                      <span className="block text-xs text-gray-500 mt-0.5">
+                        Default: e ndezur. Bizneset me sektor përkatës e shohin automatikisht në /dashboard/grants.
+                      </span>
+                    </span>
+                  </label>
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.notifySector}
+                      onChange={(e) => setForm({ ...form, notifySector: e.target.checked })}
+                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1B4F72] focus:ring-[#2E86C1]"
+                    />
+                    <span className="text-sm text-gray-700">
+                      Njofto bizneset në këtë sektor
+                      <span className="block text-xs text-gray-500 mt-0.5">
+                        Krijon një njoftim të ri për çdo përdorues që ka të paktën një nga sektorët e mësipërm.
+                      </span>
+                    </span>
+                  </label>
+                </div>
+              )}
+
               <ChipInput
                 label="Etiketat e brendshme"
                 values={form.tags}
-                placeholder="p.sh. eu-funded, urgjent, rolling..."
+                placeholder="p.sh. eu-funded, urgjent, rolling, cross-cutting..."
                 onAdd={(v) => addChip('tags', v)}
                 onRemove={(i) => removeChip('tags', i)}
               />
