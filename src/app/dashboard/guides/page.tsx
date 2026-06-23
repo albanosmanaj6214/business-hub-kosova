@@ -122,13 +122,13 @@ export default async function GuidesPage() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {items.map((guide: any) => (
-                      <Link key={guide.id} href={`/dashboard/guides/${guide.id}`}>
-                        <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-                          <CardContent className="p-5">
+                      <Card key={guide.id} className="hover:shadow-md transition-shadow h-full">
+                        <CardContent className="p-5">
+                          <Link href={`/dashboard/guides/${guide.id}`} className="block group">
                             <div className="flex items-center gap-3 mb-3">
                               <span className="text-4xl leading-none">{guide.flag ?? '🌐'}</span>
                               <div>
-                                <h3 className="font-semibold text-gray-900">{guide.country}</h3>
+                                <h3 className="font-semibold text-gray-900 group-hover:text-[#1B4F72]">{guide.country}</h3>
                                 {guide.countryCode && <div className="text-xs text-gray-400 font-mono">{guide.countryCode}</div>}
                               </div>
                             </div>
@@ -150,9 +150,17 @@ export default async function GuidesPage() {
                                 </div>
                               )
                             })()}
-                          </CardContent>
-                        </Card>
-                      </Link>
+                          </Link>
+                          <div className="flex items-center justify-end gap-2 mt-3 pt-3 border-t border-gray-100">
+                            <Link
+                              href={`/dashboard/checklist?country=${guide.countryCode ?? ''}`}
+                              className="inline-flex items-center gap-1 text-xs font-medium text-[#1B4F72] hover:text-[#2E86C1] px-2.5 py-1 rounded-md border border-[#1B4F72]/20 hover:border-[#2E86C1]/40 bg-white"
+                            >
+                              {t('Checklist', 'Checklist')} →
+                            </Link>
+                          </div>
+                        </CardContent>
+                      </Card>
                     ))}
                   </div>
                 </section>
