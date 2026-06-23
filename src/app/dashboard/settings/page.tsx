@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Loader2, Save } from 'lucide-react'
 import { SectorPicker } from '@/components/sectors/SectorPicker'
+import { ActivityPicker } from '@/components/sectors/ActivityPicker'
 
 const interestOptions = [
   { value: 'grants', label: 'Grante & Fonde' },
@@ -21,6 +22,7 @@ export default function SettingsPage() {
   const [form, setForm] = useState({
     name: '',
     companyName: '',
+    activityType: '',
     sectors: [] as string[],
     interests: [] as string[],
     language: 'sq',
@@ -36,6 +38,7 @@ export default function SettingsPage() {
           setForm({
             name: data.user.name || '',
             companyName: data.user.companyName || '',
+            activityType: data.user.activityType || '',
             sectors: data.user.sectors || [],
             interests: data.user.interests || [],
             language: data.user.language || 'sq',
@@ -49,6 +52,10 @@ export default function SettingsPage() {
     e.preventDefault()
     setError('')
 
+    if (!form.activityType) {
+      setError('Zgjidh llojin e aktivitetit.')
+      return
+    }
     if (form.sectors.length === 0) {
       setError('Zgjidh të paktën një sektor.')
       return
@@ -96,6 +103,11 @@ export default function SettingsPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <Input id="name" label="Emri" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             <Input id="company" label="Kompania" value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} />
+
+            <ActivityPicker
+              value={form.activityType}
+              onChange={(next) => setForm({ ...form, activityType: next })}
+            />
 
             <SectorPicker
               value={form.sectors}

@@ -10,10 +10,17 @@ export const ACTIVITY_TYPES = [
 export type ActivityType = (typeof ACTIVITY_TYPES)[number]
 
 export const ACTIVITY_LABELS: Record<ActivityType, { sq: string; en: string; de: string }> = {
-  'prodhues-perpunues': { sq: 'Prodhues / Perpunues', en: 'Producer / Processor', de: 'Hersteller / Verarbeiter' },
-  'sherbime': { sq: 'Sherbime', en: 'Services', de: 'Dienstleistungen' },
-  'bujqesi': { sq: 'Bujqesi', en: 'Agriculture', de: 'Landwirtschaft' },
+  'prodhues-perpunues': { sq: 'Prodhues / Përpunues', en: 'Producer / Processor', de: 'Hersteller / Verarbeiter' },
+  'sherbime': { sq: 'Shërbime', en: 'Services', de: 'Dienstleistungen' },
+  'bujqesi': { sq: 'Bujqësi', en: 'Agriculture', de: 'Landwirtschaft' },
   'tregti': { sq: 'Tregti', en: 'Trade', de: 'Handel' },
+}
+
+export const ACTIVITY_HINT_SQ: Record<ActivityType, string> = {
+  'prodhues-perpunues': 'Prodhoni ose përpunoni produkte fizike.',
+  'sherbime': 'Ofroni shërbime për biznese ose qytetarë.',
+  'bujqesi': 'Veprimtari bujqësore, blegtorale ose pemtari.',
+  'tregti': 'Tregti me pakicë ose shumicë.',
 }
 
 export function isActivityType(v: string): v is ActivityType {

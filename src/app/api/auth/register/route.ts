@@ -3,6 +3,7 @@ import { hash } from 'bcryptjs'
 import { randomBytes } from 'crypto'
 import { prisma } from '@/lib/prisma'
 import { sectorBySlug, sectorsLabel } from '@/lib/sectors'
+import { isActivityType } from '@/lib/activity'
 import { sendVerificationEmail } from '@/lib/email'
 import {
   verifyTurnstile,
@@ -37,6 +38,7 @@ export async function POST(req: Request) {
       companyName,
       sector,
       sectors,
+      activityType,
       interests,
       language,
       onlyMySector,
@@ -80,6 +82,14 @@ export async function POST(req: Request) {
       )
     }
 
+    // Lloji i aktivitetit eshte i detyrueshem dhe boshti kryesor i targetimit.
+    if (typeof activityType !== 'string' || !isActivityType(activityType)) {
+      return NextResponse.json(
+        { error: 'Zgjidh llojin e aktivitetit të biznesit' },
+        { status: 400 }
+      )
+    }
+
     const hashedPassword = await hash(password, 12)
 
     const user = await prisma.user.create({
@@ -92,6 +102,9 @@ export async function POST(req: Request) {
         // code paths still reading it. Will be removed in a follow-up migration.
         sector: typeof sector === 'string' && sector ? sector : sectorsLabel(normalisedSectors),
         sectors: normalisedSectors,
+        activityType,
+        // Baza falas jep qasje ne sektorin e deklaruar. Sektore shtese hapen nga admini (Faza E).
+        entitledSectors: normalisedSectors,
         interests: interests || [],
         language: language || 'sq',
         onlyMySector: typeof onlyMySector === 'boolean' ? onlyMySector : true,

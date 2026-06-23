@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Loader2, MailCheck } from 'lucide-react'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { SectorPicker } from '@/components/sectors/SectorPicker'
+import { ActivityPicker } from '@/components/sectors/ActivityPicker'
 
 const interestOptions = [
   { value: 'grants', label: 'Grante & Fonde' },
@@ -35,6 +36,7 @@ export default function RegisterPage() {
     confirmPassword: '',
     name: '',
     companyName: '',
+    activityType: '',
     sectors: [] as string[],
     interests: [] as string[],
     language: 'sq',
@@ -62,6 +64,10 @@ export default function RegisterPage() {
       setError('Fjalëkalimi duhet të ketë së paku 8 karaktere')
       return
     }
+    if (!form.activityType) {
+      setError('Zgjidh llojin e aktivitetit të biznesit')
+      return
+    }
     if (form.sectors.length === 0) {
       setError('Zgjidh të paktën një sektor për biznesin tënd')
       return
@@ -82,6 +88,7 @@ export default function RegisterPage() {
           password: form.password,
           name: form.name,
           companyName: form.companyName,
+          activityType: form.activityType,
           sectors: form.sectors,
           interests: form.interests,
           language: form.language,
@@ -234,6 +241,11 @@ export default function RegisterPage() {
                 required
               />
             </div>
+
+            <ActivityPicker
+              value={form.activityType}
+              onChange={(next) => setForm({ ...form, activityType: next })}
+            />
 
             <SectorPicker
               value={form.sectors}
