@@ -2,7 +2,7 @@
 
 - **Data:** 2026-06-23
 - **Projekti:** Kosova Business Hub (CT109, `/var/www/businesshub`)
-- **Statusi:** Dizajn i aprovuar pikë-për-pikë nga pronari, gati për shqyrtim përfundimtar para planit të implementimit.
+- **Statusi:** Dizajn i APROVUAR plotësisht (përfshirë paketat). Gati për plan implementimi.
 
 ## 1. Qëllimi
 
@@ -25,20 +25,22 @@ Dy parime mbrojtëse:
 1. **Boshti i llojit të aktivitetit nuk ekziston.** Sot targetimi është vetëm sipas sektorit. "Grant për prodhues" (që prek shumë sektorë por jo shërbimet/tregtinë) nuk mund të shprehet.
 2. **Modeli është opt-in, jo i detyrueshëm.** `onlyMySector` është OFF si default, pra bizneset shohin gjithçka. Modeli i ri kërkon scoping të detyrueshëm sipas profilit, pa "shiko të gjitha".
 3. **`targetSectors` bosh = universal** përzihet me kuptimin e ri. Te modeli i ri "e përgjithshme" është zgjedhje eksplicite e adminit, jo thjesht fushë e zbrazët.
-4. **Nuk ka kontroll admini mbi qasjen e sektorëve dhe faturimin.** `User.sectors` është vetëdeklarim, pa miratim/faturim nga admini.
+4. **Nuk ka kontroll admini mbi qasjen e sektorëve dhe faturimin.**
 5. **Nuk ka modul Lajme/Informata.**
 6. **Nuk ka Qendër Dispeçimi të unifikuar** me parapamje live "sa biznese do ta marrin".
+7. **Nuk ka shtresë të drejtash sipas tarifës** (entitlements) përtej numrit të sektorëve.
 
 ## 3. Modeli i targetimit (i aprovuar)
 
 ### 3.1 Boshtet
 - **Lloji i aktivitetit** (4 vlera): `prodhues-perpunues`, `sherbime`, `bujqesi`, `tregti`.
+  - **Një biznes ka vetëm NJË lloj aktiviteti.** (Vendim i pronarit.)
   - Tregtia nuk merr grante sektoriale; merr vetëm përmbajtje "të përgjithshme" (pa sektor).
-- **Sektori/industria** (17 sektorë, lista zyrtare më poshtë).
+- **Sektori/industria** (18 sektorë, lista zyrtare më poshtë).
 - **Atributi "Gra në pronësi"** (po/jo/i padeklaruar).
 - Hapësirë për atribute të mëvonshme (i ri/startup, eksportues, komuna) pa i ndërtuar tani.
 
-### 3.2 Lista zyrtare e sektorëve (17)
+### 3.2 Lista zyrtare e sektorëve (18)
 1. Ushqim dhe Pije
 2. Bujqësi, Blegtori dhe Pemtari
 3. Tekstil dhe Konfeksion
@@ -56,32 +58,31 @@ Dy parime mbrojtëse:
 15. Logjistikë dhe Transport
 16. Turizëm dhe Mikpritje
 17. Artizanat dhe Industri Kreative
-
-> **Vendim i hapur:** Kodi aktual ka një sektor të 18-të, `konstruksion-inxhinieri`, që nuk është në listën e pronarit. Duhet konfirmuar nëse mbahet (rekomandim: mbahet si sektor i veçantë "Shërbime", sepse ndërtimi/inxhinieria ndryshon nga prodhimi i materialeve të ndërtimit) ose hiqet/bashkohet. Pa konfirmim, mbetet aktiv por shënohet për rishikim.
+18. Konstruksion dhe Inxhinieri *(mbahet si sektor i veçantë, vendim i pronarit)*
 
 ### 3.3 Audienca e çdo artikulli (e cakton admini)
 Çdo Grant / Panair / Lajm / Informatë merr një audiencë në një nga këto forma:
 - **E përgjithshme** (`isGeneral = true`): shkon te të gjithë, përfshirë tregtinë (p.sh. paga minimale, SuperPuna, lajme të përgjithshme).
 - **Sipas llojit të aktivitetit**: p.sh. të gjithë Prodhuesit/Përpunuesit pavarësisht sektorit.
-- **Sipas sektorëve**: një ose disa nga 17.
+- **Sipas sektorëve**: një ose disa nga 18.
 - **+ "Vetëm gra në pronësi"**: e ngushton brenda audiencës së zgjedhur.
 
-Kufizim: nëse `isGeneral = false`, admini duhet të zgjedhë të paktën një aktivitet ose një sektor (UI e detyron, që të mos krijohet audiencë e zbrazët e dykuptimtë).
+Kufizim: nëse `isGeneral = false`, admini duhet të zgjedhë të paktën një aktivitet ose një sektor (UI e detyron).
 
 ### 3.4 Rregulli i përputhjes (kush e sheh çfarë)
-Biznesi `B` e merr artikullin `I` nëse:
+Biznesi `B` (me një `activityType` të vetëm) e merr artikullin `I` nëse:
 
 ```
 isGeneral(I) == true
   OSE (
-    ( I.targetActivityTypes është bosh  OSE  B.activityTypes ∩ I.targetActivityTypes ≠ ∅ )
+    ( I.targetActivityTypes është bosh  OSE  B.activityType ∈ I.targetActivityTypes )
     DHE ( I.targetSectors është bosh     OSE  B.entitledSectors ∩ I.targetSectors ≠ ∅ )
     DHE ( I.forFemaleOwned == false      OSE  B.femaleOwnership == true )
   )
 ```
 
 Shembuj:
-- **Grant për prodhues** (`targetActivityTypes=[prodhues-perpunues]`, `targetSectors=[]`): te të gjithë prodhuesit, çdo sektor. Tregtia dhe shërbimet: jo.
+- **Grant për prodhues** (`targetActivityTypes=[prodhues-perpunues]`, `targetSectors=[]`): te të gjithë prodhuesit, çdo sektor. Tregtia/shërbimet: jo.
 - **Panair ushqimi** (`targetSectors=[ushqim-dhe-pije]`): vetëm te bizneset me ushqim në `entitledSectors`. Prodhuesi i drurit: jo.
 - **Grant për gra** (`forFemaleOwned=true`): vetëm te bizneset me grua në pronësi brenda audiencës.
 - **Paga minimale** (`isGeneral=true`): te të gjithë, përfshirë tregtinë.
@@ -89,26 +90,25 @@ Shembuj:
 ## 4. Ndryshimet në modelin e të dhënave (Prisma)
 
 ### 4.1 `User` (profili i biznesit)
-- Shto `activityTypes ActivityType[] @default([])` — enum i ri `ActivityType { PRODHUES_PERPUNUES, SHERBIME, BUJQESI, TREGTI }`. Zakonisht një vlerë, lejohen disa.
-- `sectors String[]` mbahet si **sektorët e vetëdeklaruar** (footprint-i që biznesi thotë se mbulon).
-- Shto `entitledSectors String[] @default([])` — **sektorët që admini ka aktivizuar/faturuar**; këta e përcaktojnë dukshmërinë. Në regjistrim mbushen me sektorin e parë të deklaruar (Starter = 1 sektor); admini shton të tjerë me faturë.
+- Shto `activityType ActivityType?` — enum i ri `ActivityType { PRODHUES_PERPUNUES, SHERBIME, BUJQESI, TREGTI }`. **Një vlerë e vetme** për biznes.
+- `sectors String[]` mbahet si **sektorët e vetëdeklaruar**.
+- Shto `entitledSectors String[] @default([])` — **sektorët që admini ka aktivizuar/faturuar**; këta e përcaktojnë dukshmërinë. Në regjistrim mbushen sipas pakos (Starter = 1 sektor).
 - `femaleOwnership Boolean?` mbahet.
-- `onlyMySector` shënohet i vjetëruar dhe hiqet pas migrimit (scoping bëhet i detyrueshëm; opt-in nuk ka më kuptim).
+- `onlyMySector` shënohet i vjetëruar dhe hiqet pas migrimit.
 
 ### 4.2 `Grant`, `TradeFair`, `NewsItem` (audienca)
-Standardizo audiencën në të tria:
 - `isGeneral Boolean @default(false)`
-- `targetActivityTypes ActivityType[] @default([])`
+- `targetActivityTypes ActivityType[] @default([])` (anë e përmbajtjes mban listë)
 - `targetSectors String[] @default([])` (kuptimi i vjetër "bosh = universal" zëvendësohet nga `isGeneral`)
-- `forFemaleOwned Boolean @default(false)` (ekziston te Grant/TradeFair)
-- Fusha auditimi: `dispatchedAt DateTime?`, `dispatchedById String?`, `dispatchStatus` (`PENDING` / `DISPATCHED` / `REJECTED`).
+- `forFemaleOwned Boolean @default(false)`
+- Auditim: `dispatchStatus` (`PENDING`/`DISPATCHED`/`REJECTED`), `dispatchedAt`, `dispatchedById`.
 
 ### 4.3 `NewsItem` (model i ri) + moduli Lajme/Informata
 ```
 model NewsItem {
   id, title, titleSq, summary, body (Text),
   sourceName, sourceUrl, publishedAt, scrapedAt,
-  isGeneral Boolean @default(true),   // lajmet default = të gjithë
+  isGeneral Boolean @default(true),
   targetActivityTypes ActivityType[] @default([]),
   targetSectors String[] @default([]),
   forFemaleOwned Boolean @default(false),
@@ -116,63 +116,61 @@ model NewsItem {
   isActive Boolean @default(true)
 }
 ```
-- Menu e re publike "Lajme dhe Informata"; lajmet lexohen brenda platformës dhe dërgohen me email (newsletter).
-- Default = i përgjithshëm; por admini mund ta dërgojë një lajm vetëm te një aktivitet/sektor nga Qendra e Dispeçimit.
-- Burimet e lajmeve riperdorin regjistrin ekzistues `Source` (kind=rss/html), me radhë në `Opportunity`/`NewsItem` para dispeçimit.
+- Menu e re publike "Lajme dhe Informata"; lexohen brenda platformës dhe dërgohen me email (newsletter).
+- Default = i përgjithshëm; admini mund ta dërgojë një lajm vetëm te një aktivitet/sektor nga Qendra e Dispeçimit.
+- Burimet riperdorin regjistrin ekzistues `Source` (kind=rss/html).
 
 ## 5. Shtresa e dukshmërisë (kod)
-- Modul i ri `src/lib/audience.ts`:
-  - `matchesAudience(user, item): boolean` — rregulli i 3.4.
-  - `countAudience(item): Promise<number>` — sa biznese përputhen (për parapamjen live).
-  - `feedFor(user, type): Promise<Item[]>` — feed-i i personalizuar.
-- `src/lib/sector-filter.ts` dhe logjika `onlyMySector` hiqen / zëvendësohen nga `audience.ts`.
+- Modul i ri `src/lib/audience.ts`: `matchesAudience(user, item)`, `countAudience(item)`, `feedFor(user, type)`.
+- `src/lib/sector-filter.ts` dhe logjika `onlyMySector` hiqen / zëvendësohen.
 
 ## 6. Qendra e Dispeçimit (paneli i adminit)
-Një vend i vetëm; e njëjta rrjedhë për çdo lloj (grant, panair, lajm). Thjeshtësia është kërkesë eksplicite.
-
+Një vend i vetëm; e njëjta rrjedhë për çdo lloj. Thjeshtësia është kërkesë eksplicite.
 - **Radha lart** me filtra chip: `Grante (N) · Panaire (N) · Lajme (N)`.
-- **Karta e dispeçimit** për një artikull:
-  - Përmbledhja: titulli, burimi me link, afati, shuma (grante), teksti.
-  - ☑ Burimi i verifikuar (+ fusha e burimit).
-  - **Audienca:** ◯ Të gjithë · ◯ Sipas aktivitetit · ◯ Sipas sektorëve; nën-zgjedhje për aktivitete dhe chip-at e 17 sektorëve; ☑ Vetëm gra në pronësi.
-  - **Parapamje live:** "Ky artikull do t'u shkojë te N biznese." (përdor `countAudience`).
-  - Butonat: **Dërgo** · Ruaj draft · Refuzo.
-- **Tab i dytë — Pasqyra e bizneseve:** tabelë Biznes × sektorë të aktivizuar (`entitledSectors`) me checkbox për të hapur sektor shtesë + shënim faturimi (kush/kur/sa). Faturimi real me Stripe është jashtë fushës tani; ruhet vetëm shënimi.
-
-Auditimi: çdo dispeçim ruan kush e dërgoi, kur, dhe audiencën e zgjedhur, që përgjegjësia për informimin të jetë e gjurmueshme.
+- **Karta e dispeçimit:** përmbledhja (titull, burim me link, afat, shumë, tekst); ☑ Burimi i verifikuar; **Audienca** (◯ Të gjithë · ◯ Sipas aktivitetit · ◯ Sipas sektorëve + chip-at e 18 sektorëve + ☑ Vetëm gra në pronësi); **Parapamje live: "do t'u shkojë te N biznese"**; butonat Dërgo · Ruaj draft · Refuzo.
+- **Tab i dytë — Pasqyra e bizneseve:** tabelë Biznes × `entitledSectors` me checkbox për sektor shtesë + shënim faturimi.
+- Auditim: çdo dispeçim ruan kush/kur/çfarë audience.
 
 ## 7. Migrimi (pa humbje të dhënash)
-1. **Sektorët:** 18 → 17 sipas listës; `konstruksion-inxhinieri` mbetet derisa pronari të vendosë. Ri-mapim i sllagëve ekzistues; asnjë rresht nuk fshihet.
-2. **Përdoruesit:** `entitledSectors` mbushet nga `sectors` e deklaruar (e kufizuar në numrin e lejuar nga pakoja). Profilet pa aktivitet/sektor marrin kërkesë për t'i plotësuar; deri atëherë shohin vetëm përmbajtje "të përgjithshme" (default i sigurt).
-3. **Përmbajtja ekzistuese:** grantet/panairet me `targetSectors` bosh shënohen `isGeneral=true` për të ruajtur dukshmërinë aktuale, pastaj admini i ri-targeton nga Qendra e Dispeçimit. Grantet "për prodhues" ri-tagohen me aktivitetin.
+1. Sektorët mbeten 18; ri-mapim i sllagëve ekzistues; asnjë rresht s'fshihet.
+2. `entitledSectors` mbushet nga `sectors` e deklaruar (e kufizuar në numrin e pakos). Profilet pa aktivitet/sektor marrin kërkesë plotësimi; deri atëherë shohin vetëm "të përgjithshme".
+3. Përmbajtja me `targetSectors` bosh → `isGeneral=true` për të ruajtur dukshmërinë, pastaj admini i ri-targeton. Grantet "për prodhues" ri-tagohen me aktivitetin.
 4. `onlyMySector` hiqet pas migrimit.
 
 ## 8. Implementimi me faza (inkremente të vogla, të verifikuara)
-- **Faza A — Bazat:** enum `ActivityType`, fushat e reja në schema, `audience.ts` + teste. Pa ndryshim UI.
+- **Faza A — Bazat:** enum `ActivityType`, fushat e reja, `audience.ts` + teste. Pa ndryshim UI.
 - **Faza B — Regjistrimi:** kapja e aktivitetit + sektorëve + gra në pronësi; plotësimi i profilit.
 - **Faza C — Qendra e Dispeçimit** (grante + panaire) me parapamje live + auditim; zëvendëson `/admin/review`.
 - **Faza D — Moduli Lajme/Informata:** model + scraping + menu + dispeçim.
-- **Faza E — Pasqyra e qasjes së sektorëve** + shënime faturimi; heqja e `onlyMySector` dhe e çdo pamjeje "shiko të gjitha".
+- **Faza E — Pasqyra e qasjes + të drejtat sipas tarifës (entitlements)** + heqja e `onlyMySector` dhe e "shiko të gjitha".
 
 Çdo fazë dërgohet dhe verifikohet para fazës tjetër.
 
 ## 9. Verifikimi (mbrojtja nga gabimet)
-Teste njësi për `matchesAudience` që mbulojnë:
-- E përgjithshme → tregtia e merr.
-- Grant për prodhues → prodhuesi po, shërbimi jo, tregtia jo.
-- Panair ushqimi → ushqimi po, druri jo.
-- Grant për gra → vetëm bizneset me grua në pronësi.
-- Biznes multi-sektor → i sheh të dy sektorët.
-- Numri i parapamjes `countAudience` = marrësit realë (test barazie).
-
-Seed me biznese dhe artikuj përfaqësues për t'i provuar skenarët end-to-end.
+Teste njësi për `matchesAudience`: e përgjithshme→tregtia e merr; grant për prodhues→prodhuesi po/shërbimi jo/tregtia jo; panair ushqimi→ushqimi po/druri jo; grant për gra→vetëm gra në pronësi; biznes multi-sektor→i sheh të dy; `countAudience` = marrësit realë. Seed me biznese + artikuj përfaqësues për skenarët end-to-end.
 
 ## 10. Jashtë fushës / e parkuar
 - **Materialet e "Pakos"** (template/checklista për pako) — mekanizëm i veçantë, dizajnohet më vonë.
-- Matja/faturimi automatik me Stripe i sektorëve shtesë — tani vetëm shënim manual.
-- Auto-tagim me AI i audiencës — admini e bën manualisht; AI mund të propozojë më vonë.
+- Faturimi automatik me Stripe i sektorëve/të drejtave shtesë — tani vetëm shënim manual + konfigurim.
+- Auto-tagim me AI i audiencës — admini manualisht; AI propozon më vonë.
 
-## 11. Vendime të hapura për pronarin
-1. A mbahet sektori i 18-të `konstruksion-inxhinieri` apo hiqet/bashkohet me "Materiale Ndërtimi"?
-2. A mund një biznes të ketë më shumë se një lloj aktiviteti (p.sh. prodhues edhe shërbime), apo gjithmonë vetëm një?
-3. A duhet pakoja bazë (Starter) të përfshijë saktësisht 1 sektor, me çdo sektor shtesë të hapur vetëm nga admini me faturë?
+## 11. Vendimet (të zgjidhura)
+1. Sektori i 18-të `Konstruksion dhe Inxhinieri` **mbahet**.
+2. Një biznes ka **një lloj aktiviteti** të vetëm.
+3. Paketat definohen sipas matricës në seksionin 12 (pikënisje, e ndryshueshme më vonë).
+
+## 12. Paketat dhe të drejtat (entitlements) — pikënisje, e ndryshueshme
+Dy dimensione të pavarura për çdo biznes: (A) shtrirja e sektorit; (B) niveli i tarifës që cakton të drejtat.
+
+| E drejta | Starter €39 | Professional €99 | Enterprise €249 |
+| --- | --- | --- | --- |
+| Sektorë | 1 | deri 3 | deri 6 (admin) |
+| Njoftime grante/panaire (brenda platformës) | Po | Po | Po |
+| Alerte me email | Jo | Po | Po, prioritare |
+| Newsletter periodik | Po | Po | Po |
+| Udhëzues eksporti | Të kufizuar (sektori + vendet kryesore) | Të gjithë | Të gjithë + përditësime |
+| Checklista | Jo | Po | Po |
+| Template për panaire | Jo | Po | Po |
+| Konsulencë / takim | Jo | 1 në muaj | E pakufizuar |
+
+Implementim: të drejtat ruhen si konfigurim `TIER_ENTITLEMENTS` (i ndryshueshëm nga admini pa prekur kod). Gating-u bëhet në shtresën e dukshmërisë bashkë me targetimin. Të drejtat janë ortogonale me sektorin: biznesi sheh vetëm sektorin/sektorët e vet (Dimensioni A), dhe brenda tyre, vetëm llojet e përmbajtjes që ia hap tarifa (Dimensioni B).
