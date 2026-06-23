@@ -71,6 +71,11 @@ model User {
   //   null  = user has not declared (default for legacy rows + skipped onboarding).
   // Filtering rule: female-targeted Grants/Fairs only surface to users with `true`.
   femaleOwnership Boolean?
+  // Lloji i vetem i aktivitetit (slug nga src/lib/activity.ts). Boshti kryesor per grante.
+  activityType    String?
+  // Sektoret e aktivizuar/faturuar nga admini; keta percaktojne dukshmerine.
+  // Ndahen nga `sectors` (vetedeklarim). Default bosh => sheh vetem permbajtje te pergjithshme.
+  entitledSectors String[]  @default([])
   emailVerified DateTime?
   image         String?
   createdAt     DateTime  @default(now())
@@ -158,6 +163,10 @@ model Grant {
   // When true, this grant is restricted to businesses with female ownership.
   // Only users where `User.femaleOwnership=true` see it in the dashboard.
   forFemaleOwned Boolean  @default(false)
+  // Audienca eksplicite. isGeneral=true => te te gjithe (perfshire tregtine).
+  isGeneral           Boolean  @default(false)
+  // Slug-et e aktivitetit qe targeton (bosh = pa kufizim aktiviteti).
+  targetActivityTypes String[] @default([])
   isActive      Boolean   @default(true)
   scrapedAt     DateTime  @default(now())
   createdAt     DateTime  @default(now())
@@ -190,6 +199,10 @@ model TradeFair {
   // When true, this fair/event is restricted to businesses with female ownership.
   // Only users where `User.femaleOwnership=true` see it in the dashboard.
   forFemaleOwned Boolean @default(false)
+  // Audienca eksplicite. isGeneral=true => te te gjithe (perfshire tregtine).
+  isGeneral           Boolean  @default(false)
+  // Slug-et e aktivitetit qe targeton (bosh = pa kufizim aktiviteti).
+  targetActivityTypes String[] @default([])
   eventType     EventType @default(FAIR)
   organizer     String?
   registrationUrl String?
