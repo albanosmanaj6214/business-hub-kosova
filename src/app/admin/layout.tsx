@@ -6,12 +6,13 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   Shield, Users, Search, Calendar, BookOpen, Bot, Bell, Inbox,
-  LayoutDashboard, Menu, X, ArrowLeft, Trash2, Database, ClipboardCheck,
+  LayoutDashboard, Menu, X, ArrowLeft, Trash2, Database, ClipboardCheck, Send,
 } from 'lucide-react'
 import { Toaster } from '@/components/admin/Toaster'
 
 const adminNav = [
   { name: 'Overview', href: '/admin', icon: LayoutDashboard },
+  { name: 'Qendra e Dispeçimit', href: '/admin/dispatch', icon: Send },
   { name: 'Perdoruesit', href: '/admin/users', icon: Users },
   { name: 'Grantet', href: '/admin/grants', icon: Search },
   { name: 'Panairet', href: '/admin/fairs', icon: Calendar },

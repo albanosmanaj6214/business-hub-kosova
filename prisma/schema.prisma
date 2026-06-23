@@ -167,6 +167,10 @@ model Grant {
   isGeneral           Boolean  @default(false)
   // Slug-et e aktivitetit qe targeton (bosh = pa kufizim aktiviteti).
   targetActivityTypes String[] @default([])
+  // Dispeçimi nga admini: PENDING derisa admini te caktoje audiencen dhe te dergoje.
+  dispatchStatus String    @default("PENDING")
+  dispatchedAt   DateTime?
+  dispatchedById String?
   isActive      Boolean   @default(true)
   scrapedAt     DateTime  @default(now())
   createdAt     DateTime  @default(now())
@@ -203,6 +207,10 @@ model TradeFair {
   isGeneral           Boolean  @default(false)
   // Slug-et e aktivitetit qe targeton (bosh = pa kufizim aktiviteti).
   targetActivityTypes String[] @default([])
+  // Dispeçimi nga admini: PENDING derisa admini te caktoje audiencen dhe te dergoje.
+  dispatchStatus String    @default("PENDING")
+  dispatchedAt   DateTime?
+  dispatchedById String?
   eventType     EventType @default(FAIR)
   organizer     String?
   registrationUrl String?
