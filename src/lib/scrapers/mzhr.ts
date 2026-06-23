@@ -103,6 +103,8 @@ export async function scrapeMzhr(opts: ScrapeMzhrOptions = {}): Promise<Opportun
 
       const title = decodeEntities($a.text())
       if (!title || title.length < 12) return
+      // Reject HTML markup that leaked as text (image tags inside <a>)
+      if (title.startsWith('<') || /<img|<picture|<svg/i.test(title)) return
 
       const classification = classifyTitle(title, slug)
       if (classification === 'SKIP') return

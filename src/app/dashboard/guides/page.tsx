@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
 import { prisma } from '@/lib/prisma'
+import { currentBusinessProfile } from '@/lib/audience-server'
+import { SECTORS } from '@/lib/sectors'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { BookOpen } from 'lucide-react'
@@ -39,6 +41,14 @@ export default async function GuidesPage() {
     where: { isPublished: true, deletedAt: null },
     orderBy: [{ countryCode: "asc" }],
   })
+
+  // Personalize: if user has entitledSectors set, show only those sector tags on cards.
+  const profile = await currentBusinessProfile()
+  const userCanonicalSectors = new Set(
+    (profile?.entitledSectors ?? [])
+      .map((slug) => SECTORS.find((sd) => sd.slug === slug)?.sq)
+      .filter((x): x is string => !!x),
+  )
 
   const guides = guidesRaw
 
@@ -124,16 +134,23 @@ export default async function GuidesPage() {
                               </div>
                             </div>
                             <p className="text-sm text-gray-600 line-clamp-3">{previewFor(guide, locale)}</p>
-                            {guide.sectors?.length > 0 && (
-                              <div className="flex gap-1 mt-3 flex-wrap">
-                                {guide.sectors.slice(0, 3).map((s: string) => (
-                                  <Badge key={s} variant="secondary">{s}</Badge>
-                                ))}
-                                {guide.sectors.length > 3 && (
-                                  <span className="text-xs text-gray-400 self-center">+{guide.sectors.length - 3}</span>
-                                )}
-                              </div>
-                            )}
+                            {(() => {
+                              const all: string[] = guide.sectors ?? []
+                              const filtered = userCanonicalSectors.size > 0
+                                ? all.filter((s) => userCanonicalSectors.has(s))
+                                : all
+                              if (filtered.length === 0) return null
+                              return (
+                                <div className="flex gap-1 mt-3 flex-wrap">
+                                  {filtered.slice(0, 3).map((s: string) => (
+                                    <Badge key={s} variant="secondary">{s}</Badge>
+                                  ))}
+                                  {filtered.length > 3 && (
+                                    <span className="text-xs text-gray-400 self-center">+{filtered.length - 3}</span>
+                                  )}
+                                </div>
+                              )
+                            })()}
                           </CardContent>
                         </Card>
                       </Link>

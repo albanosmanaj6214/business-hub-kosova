@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
+import { currentBusinessProfile } from '@/lib/audience-server'
+import { SECTORS } from '@/lib/sectors'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -127,10 +129,28 @@ export default async function GuidePage({ params }: { params: { id: string } }) 
 
   const overview = guide.marketOverview as unknown as BiText
   const customs = guide.customs as any
-  const requiredDocs = (guide.requiredDocs as any[]) ?? []
-  const certifications = (guide.certifications as any[]) ?? []
+  // Personalize: hide docs/certs/sectorRules that explicitly target other sectors.
+  const profile = await currentBusinessProfile()
+  const userCanonicalSectors = new Set<string>(
+    (profile?.entitledSectors ?? [])
+      .map((slug) => SECTORS.find((sd) => sd.slug === slug)?.sq)
+      .filter((x): x is string => !!x),
+  )
+  const matchesUserSector = (appliesTo?: string[] | null): boolean => {
+    if (!appliesTo || appliesTo.length === 0) return true            // universal item → show always
+    if (userCanonicalSectors.size === 0) return true                 // no user sector → show all
+    return appliesTo.some((s) => userCanonicalSectors.has(s))         // any overlap → show
+  }
+
+  const requiredDocsAll = (guide.requiredDocs as any[]) ?? []
+  const requiredDocs = requiredDocsAll.filter((d: any) => matchesUserSector(d?.appliesTo))
+  const certificationsAll = (guide.certifications as any[]) ?? []
+  const certifications = certificationsAll.filter((c: any) => matchesUserSector(c?.appliesTo))
   const labeling = guide.labeling as any
-  const sectorRules = (guide.sectorRules as any[]) ?? []
+  const sectorRulesAll = (guide.sectorRules as any[]) ?? []
+  const sectorRules = userCanonicalSectors.size > 0
+    ? sectorRulesAll.filter((g: any) => userCanonicalSectors.has(g?.sector))
+    : sectorRulesAll
   const tradeAgreements = (guide.tradeAgreements as any[]) ?? []
   const contacts = (guide.contacts as any[]) ?? []
   const citations = (guide.citations as any[]) ?? []
