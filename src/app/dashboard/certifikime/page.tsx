@@ -11,8 +11,7 @@ import {
   Award, Utensils, ShieldCheck, Leaf, Heart, Shirt, Trees, Zap,
   ChevronDown, Building2, Clock, Wallet, MapPin,
 } from 'lucide-react'
-import { getPersonalization } from '@/lib/sector-filter'
-import { PersonalizationBanner } from '@/components/dashboard/PersonalizationBanner'
+import { currentBusinessProfile } from '@/lib/audience-server'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,17 +22,17 @@ const ICONS: Record<string, any> = {
 export default async function CertificationsPage({
   searchParams,
 }: {
-  searchParams?: { filter?: string; all?: string }
+  searchParams?: { filter?: string }
 }) {
   const filter = searchParams?.filter ?? 'all'
-  const allOverride = searchParams?.all === '1'
   const totalAll = CERTIFICATION_CATEGORIES.reduce((a, c) => a + c.certifications.length, 0)
 
-  // Personalization-by-default: keep only categories/certs relevant to the
-  // user's sectors. Empty-targetSectors certs are universal and always show.
-  const pers = await getPersonalization({ all: allOverride })
-  const personalized = pers.active
-    ? filterCertCategoriesByUserSectors(CERTIFICATION_CATEGORIES, pers.userSectors)
+  // Scoping i detyrueshem sipas sektoreve te aktivizuar (entitledSectors). Pa entitled
+  // sektore (profil i paplotesuar) shfaqen te gjitha si referencë.
+  const profile = await currentBusinessProfile()
+  const entitled = profile?.entitledSectors ?? []
+  const personalized = entitled.length > 0
+    ? filterCertCategoriesByUserSectors(CERTIFICATION_CATEGORIES, entitled)
     : CERTIFICATION_CATEGORIES
 
   // Apply mandatory filter
@@ -60,18 +59,10 @@ export default async function CertificationsPage({
         </p>
       </div>
 
-      <PersonalizationBanner
-        active={pers.active}
-        label={pers.label}
-        hasSector={pers.hasSector}
-        pathname="/dashboard/certifikime"
-        preserveParams={{ filter: searchParams?.filter }}
-      />
-
       {/* Filter pills */}
       <div className="flex gap-2 text-sm">
         <Link
-          href={allOverride ? '/dashboard/certifikime?all=1' : '/dashboard/certifikime'}
+          href="/dashboard/certifikime"
           className={`rounded-full px-3.5 py-1.5 border transition-colors ${
             filter === 'all'
               ? 'bg-[#1B4F72] text-white border-[#1B4F72]'
@@ -81,7 +72,7 @@ export default async function CertificationsPage({
           Të gjitha ({totalAll})
         </Link>
         <Link
-          href={`/dashboard/certifikime?filter=mandatory${allOverride ? '&all=1' : ''}`}
+          href="/dashboard/certifikime?filter=mandatory"
           className={`rounded-full px-3.5 py-1.5 border transition-colors ${
             filter === 'mandatory'
               ? 'bg-[#1B4F72] text-white border-[#1B4F72]'

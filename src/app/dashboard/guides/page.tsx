@@ -3,7 +3,7 @@ import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { BookOpen, Sparkles } from 'lucide-react'
+import { BookOpen } from 'lucide-react'
 import { getServerLocale } from '@/lib/i18n-server'
 import type { Locale } from '@/lib/i18n'
 import {
@@ -12,7 +12,6 @@ import {
   REGION_LABELS,
   type RegionKey,
 } from './utils'
-import { getPersonalization } from '@/lib/sector-filter'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,7 +41,6 @@ export default async function GuidesPage() {
   })
 
   const guides = guidesRaw
-  const pers = await getPersonalization()
 
   const t = (sq: string, en: string) => locale === 'sq' ? sq : en
 
@@ -71,19 +69,6 @@ export default async function GuidesPage() {
           >
             Checklist eksporti sipas tregut →
           </Link>
-
-      {pers.hasSector && (
-        <div className="flex items-start gap-2 rounded-xl border border-[#1B4F72]/15 bg-[#1B4F72]/5 px-4 py-3 text-sm text-gray-700">
-          <Sparkles className="h-4 w-4 text-[#1B4F72] shrink-0 mt-0.5" />
-          <p className="min-w-0">
-            {t(
-              'Udhëzuesit janë sipas vendit, jo sektorit. Brenda secilit udhëzues, KBH e veçon atë që i takon sektorit tënd:',
-              'Guides are organised by country, not sector. Inside each guide we highlight what applies to your sector:',
-            )}
-            <span className="font-semibold text-[#1B4F72]"> {pers.label}</span>.
-          </p>
-        </div>
-      )}
 
       {guides.length === 0 ? (
         <Card>

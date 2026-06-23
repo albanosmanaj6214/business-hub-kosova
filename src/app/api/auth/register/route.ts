@@ -41,7 +41,6 @@ export async function POST(req: Request) {
       activityType,
       interests,
       language,
-      onlyMySector,
       femaleOwnership,
       turnstileToken,
     } = body
@@ -107,7 +106,6 @@ export async function POST(req: Request) {
         entitledSectors: normalisedSectors,
         interests: interests || [],
         language: language || 'sq',
-        onlyMySector: typeof onlyMySector === 'boolean' ? onlyMySector : true,
         // Tri-state: only persist boolean if explicitly true/false; otherwise leave NULL
         // so we can distinguish "user did not declare" from "user said no".
         femaleOwnership: typeof femaleOwnership === 'boolean' ? femaleOwnership : null,

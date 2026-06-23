@@ -120,6 +120,7 @@ async function searchGrants(args: Record<string, unknown>, ctx: UserContext) {
     where: {
       isActive: true,
       deletedAt: null,
+      dispatchStatus: 'DISPATCHED',
       NOT: [{ audience: 'civil_society' }, { tags: { has: 'legacy_synthetic' } }],
       ...(keywords ? {
         OR: [
@@ -187,6 +188,7 @@ async function searchFairs(args: Record<string, unknown>, ctx: UserContext) {
     where: {
       isActive: true,
       deletedAt: null,
+      dispatchStatus: 'DISPATCHED',
       startDate: { gte: today, lte: cap },
       ...(keywords ? {
         OR: [

@@ -5,8 +5,8 @@ import { Badge } from '@/components/ui/badge'
 import { ExternalLink, Clock, Calendar, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 import { PaginatedGrid } from '@/components/dashboard/PaginatedGrid'
-import { getPersonalization, filterPersonalized } from '@/lib/sector-filter'
-import { PersonalizationBanner } from '@/components/dashboard/PersonalizationBanner'
+import { currentBusinessProfile } from '@/lib/audience-server'
+import { feedFor } from '@/lib/audience'
 
 export const dynamic = 'force-dynamic'
 
@@ -132,23 +132,26 @@ function expiredYear(g: GrantRow): number {
 export default async function GrantsPage({
   searchParams,
 }: {
-  searchParams?: { show?: string; all?: string }
+  searchParams?: { show?: string }
 }) {
   const showAll = searchParams?.show === 'all'
   const showExpired = searchParams?.show === 'expired'
-  const allOverride = searchParams?.all === '1'
 
+  // Scoping i detyrueshem: vetem grante te dispeçuara (DISPATCHED) qe i takojne
+  // profilit te biznesit (aktivitet + entitledSectors + gra). Pa "shiko te gjitha".
   const grantsRaw = (await prisma.grant.findMany({
-    where: { deletedAt: null, NOT: [{ audience: 'civil_society' }, { tags: { has: 'legacy_synthetic' } }] },
+    where: {
+      deletedAt: null,
+      dispatchStatus: 'DISPATCHED',
+      NOT: [{ audience: 'civil_society' }, { tags: { has: 'legacy_synthetic' } }],
+    },
     orderBy: [{ deadline: 'asc' }, { createdAt: 'desc' }],
-  })) as GrantRow[]
+  })) as (GrantRow & { isGeneral: boolean; targetActivityTypes: string[] })[]
   // Fair-participation calls belong to /dashboard/fairs, not here.
   const grantsWithoutFairStand = grantsRaw.filter((g) => !isFairStandCall(g))
 
-  // Personalization-by-default: filter by user.sectors ∩ grant.targetSectors,
-  // with a lenient fallback (empty targetSectors and `cross-cutting` always show).
-  const pers = await getPersonalization({ all: allOverride })
-  const grants = filterPersonalized(grantsWithoutFairStand, pers)
+  const profile = (await currentBusinessProfile()) ?? { activityType: null, entitledSectors: [], femaleOwnership: null }
+  const grants = feedFor(profile, grantsWithoutFairStand)
 
   const today = kosovoToday()
 
@@ -188,19 +191,11 @@ export default async function GrantsPage({
         </div>
       </div>
 
-      <PersonalizationBanner
-        active={pers.active}
-        label={pers.label}
-        hasSector={pers.hasSector}
-        pathname="/dashboard/grants"
-        preserveParams={{ show: searchParams?.show }}
-      />
-
       <div className="flex flex-wrap items-end justify-end gap-4">
         <div></div>
         <div className="flex gap-2 text-sm">
           <Link
-            href={allOverride ? '/dashboard/grants?all=1' : '/dashboard/grants'}
+            href="/dashboard/grants"
             className={`rounded-full px-3 py-1.5 border ${
               !showAll && !showExpired
                 ? 'bg-[#1B4F72] text-white border-[#1B4F72]'
@@ -210,7 +205,7 @@ export default async function GrantsPage({
             Vetëm aktive ({activeCount})
           </Link>
           <Link
-            href={`/dashboard/grants?show=expired${allOverride ? '&all=1' : ''}`}
+            href="/dashboard/grants?show=expired"
             className={`rounded-full px-3 py-1.5 border ${
               showExpired
                 ? 'bg-[#1B4F72] text-white border-[#1B4F72]'
@@ -220,7 +215,7 @@ export default async function GrantsPage({
             Arkivi ({expiredCount + noDeadlineCount})
           </Link>
           <Link
-            href={`/dashboard/grants?show=all${allOverride ? '&all=1' : ''}`}
+            href="/dashboard/grants?show=all"
             className={`rounded-full px-3 py-1.5 border ${
               showAll
                 ? 'bg-[#1B4F72] text-white border-[#1B4F72]'

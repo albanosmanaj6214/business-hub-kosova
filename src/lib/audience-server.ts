@@ -1,5 +1,25 @@
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { AudienceCriteria, AudienceProfile, matchesAudience } from '@/lib/audience'
+import { AudienceCriteria, AudienceProfile, BusinessProfile, matchesAudience } from '@/lib/audience'
+
+// Profili i biznesit te kyçur per gating-un e dukshmerise ne dashboard.
+// Kthen null nese s'ka sesion. entitledSectors bosh => sheh vetem permbajtje te pergjithshme.
+export async function currentBusinessProfile(): Promise<BusinessProfile | null> {
+  const session = await getServerSession(authOptions)
+  const id = (session?.user as { id?: string })?.id
+  if (!id) return null
+  const u = await prisma.user.findUnique({
+    where: { id },
+    select: { activityType: true, entitledSectors: true, femaleOwnership: true },
+  })
+  if (!u) return null
+  return {
+    activityType: u.activityType,
+    entitledSectors: u.entitledSectors,
+    femaleOwnership: u.femaleOwnership,
+  }
+}
 
 // Server-anash: numeron sa biznese e marrin nje artikull me kete audience.
 // Riperdor funksionin e paster matchesAudience (te testuar). Per shkalle te vogel-mesatare

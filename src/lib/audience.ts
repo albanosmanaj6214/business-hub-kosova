@@ -33,3 +33,12 @@ export function matchesAudience(user: AudienceProfile, item: AudienceCriteria): 
 export function filterForUser<T extends AudienceCriteria>(user: AudienceProfile, items: T[]): T[] {
   return items.filter((item) => matchesAudience(user, item))
 }
+
+// Profili i biznesit i kyçur (alias semantik per faqet e dashboard-it).
+export type BusinessProfile = AudienceProfile
+
+// Feed-i i nje biznesi: vetem artikujt qe i takojne profilit te tij.
+// Faqet i kombinojne keto me filtrin `dispatchStatus=DISPATCHED` ne query.
+export function feedFor<T extends AudienceCriteria>(business: BusinessProfile, items: T[]): T[] {
+  return filterForUser(business, items)
+}

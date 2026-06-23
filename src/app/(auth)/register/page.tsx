@@ -93,7 +93,6 @@ export default function RegisterPage() {
           interests: form.interests,
           language: form.language,
           femaleOwnership: form.femaleOwnership,
-          onlyMySector: true,
           turnstileToken,
         }),
       })

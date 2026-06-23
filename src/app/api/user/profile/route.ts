@@ -13,7 +13,7 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { name: true, companyName: true, sector: true, sectors: true, activityType: true, entitledSectors: true, interests: true, language: true, onlyMySector: true, femaleOwnership: true },
+    select: { name: true, companyName: true, sector: true, sectors: true, activityType: true, entitledSectors: true, interests: true, language: true, femaleOwnership: true },
   })
 
   return NextResponse.json({ user })
@@ -26,7 +26,7 @@ export async function PUT(req: Request) {
   }
 
   const body = await req.json()
-  const { name, companyName, sector, sectors, activityType, interests, language, onlyMySector, femaleOwnership } = body
+  const { name, companyName, sector, sectors, activityType, interests, language, femaleOwnership } = body
 
   // Normalise sectors[] to canonical slugs only. Drops unknown entries silently.
   const normalisedSectors = Array.isArray(sectors)
@@ -37,9 +37,16 @@ export async function PUT(req: Request) {
   const activityTypeUpdate =
     typeof activityType === 'string' && isActivityType(activityType) ? activityType : undefined
 
-  // Kur biznesi ndryshon sektorin e deklaruar, entitledSectors ndjek deklarimin
-  // (baza falas = sektori i deklaruar). Sektore shtese mbeten nen kontrollin e adminit (Faza E).
-  const entitledSectorsUpdate = normalisedSectors
+  // entitledSectors mbetet nën kontrollin e adminit (faturim). Vetëdeklarimi i sektorit
+  // NUK e zgjeron qasjen: e mbushim entitledSectors vetëm nëse është ende bosh (seed fillestar).
+  let entitledSectorsUpdate: string[] | undefined = undefined
+  if (normalisedSectors && normalisedSectors.length > 0) {
+    const cur = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { entitledSectors: true },
+    })
+    if (!cur || cur.entitledSectors.length === 0) entitledSectorsUpdate = normalisedSectors
+  }
 
   // Tri-state female ownership. true/false set the column; explicit null clears it;
   // undefined leaves the existing value untouched (partial update safety).
@@ -48,8 +55,8 @@ export async function PUT(req: Request) {
   else if (femaleOwnership === null) femaleOwnershipUpdate = null
   else femaleOwnershipUpdate = undefined
 
-  // Undefined fields are ignored by Prisma, so a partial update (e.g. just the
-  // onlyMySector toggle) leaves everything else untouched.
+  // Undefined fields are ignored by Prisma, so a partial update
+  // leaves everything else untouched.
   const user = await prisma.user.update({
     where: { id: session.user.id },
     data: {
@@ -61,7 +68,6 @@ export async function PUT(req: Request) {
       entitledSectors: entitledSectorsUpdate,
       interests,
       language,
-      onlyMySector: typeof onlyMySector === 'boolean' ? onlyMySector : undefined,
       femaleOwnership: femaleOwnershipUpdate,
     },
   })
