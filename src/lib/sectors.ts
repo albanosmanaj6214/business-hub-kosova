@@ -458,3 +458,42 @@ export function sectorsLabel(slugs: readonly string[]): string {
     .filter(Boolean)
     .join(', ')
 }
+
+// Universal markers used in appliesTo strings — these mean "applies to everyone"
+// regardless of sector. Examples: "Të gjitha produktet", "Çdo sektor", "Të gjithë", "all".
+const UNIVERSAL_APPLIES_RE = /\b(t[ëe]\s+gjith|t[ëe]\s+gjitha|t[ëe]\s+gjith[eë]|[çc]do\s+(sektor|produkt|biznes)|shum[ëe]\s+kategori|all\s+sectors|any\s+sector|tutti)/i
+
+// Permissive sector→tag match. Used to filter appliesTo arrays on docs/certs/rules.
+// - empty/missing appliesTo → return true (universal item)
+// - empty userSectorDefs → return true (user has no sector → show everything)
+// - universal marker present → return true
+// - variant substring overlap → return true (e.g. "ushqim organik" matches food-sector variant "ushqim")
+export function sectorAppliesToAny(
+  userSectorDefs: SectorDef[],
+  appliesTo: ReadonlyArray<string> | null | undefined,
+): boolean {
+  if (!appliesTo || appliesTo.length === 0) return true
+  if (userSectorDefs.length === 0) return true
+
+  for (const tag of appliesTo) {
+    if (UNIVERSAL_APPLIES_RE.test(tag)) return true
+  }
+
+  for (const sd of userSectorDefs) {
+    const variants = sd.variants.map((v) => v.toLowerCase())
+    for (const tag of appliesTo) {
+      const norm = tag.toLowerCase().trim()
+      // Slash/comma-split bilingual tags
+      const parts = norm.split(/\s*[\/,|]\s*/).filter(Boolean)
+      parts.push(norm)
+      for (const p of parts) {
+        for (const v of variants) {
+          if (p === v) return true
+          if (p.includes(v) || v.includes(p)) return true
+        }
+      }
+    }
+  }
+  return false
+}
+

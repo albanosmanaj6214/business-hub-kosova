@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
 import { prisma } from '@/lib/prisma'
 import { currentBusinessProfile } from '@/lib/audience-server'
-import { SECTORS } from '@/lib/sectors'
+import { SECTORS, sectorAppliesToAny } from '@/lib/sectors'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { BookOpen } from 'lucide-react'
@@ -44,11 +44,10 @@ export default async function GuidesPage() {
 
   // Personalize: if user has entitledSectors set, show only those sector tags on cards.
   const profile = await currentBusinessProfile()
-  const userCanonicalSectors = new Set(
-    (profile?.entitledSectors ?? [])
-      .map((slug) => SECTORS.find((sd) => sd.slug === slug)?.sq)
-      .filter((x): x is string => !!x),
-  )
+  const userSectorDefs = (profile?.entitledSectors ?? [])
+    .map((slug) => SECTORS.find((sd) => sd.slug === slug))
+    .filter((x): x is NonNullable<typeof x> => !!x)
+  const userCanonicalSectors = new Set(userSectorDefs.map((sd) => sd.sq))
 
   const guides = guidesRaw
 
@@ -136,8 +135,8 @@ export default async function GuidesPage() {
                             <p className="text-sm text-gray-600 line-clamp-3">{previewFor(guide, locale)}</p>
                             {(() => {
                               const all: string[] = guide.sectors ?? []
-                              const filtered = userCanonicalSectors.size > 0
-                                ? all.filter((s) => userCanonicalSectors.has(s))
+                              const filtered = userSectorDefs.length > 0
+                                ? all.filter((s) => sectorAppliesToAny(userSectorDefs, [s]))
                                 : all
                               if (filtered.length === 0) return null
                               return (

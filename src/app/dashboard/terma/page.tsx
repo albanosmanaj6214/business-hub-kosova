@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { TERM_CATEGORIES } from '@/lib/export-terms'
+import { currentBusinessProfile } from '@/lib/audience-server'
 import {
   Package, FileText, CreditCard, Truck, ShieldCheck, Handshake,
-  Ship, ArrowRight,
+  Ship, ArrowRight, Info,
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -14,7 +15,17 @@ function shortName(term: string): string {
   return term.split(/[—–-]/)[0].trim() || term
 }
 
-export default function TermsHubPage() {
+// Kategorite specifike per eksportin fizik te produkteve.
+// Per nje biznes sherbimesh (TIK/software/BPO) keto nuk aplikohen.
+const PRODUCT_ONLY_CATEGORIES = new Set(['porosia', 'dokumentet', 'logjistika', 'standardet'])
+
+export default async function TermsHubPage() {
+  const profile = await currentBusinessProfile()
+  const isServices = profile?.activityType === 'sherbime'
+  const visibleCategories = isServices
+    ? TERM_CATEGORIES.filter((c) => !PRODUCT_ONLY_CATEGORIES.has(c.id))
+    : TERM_CATEGORIES
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-12">
       <div>
@@ -30,7 +41,21 @@ export default function TermsHubPage() {
             HS Code Finder →
           </Link>
 
-      {/* Featured: Incoterms */}
+      {isServices && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+            <div className="text-sm text-amber-900 space-y-1">
+              <p><strong>Ti je biznes shërbimesh (TIK / software / BPO).</strong></p>
+              <p>Incoterms, dokumentet doganore (EUR.1, CMR), CE Marking dhe logjistika fizike <strong>nuk aplikohen</strong> për eksportin e shërbimeve.</p>
+              <p>Po të tregojmë vetëm financimin dhe partneritetet. Seksioni i dedikuar për shërbime (Service Level Agreements, MSA/SOW, GDPR, trajtimi tatimor i shërbimeve të eksportuara) është në ndërtim.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Featured: Incoterms — fshehet për shërbimet */}
+      {!isServices && (
       <Link href="/dashboard/terma/incoterms" className="block group">
         <div className="rounded-xl border-2 border-[#1B4F72]/20 bg-gradient-to-br from-[#1B4F72]/5 to-white p-6 hover:border-[#2E86C1] transition-colors">
           <div className="flex items-start justify-between gap-4">
@@ -51,10 +76,11 @@ export default function TermsHubPage() {
           </div>
         </div>
       </Link>
+      )}
 
       {/* Category cards — click to open the full topic */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {TERM_CATEGORIES.map((cat) => {
+        {visibleCategories.map((cat) => {
           const Icon = ICONS[cat.icon] ?? FileText
           return (
             <Link key={cat.id} href={`/dashboard/terma/${cat.id}`} className="block group">
