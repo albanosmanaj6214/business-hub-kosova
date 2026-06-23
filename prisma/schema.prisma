@@ -224,6 +224,41 @@ model TradeFair {
   @@index([isActive])
 }
 
+// Moduli Lajme / Informata (Faza D). Lajme biznesi qe lexohen brenda platformes
+// dhe (opsionale) dergohen me email. Default = i pergjithshem (isGeneral=true):
+// shkojne te te gjithe perfshire tregtine derisa admini te zgjedhe nje audience me te ngushte.
+// Konventat e audiences + dispeçimit jane identike me Grant/TradeFair (slug strings, jo enum).
+model NewsItem {
+  id          String    @id @default(cuid())
+  title       String
+  titleSq     String?
+  summary     String?   @db.Text
+  body        String    @db.Text
+  sourceName  String?
+  sourceUrl   String?
+  publishedAt DateTime?
+  scrapedAt   DateTime  @default(now())
+
+  // Audienca eksplicite. isGeneral=true => te te gjithe (perfshire tregtine).
+  isGeneral           Boolean  @default(true)
+  // Slug-et e aktivitetit/sektoreve qe targeton (bosh = pa kufizim ne ate bosht).
+  targetActivityTypes String[] @default([])
+  targetSectors       String[] @default([])
+  forFemaleOwned      Boolean  @default(false)
+  // Dispeçimi nga admini: PENDING derisa admini te caktoje audiencen dhe te dergoje.
+  dispatchStatus String    @default("PENDING")
+  dispatchedAt   DateTime?
+  dispatchedById String?
+
+  isActive  Boolean   @default(true)
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([isActive, publishedAt])
+  @@index([dispatchStatus])
+}
+
 model ExportGuide {
   id          String   @id @default(cuid())
   title       String

@@ -10,12 +10,13 @@ import { KonsulentiWidget, openKonsulenti } from '@/components/konsulenti/Konsul
 import {
   LayoutDashboard, Search, Calendar, BookOpen,
   Bell, Settings, CreditCard, MessageSquare, MessagesSquare, Menu, X, GraduationCap,
-  LogOut, Shield, ChevronRight, ShieldCheck, ClipboardCheck} from 'lucide-react'
+  LogOut, Shield, ChevronRight, ShieldCheck, ClipboardCheck, Newspaper} from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Grante', href: '/dashboard/grants', icon: Search },
   { name: 'Panaire', href: '/dashboard/fairs', icon: Calendar },
+  { name: 'Lajme dhe Informata', href: '/dashboard/lajme', icon: Newspaper },
   { name: 'Udhëzues Eksporti', href: '/dashboard/guides', icon: BookOpen },
   { name: 'Checklist Eksporti', href: '/dashboard/checklist', icon: ClipboardCheck },
   { name: 'Termet e Eksportit', href: '/dashboard/terma', icon: GraduationCap },

@@ -5,9 +5,11 @@ import { Loader2, Send, ExternalLink, CheckCircle2, Inbox } from 'lucide-react'
 import { AudienceEditor } from '@/components/admin/AudienceEditor'
 import { AudienceValue, isValueComplete, valueToCriteria } from '@/lib/dispatch'
 
+export type DispatchType = 'grant' | 'fair' | 'news'
+
 export interface DispatchItem {
   id: string
-  type: 'grant' | 'fair'
+  type: DispatchType
   title: string
   provider: string | null
   deadline: string | null
@@ -19,14 +21,20 @@ interface Props {
   initialItems: DispatchItem[]
 }
 
-const TYPE_LABEL = { grant: 'Grant', fair: 'Panair' } as const
+const TYPE_LABEL: Record<DispatchType, string> = { grant: 'Grant', fair: 'Panair', news: 'Lajm' }
+const TYPE_BADGE: Record<DispatchType, string> = {
+  grant: 'bg-[#1B4F72] text-white',
+  fair: 'bg-[#27AE60] text-white',
+  news: 'bg-[#F39C12] text-white',
+}
 
 export function DispatchCenter({ initialItems }: Props) {
   const [items, setItems] = useState(initialItems)
-  const [filter, setFilter] = useState<'grant' | 'fair' | 'all'>('all')
+  const [filter, setFilter] = useState<DispatchType | 'all'>('all')
   const [selectedId, setSelectedId] = useState<string | null>(initialItems[0]?.id ?? null)
   const [audience, setAudience] = useState<AudienceValue>(initialItems[0]?.audience ?? { mode: 'all', activityTypes: [], sectors: [], forFemaleOwned: false })
   const [notify, setNotify] = useState(true)
+  const [emailNotify, setEmailNotify] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [doneMsg, setDoneMsg] = useState('')
@@ -39,6 +47,7 @@ export function DispatchCenter({ initialItems }: Props) {
   const counts = {
     grant: items.filter((i) => i.type === 'grant').length,
     fair: items.filter((i) => i.type === 'fair').length,
+    news: items.filter((i) => i.type === 'news').length,
   }
 
   function select(item: DispatchItem) {
@@ -56,7 +65,7 @@ export function DispatchCenter({ initialItems }: Props) {
       const res = await fetch('/api/admin/dispatch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: selected.type, id: selected.id, notify, ...valueToCriteria(audience) }),
+        body: JSON.stringify({ type: selected.type, id: selected.id, notify, emailNotify, ...valueToCriteria(audience) }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -65,7 +74,9 @@ export function DispatchCenter({ initialItems }: Props) {
       }
       const remaining = items.filter((i) => i.id !== selected.id)
       setItems(remaining)
-      setDoneMsg(`U dërgua te ${data.recipients} biznese.`)
+      setDoneMsg(
+        `U dërgua te ${data.recipients} biznese` + (data.emailsSent ? `, ${data.emailsSent} email` : '') + '.',
+      )
       const next = remaining.find((i) => filter === 'all' || i.type === filter) ?? null
       setSelectedId(next?.id ?? null)
       if (next) setAudience(next.audience)
@@ -86,7 +97,7 @@ export function DispatchCenter({ initialItems }: Props) {
       </div>
 
       <div className="flex gap-2">
-        {(['all', 'grant', 'fair'] as const).map((f) => (
+        {(['all', 'grant', 'fair', 'news'] as const).map((f) => (
           <button
             key={f}
             type="button"
@@ -95,7 +106,13 @@ export function DispatchCenter({ initialItems }: Props) {
               filter === f ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300'
             }`}
           >
-            {f === 'all' ? `Të gjitha (${items.length})` : f === 'grant' ? `Grante (${counts.grant})` : `Panaire (${counts.fair})`}
+            {f === 'all'
+              ? `Të gjitha (${items.length})`
+              : f === 'grant'
+                ? `Grante (${counts.grant})`
+                : f === 'fair'
+                  ? `Panaire (${counts.fair})`
+                  : `Lajme (${counts.news})`}
           </button>
         ))}
       </div>
@@ -117,7 +134,7 @@ export function DispatchCenter({ initialItems }: Props) {
                 className={`w-full text-left px-4 py-3 hover:bg-gray-50 ${selectedId === i.id ? 'bg-[#2E86C1]/5' : ''}`}
               >
                 <div className="flex items-center gap-2 mb-0.5">
-                  <span className={`text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded ${i.type === 'grant' ? 'bg-[#1B4F72] text-white' : 'bg-[#27AE60] text-white'}`}>
+                  <span className={`text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded ${TYPE_BADGE[i.type]}`}>
                     {TYPE_LABEL[i.type]}
                   </span>
                   {i.provider && <span className="text-xs text-gray-500 truncate">{i.provider}</span>}
@@ -158,6 +175,13 @@ export function DispatchCenter({ initialItems }: Props) {
                   <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-[#1B4F72]" />
                   Njofto bizneset tani
                 </label>
+
+                {selected.type === 'news' && (
+                  <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                    <input type="checkbox" checked={emailNotify} onChange={(e) => setEmailNotify(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-[#1B4F72]" />
+                    Dërgo edhe newsletter me email
+                  </label>
+                )}
 
                 {error && <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{error}</div>}
 

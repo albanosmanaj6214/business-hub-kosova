@@ -13,7 +13,7 @@ export default async function DispatchPage() {
     redirect('/login')
   }
 
-  const [grants, fairs] = await Promise.all([
+  const [grants, fairs, news] = await Promise.all([
     prisma.grant.findMany({
       where: { isActive: true, deletedAt: null, dispatchStatus: 'PENDING' },
       orderBy: { createdAt: 'desc' },
@@ -22,6 +22,11 @@ export default async function DispatchPage() {
     prisma.tradeFair.findMany({
       where: { isActive: true, deletedAt: null, dispatchStatus: 'PENDING' },
       orderBy: { createdAt: 'desc' },
+      take: 100,
+    }),
+    prisma.newsItem.findMany({
+      where: { isActive: true, deletedAt: null, dispatchStatus: 'PENDING' },
+      orderBy: { scrapedAt: 'desc' },
       take: 100,
     }),
   ])
@@ -44,6 +49,15 @@ export default async function DispatchPage() {
       deadline: f.startDate ? f.startDate.toISOString() : null,
       url: f.website ?? null,
       audience: deriveAudienceValue(f),
+    })),
+    ...news.map((n) => ({
+      id: n.id,
+      type: 'news' as const,
+      title: n.titleSq || n.title,
+      provider: n.sourceName ?? null,
+      deadline: n.publishedAt ? n.publishedAt.toISOString() : null,
+      url: n.sourceUrl ?? null,
+      audience: deriveAudienceValue(n),
     })),
   ]
 

@@ -121,3 +121,86 @@ export async function sendVerificationEmail(to: string, token: string): Promise<
     return { ok: false, provider: 'resend', error: err instanceof Error ? err.message : String(err) }
   }
 }
+
+export interface NewsEmail {
+  title: string
+  summary: string | null
+  // Path-i brenda platformes (p.sh. /dashboard/lajme) ose URL e plote.
+  link: string
+}
+
+function absoluteUrl(link: string): string {
+  if (/^https?:\/\//i.test(link)) return link
+  return `${APP_URL.replace(/\/$/, '')}${link.startsWith('/') ? '' : '/'}${link}`
+}
+
+function newsEmailHtml(n: NewsEmail, url: string): string {
+  const summary = n.summary
+    ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#334155;">${n.summary}</p>`
+    : ''
+  return `<!DOCTYPE html>
+<html lang="sq">
+  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>${n.title}</title></head>
+  <body style="margin:0;padding:0;background:#f4f6f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:#1f2937;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f6f8;padding:32px 16px;">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 16px rgba(15,23,42,0.06);">
+          <tr><td style="background:linear-gradient(135deg,#1B4F72,#2E86C1);padding:20px 32px;color:#ffffff;font-size:16px;font-weight:600;">Kosova Business Hub</td></tr>
+          <tr><td style="padding:32px;">
+            <div style="font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:#94a3b8;margin-bottom:8px;">Lajme dhe Informata</div>
+            <h1 style="margin:0 0 16px;font-size:20px;color:#0f172a;line-height:1.35;">${n.title}</h1>
+            ${summary}
+            <p style="margin:24px 0;text-align:center;">
+              <a href="${url}" style="display:inline-block;background:#2E86C1;color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:10px;font-weight:600;font-size:15px;">Lexo në platformë</a>
+            </p>
+          </td></tr>
+          <tr><td style="background:#f8fafc;padding:16px 32px;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;">Kosova Business Hub. kosovabusinesses.aiaohub.com</td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`
+}
+
+function newsEmailText(n: NewsEmail, url: string): string {
+  return `Kosova Business Hub. Lajme dhe Informata
+
+${n.title}
+${n.summary ? `\n${n.summary}\n` : ''}
+Lexo në platformë: ${url}
+
+Kosova Business Hub
+kosovabusinesses.aiaohub.com`
+}
+
+// Newsletter per nje lajm te dispeçuar. Thirret vetem kur admini zgjedh email-in (opt-in).
+export async function sendNewsEmail(to: string, n: NewsEmail): Promise<SendResult> {
+  const url = absoluteUrl(n.link)
+  const subject = `Lajm i ri: ${n.title}`.slice(0, 120)
+
+  if (!resend) {
+    // eslint-disable-next-line no-console
+    console.warn(`[email] RESEND_API_KEY not set. News email NOT sent.\n        To: ${to}\n        Subject: ${subject}`)
+    return { ok: true, provider: 'console' }
+  }
+
+  try {
+    const result = await resend.emails.send({
+      from: EMAIL_FROM,
+      to,
+      subject,
+      html: newsEmailHtml(n, url),
+      text: newsEmailText(n, url),
+    })
+    if (result.error) {
+      // eslint-disable-next-line no-console
+      console.error('[email] Resend news error:', result.error)
+      return { ok: false, provider: 'resend', error: String(result.error.message || result.error) }
+    }
+    return { ok: true, provider: 'resend', id: result.data?.id }
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[email] Resend news exception:', err)
+    return { ok: false, provider: 'resend', error: err instanceof Error ? err.message : String(err) }
+  }
+}
