@@ -1,10 +1,12 @@
 import { Type } from '@google/genai'
 import { prisma } from '@/lib/prisma'
+import { feedFor, type AudienceProfile } from '@/lib/audience'
 import { CERTIFICATION_CATEGORIES, filterCertCategoriesByUserSectors, certTargetSectors } from '@/lib/export-certifications'
 import { INCOTERMS } from '@/lib/export-terms'
 import { matchesUserSectors, sectorsLabel } from '@/lib/sectors'
 
 export interface UserContext {
+  audienceProfile?: AudienceProfile | null
   userId: string
   // Personalization v1: canonical sector slugs the user has picked. May be empty.
   sectors: string[]
@@ -132,14 +134,19 @@ async function searchGrants(args: Record<string, unknown>, ctx: UserContext) {
       } : {}),
       ...(provider ? { provider: { contains: provider, mode: 'insensitive' } } : {}),
     },
-    select: { id: true, title: true, titleSq: true, descriptionSq: true, description: true, provider: true, amount: true, deadline: true, isOngoing: true, url: true, sectors: true, targetSectors: true, tags: true, forFemaleOwned: true },
+    select: { id: true, title: true, titleSq: true, descriptionSq: true, description: true, provider: true, amount: true, deadline: true, isOngoing: true, url: true, sectors: true, targetSectors: true, tags: true, forFemaleOwned: true, isGeneral: true, targetActivityTypes: true },
     orderBy: [{ deadline: 'asc' }, { createdAt: 'desc' }],
     // Cast a wider net because we'll trim by sector below.
     take: limit * 3,
   })
 
+  // Apply audience targeting if profile available (isGeneral OR targetSectors overlap).
+  const audienceFiltered = ctx.audienceProfile
+    ? feedFor(ctx.audienceProfile, grants)
+    : grants
+
   const womenSafe = ctx.femaleOwnership === true
-  const filtered = grants.filter((g) => {
+  const filtered = audienceFiltered.filter((g) => {
     if (isFairStandCall(g)) return false
     // Female-only grants are hidden from users who did not declare female ownership.
     if (g.forFemaleOwned && !womenSafe) return false
@@ -201,7 +208,7 @@ async function searchFairs(args: Record<string, unknown>, ctx: UserContext) {
       } : {}),
       ...(country ? { country: { contains: country, mode: 'insensitive' } } : {}),
     },
-    select: { id: true, name: true, nameSq: true, country: true, location: true, sectors: true, targetSectors: true, tags: true, startDate: true, endDate: true, website: true, registrationUrl: true, eventType: true, forFemaleOwned: true },
+    select: { id: true, name: true, nameSq: true, country: true, location: true, sectors: true, targetSectors: true, tags: true, startDate: true, endDate: true, website: true, registrationUrl: true, eventType: true, forFemaleOwned: true, isGeneral: true, targetActivityTypes: true },
     orderBy: { startDate: 'asc' },
     // Cast a wider net because we'll trim by sector below.
     take: limit * 3,

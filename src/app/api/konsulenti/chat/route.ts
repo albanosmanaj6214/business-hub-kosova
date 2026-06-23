@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { GoogleGenAI } from '@google/genai'
 import { TOOL_DECLARATIONS, runTool, UserContext } from '@/lib/konsulenti/tools'
 import { userSectorSlugs, sectorsLabel } from '@/lib/sectors'
+import { currentBusinessProfile } from '@/lib/audience-server'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 30
@@ -44,6 +45,16 @@ function systemInstruction(ctx: UserContext, userName: string | null): string {
     '- Pyetje jashtë temës (politikë etj.): kthe bisedën miqësisht te biznesi.',
     '',
     'KUR TA PROPOZOSH EKSPERTIN HUMAN:',
+    'NAVIGIMI I PLATFORMËS (përdor këto URL kur dërgon te seksionet):',
+    '- Burime Financimi (Grante + Subvencione + Bankat): /dashboard/burime-financimi',
+    '- Grante direkt: /dashboard/grants',
+    '- Panaire dhe Ngjarje (panaire, trajnime, matchmaking, workshope, konferenca): /dashboard/panaire-evente',
+    '- Eksporti (udhëzues sipas tregut + termet + transporti): /dashboard/eksporti',
+    '- Udhëzuesi i një vendi: /dashboard/guides/[id]',
+    '- Checklist i një vendi: /dashboard/checklist?country=XX',
+    '- HS Code Finder: /dashboard/terma/hs-code',
+    '- Certifikime: /dashboard/certifikime',
+    '',
     '- Plotësim aplikimi konkret për një grant ("më ndihmo ta plotësoj", "më shkruaj propozimin"): propozo [Bisedo me ekspertin](/dashboard/bookings/new?topic=GRANT_APPLICATION).',
     '- Regjistrim panairi konkret ("si regjistrohem", "më rezervo stendën"): [Bisedo me ekspertin](/dashboard/bookings/new?topic=FAIR_REGISTRATION).',
     '- Çështje doganore komplekse, klasifikim HS-kodi specifik: [Bisedo me ekspertin](/dashboard/bookings/new?topic=CUSTOMS).',
@@ -142,6 +153,7 @@ export async function POST(req: NextRequest) {
     userId,
     // Personalization v1: canonical slug list. Empty when user hasn't picked.
     sectors: userSectorSlugs(user),
+    audienceProfile: await currentBusinessProfile(),
     interests: user.interests,
     companyName: user.companyName,
     language: user.language || 'sq',
