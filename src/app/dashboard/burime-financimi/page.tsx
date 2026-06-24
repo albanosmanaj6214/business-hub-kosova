@@ -85,9 +85,9 @@ export default async function BurimeFinancimiPage() {
         <HubCard
           icon={Building2}
           title="Subvencione"
-          description="Programet qeveritare të subvencionit (Superpuna, ndihma për punësim, energji). Po e ndërtojmë."
+          description="SuperPuna: subvencionim i pagës për të rinjtë 18–28 vjeç për 6 muaj, në nivelin e pagës minimale."
           href="/dashboard/burime-financimi/subvencione"
-          status="coming-soon"
+          count="SuperPuna"
         />
         <HubCard
           icon={Wallet}
