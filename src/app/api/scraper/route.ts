@@ -90,7 +90,10 @@ async function persistOpportunity(
       grant = 'created'
     }
     // Auto-classify newly-stored grants that still lack a deadline.
-    if (!data.deadline) {
+    // Gated: this is an Anthropic (Haiku) call. Off by default so the nightly
+    // cron never spends API credit without an explicit opt-in. Set
+    // SCRAPER_AI_ENRICH=true in .env to re-enable deadline auto-classification.
+    if (!data.deadline && process.env.SCRAPER_AI_ENRICH === 'true') {
       const stored = await prisma.grant.findFirst({
         where: { url: item.sourceUrl },
         select: { id: true, title: true, titleSq: true, provider: true, url: true, classifiedAt: true },
@@ -163,6 +166,12 @@ async function runOne(code: string, dryRun: boolean): Promise<SourceRunResult> {
   const source = await prisma.source.findUnique({ where: { code } })
   if (!source) return { code, ok: false, error: `Source ${code} not in DB` }
   if (!source.isActive) return { code, ok: false, error: `Source ${code} is inactive` }
+  // OEK enrichment uses Anthropic (Haiku). Gated off by default so the nightly
+  // cron never spends API credit without an explicit opt-in. Set
+  // SCRAPER_AI_ENRICH=true in .env to re-enable the OEK source.
+  if (code === 'OEK' && process.env.SCRAPER_AI_ENRICH !== 'true') {
+    return { code, ok: false, error: 'OEK AI-enrich i fikur (vendos SCRAPER_AI_ENRICH=true)' }
+  }
 
   let attemptId: string | null = null
   if (!dryRun) {
