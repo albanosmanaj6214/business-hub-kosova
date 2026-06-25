@@ -19,6 +19,9 @@ export default async function AdminAccessPage() {
       name: true,
       companyName: true,
       email: true,
+      sectors: true,
+      activityType: true,
+      employeeCount: true,
       entitledSectors: true,
       subscription: { select: { tier: true } },
     },
@@ -30,6 +33,9 @@ export default async function AdminAccessPage() {
     email: u.email,
     tier: isTierKey(u.subscription?.tier) ? u.subscription!.tier : 'FREE',
     entitledSectors: u.entitledSectors,
+    sectors: u.sectors,
+    activityType: u.activityType,
+    employeeCount: u.employeeCount,
   }))
 
   return (
