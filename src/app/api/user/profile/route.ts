@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sectorBySlug } from '@/lib/sectors'
 import { isActivityType } from '@/lib/activity'
+import { isEmployeeCount } from '@/lib/employee-count'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -13,7 +14,7 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { name: true, companyName: true, sector: true, sectors: true, activityType: true, entitledSectors: true, interests: true, language: true, femaleOwnership: true },
+    select: { name: true, companyName: true, sector: true, sectors: true, activityType: true, employeeCount: true, entitledSectors: true, interests: true, language: true, femaleOwnership: true },
   })
 
   return NextResponse.json({ user })
@@ -26,7 +27,7 @@ export async function PUT(req: Request) {
   }
 
   const body = await req.json()
-  const { name, companyName, sector, sectors, activityType, interests, language, femaleOwnership } = body
+  const { name, companyName, sector, sectors, activityType, employeeCount, interests, language, femaleOwnership } = body
 
   // Normalise sectors[] to canonical slugs only. Drops unknown entries silently.
   const normalisedSectors = Array.isArray(sectors)
@@ -36,6 +37,9 @@ export async function PUT(req: Request) {
   // Lloji i aktivitetit: vetem nje slug i vlefshem ndryshon kolonen; ndryshe lihet siç është.
   const activityTypeUpdate =
     typeof activityType === 'string' && isActivityType(activityType) ? activityType : undefined
+
+  // Madhesia e kompanise: vetem vlere e vlefshme ndryshon; ndryshe lihet siç është.
+  const employeeCountUpdate = isEmployeeCount(employeeCount) ? employeeCount : undefined
 
   // entitledSectors mbetet nën kontrollin e adminit (faturim). Vetëdeklarimi i sektorit
   // NUK e zgjeron qasjen: e mbushim entitledSectors vetëm nëse është ende bosh (seed fillestar).
@@ -65,6 +69,7 @@ export async function PUT(req: Request) {
       sector,
       sectors: normalisedSectors,
       activityType: activityTypeUpdate,
+      employeeCount: employeeCountUpdate,
       entitledSectors: entitledSectorsUpdate,
       interests,
       language,

@@ -4,6 +4,7 @@ import { randomBytes } from 'crypto'
 import { prisma } from '@/lib/prisma'
 import { sectorBySlug, sectorsLabel } from '@/lib/sectors'
 import { isActivityType } from '@/lib/activity'
+import { isEmployeeCount, activityNeedsSector } from '@/lib/employee-count'
 import { sendVerificationEmail } from '@/lib/email'
 import {
   verifyTurnstile,
@@ -39,6 +40,7 @@ export async function POST(req: Request) {
       sector,
       sectors,
       activityType,
+      employeeCount,
       interests,
       language,
       femaleOwnership,
@@ -61,6 +63,25 @@ export async function POST(req: Request) {
       )
     }
 
+    if (typeof name !== 'string' || !name.trim()) {
+      return NextResponse.json(
+        { error: 'Shkruaj emrin dhe mbiemrin' },
+        { status: 400 }
+      )
+    }
+    if (typeof companyName !== 'string' || !companyName.trim()) {
+      return NextResponse.json(
+        { error: 'Shkruaj emrin e kompanisë' },
+        { status: 400 }
+      )
+    }
+    if (!isEmployeeCount(employeeCount)) {
+      return NextResponse.json(
+        { error: 'Zgjidh madhësinë e ndërmarrjes' },
+        { status: 400 }
+      )
+    }
+
     const existingUser = await prisma.user.findUnique({ where: { email } })
     if (existingUser) {
       return NextResponse.json(
@@ -74,17 +95,19 @@ export async function POST(req: Request) {
     const normalisedSectors: string[] = Array.isArray(sectors)
       ? Array.from(new Set(sectors.filter((s: unknown): s is string => typeof s === "string" && !!sectorBySlug(s)))).slice(0, 1)
       : []
-    if (normalisedSectors.length === 0) {
-      return NextResponse.json(
-        { error: 'Zgjidh të paktën një sektor' },
-        { status: 400 }
-      )
-    }
-
     // Lloji i aktivitetit eshte i detyrueshem dhe boshti kryesor i targetimit.
     if (typeof activityType !== 'string' || !isActivityType(activityType)) {
       return NextResponse.json(
         { error: 'Zgjidh llojin e aktivitetit të biznesit' },
+        { status: 400 }
+      )
+    }
+
+    // Sektori kerkohet vetem per aktivitete qe e kane sektorin si dimension shtese
+    // (prodhues-perpunues, sherbime). Tregti / bujqesi nuk e kerkojne.
+    if (activityNeedsSector(activityType) && normalisedSectors.length === 0) {
+      return NextResponse.json(
+        { error: 'Zgjidh sektorin e biznesit' },
         { status: 400 }
       )
     }
@@ -102,8 +125,9 @@ export async function POST(req: Request) {
         sector: typeof sector === 'string' && sector ? sector : sectorsLabel(normalisedSectors),
         sectors: normalisedSectors,
         activityType,
+        employeeCount,
         // Baza falas jep qasje ne sektorin e deklaruar. Sektore shtese hapen nga admini (Faza E).
-        entitledSectors: normalisedSectors,
+        entitledSectors: activityNeedsSector(activityType) ? normalisedSectors : [],
         interests: interests || [],
         language: language || 'sq',
         // Tri-state: only persist boolean if explicitly true/false; otherwise leave NULL

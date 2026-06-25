@@ -73,6 +73,9 @@ model User {
   femaleOwnership Boolean?
   // Lloji i vetem i aktivitetit (slug nga src/lib/activity.ts). Boshti kryesor per grante.
   activityType    String?
+  // Madhesia e kompanise sipas numrit te punetoreve. Vlerat: SMALL_1_9, MID_10_49, LARGE_50_249, XLARGE_250_PLUS.
+  // E detyrueshme ne regjistrim te ri; opsionale historikisht per llogarite ekzistuese.
+  employeeCount   String?
   // Sektoret e aktivizuar/faturuar nga admini; keta percaktojne dukshmerine.
   // Ndahen nga `sectors` (vetedeklarim). Default bosh => sheh vetem permbajtje te pergjithshme.
   entitledSectors String[]  @default([])

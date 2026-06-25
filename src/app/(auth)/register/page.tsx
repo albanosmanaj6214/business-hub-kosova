@@ -9,6 +9,7 @@ import { Loader2, MailCheck } from 'lucide-react'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { SectorPicker } from '@/components/sectors/SectorPicker'
 import { ActivityPicker } from '@/components/sectors/ActivityPicker'
+import { EMPLOYEE_COUNT_BUCKETS, EMPLOYEE_COUNT_LABEL, isEmployeeCount, activityNeedsSector } from '@/lib/employee-count'
 
 const interestOptions = [
   { value: 'grants', label: 'Grante & Fonde' },
@@ -37,6 +38,7 @@ export default function RegisterPage() {
     name: '',
     companyName: '',
     activityType: '',
+    employeeCount: '',
     sectors: [] as string[],
     interests: [] as string[],
     language: 'sq',
@@ -64,12 +66,20 @@ export default function RegisterPage() {
       setError('Fjalëkalimi duhet të ketë së paku 8 karaktere')
       return
     }
+    if (!form.companyName.trim()) {
+      setError('Shkruaj emrin e kompanisë')
+      return
+    }
     if (!form.activityType) {
       setError('Zgjidh llojin e aktivitetit të biznesit')
       return
     }
-    if (form.sectors.length === 0) {
-      setError('Zgjidh të paktën një sektor për biznesin tënd')
+    if (!isEmployeeCount(form.employeeCount)) {
+      setError('Zgjidh numrin e të punësuarve')
+      return
+    }
+    if (activityNeedsSector(form.activityType) && form.sectors.length === 0) {
+      setError('Zgjidh sektorin e biznesit')
       return
     }
     if (!turnstileToken) {
@@ -89,7 +99,8 @@ export default function RegisterPage() {
           name: form.name,
           companyName: form.companyName,
           activityType: form.activityType,
-          sectors: form.sectors,
+          employeeCount: form.employeeCount,
+          sectors: activityNeedsSector(form.activityType) ? form.sectors : [],
           interests: form.interests,
           language: form.language,
           femaleOwnership: form.femaleOwnership,
@@ -206,9 +217,10 @@ export default function RegisterPage() {
               />
               <Input
                 id="companyName"
-                label="Emri i Kompanise"
+                label="Emri i Kompanisë"
                 value={form.companyName}
                 onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+                required
               />
             </div>
 
@@ -243,13 +255,34 @@ export default function RegisterPage() {
 
             <ActivityPicker
               value={form.activityType}
-              onChange={(next) => setForm({ ...form, activityType: next })}
+              onChange={(next) => setForm({ ...form, activityType: next, sectors: [] })}
             />
 
-            <SectorPicker
-              value={form.sectors}
-              onChange={(next) => setForm({ ...form, sectors: next })}
-            />
+            <div>
+              <label htmlFor="employeeCount" className="block text-sm font-medium text-gray-700 mb-1">
+                Numri i të punësuarve <span className="text-red-500">*</span>
+              </label>
+              <select
+                id="employeeCount"
+                value={form.employeeCount}
+                onChange={(e) => setForm({ ...form, employeeCount: e.target.value })}
+                required
+                className="flex h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2E86C1] focus:border-transparent"
+              >
+                <option value="">Zgjidh madhësinë e ndërmarrjes</option>
+                {EMPLOYEE_COUNT_BUCKETS.map((b) => (
+                  <option key={b} value={b}>{EMPLOYEE_COUNT_LABEL[b].sq}</option>
+                ))}
+              </select>
+            </div>
+
+            {activityNeedsSector(form.activityType) && (
+              <SectorPicker
+                value={form.sectors}
+                onChange={(next) => setForm({ ...form, sectors: next })}
+                activityType={form.activityType}
+              />
+            )}
 
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
               <label className="flex items-center gap-3 cursor-pointer">

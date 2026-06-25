@@ -22,16 +22,28 @@ interface Props {
   /** Array of slugs. Only sectors[0] is used (single-select). */
   value: string[]
   onChange: (next: string[]) => void
+  /** Filters sectors by activity type:
+   *  - prodhues-perpunues: shfaq vetëm sektorët prodhues (12)
+   *  - sherbime: shfaq vetëm sektorët e shërbimeve (5)
+   *  - i pacaktuar / të tjera: shfaq të gjithë sektorët.
+   */
+  activityType?: string
 }
 
 const GROUPS_ORDER: SectorGroup[] = ['production', 'services']
 
-// Single-sector picker. A business selects ONE sector that best describes it.
-// The picker is stored as sectors[] (length 0 or 1) for forward-compat.
-export function SectorPicker({ value, onChange }: Props) {
+export function SectorPicker({ value, onChange, activityType }: Props) {
   const selected = value[0] ?? ''
   const def = selected ? sectorBySlug(selected) : null
   const Icon = def ? ICONS[def.icon] ?? Building2 : null
+
+  const allowedGroups: SectorGroup[] = (() => {
+    if (activityType === 'prodhues-perpunues') return ['production']
+    if (activityType === 'sherbime') return ['services']
+    return GROUPS_ORDER
+  })()
+
+  const visibleSectors = SECTORS.filter((s) => allowedGroups.includes(s.group))
 
   const setSector = (slug: string) => {
     if (!slug) {
@@ -48,7 +60,11 @@ export function SectorPicker({ value, onChange }: Props) {
           Sektori i biznesit <span className="text-red-500">*</span>
         </label>
         <p className="text-xs text-gray-500 mb-2">
-          Zgjidh sektorin që përshkruan biznesin tënd.
+          {activityType === 'prodhues-perpunues'
+            ? 'Zgjidh sektorin që përshkruan produktin që prodhoni ose përpunoni.'
+            : activityType === 'sherbime'
+              ? 'Zgjidh sektorin që përshkruan shërbimin që ofroni.'
+              : 'Zgjidh sektorin që përshkruan biznesin tënd.'}
         </p>
         <select
           id="sector-select"
@@ -58,9 +74,9 @@ export function SectorPicker({ value, onChange }: Props) {
           className="flex h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2E86C1] focus:border-transparent"
         >
           <option value="">Zgjidh sektorin e biznesit</option>
-          {GROUPS_ORDER.map((group) => (
+          {allowedGroups.map((group) => (
             <optgroup key={group} label={SECTOR_GROUP_LABEL[group].sq}>
-              {SECTORS.filter((s) => s.group === group).map((s) => (
+              {visibleSectors.filter((s) => s.group === group).map((s) => (
                 <option key={s.slug} value={s.slug}>
                   {s.sq}
                 </option>
