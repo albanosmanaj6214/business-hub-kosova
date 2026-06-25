@@ -1,23 +1,6 @@
 'use client'
 
-import { SECTORS, SECTOR_GROUP_LABEL, sectorBySlug, type SectorGroup } from '@/lib/sectors'
-import {
-  Utensils, Wheat, Shirt, Footprints, TreePine,
-  Factory, Building2, Recycle, FlaskConical,
-  Package, Plug, Stethoscope,
-  Cpu, Wind, Truck, Hotel,
-  Palette, HardHat,
-  type LucideIcon,
-} from 'lucide-react'
-
-const ICONS: Record<string, LucideIcon> = {
-  Utensils, Wheat, Shirt, Footprints, TreePine,
-  Factory, Building2, Recycle, FlaskConical,
-  Package, Plug, Stethoscope,
-  Cpu, Wind, Truck, Hotel,
-  Palette, HardHat,
-}
-
+import { SECTORS, SECTOR_GROUP_LABEL, type SectorGroup } from '@/lib/sectors'
 interface Props {
   /** Array of slugs. Only sectors[0] is used (single-select). */
   value: string[]
@@ -34,8 +17,6 @@ const GROUPS_ORDER: SectorGroup[] = ['production', 'services']
 
 export function SectorPicker({ value, onChange, activityType }: Props) {
   const selected = value[0] ?? ''
-  const def = selected ? sectorBySlug(selected) : null
-  const Icon = def ? ICONS[def.icon] ?? Building2 : null
 
   const allowedGroups: SectorGroup[] = (() => {
     if (activityType === 'prodhues-perpunues') return ['production']
@@ -59,13 +40,6 @@ export function SectorPicker({ value, onChange, activityType }: Props) {
         <label htmlFor="sector-select" className="block text-sm font-medium text-gray-700 mb-1">
           Sektori i biznesit <span className="text-red-500">*</span>
         </label>
-        <p className="text-xs text-gray-500 mb-2">
-          {activityType === 'prodhues-perpunues'
-            ? 'Zgjidh sektorin që përshkruan produktin që prodhoni ose përpunoni.'
-            : activityType === 'sherbime'
-              ? 'Zgjidh sektorin që përshkruan shërbimin që ofroni.'
-              : 'Zgjidh sektorin që përshkruan biznesin tënd.'}
-        </p>
         <select
           id="sector-select"
           value={selected}
@@ -86,21 +60,6 @@ export function SectorPicker({ value, onChange, activityType }: Props) {
         </select>
       </div>
 
-      {def && Icon && (
-        <div className="flex items-start gap-2.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
-          <span
-            className="inline-flex h-7 w-7 items-center justify-center rounded text-white shrink-0"
-            style={{ backgroundColor: def.color }}
-            aria-hidden="true"
-          >
-            <Icon className="h-4 w-4" />
-          </span>
-          <div className="text-xs text-gray-700 leading-relaxed">
-            <div className="font-medium text-gray-900 mb-0.5">{def.sq}</div>
-            <div>{def.tagline.sq}</div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

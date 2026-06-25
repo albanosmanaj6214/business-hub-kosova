@@ -9,10 +9,10 @@ export const EMPLOYEE_COUNT_BUCKETS = [
 export type EmployeeCount = (typeof EMPLOYEE_COUNT_BUCKETS)[number]
 
 export const EMPLOYEE_COUNT_LABEL: Record<EmployeeCount, { sq: string; en: string; de: string }> = {
-  SMALL_1_9: { sq: '1–9 punëtorë (mikro)', en: '1–9 employees (micro)', de: '1–9 Beschäftigte (Mikro)' },
-  MID_10_49: { sq: '10–49 punëtorë (i vogël)', en: '10–49 employees (small)', de: '10–49 Beschäftigte (klein)' },
-  LARGE_50_249: { sq: '50–249 punëtorë (i mesëm)', en: '50–249 employees (medium)', de: '50–249 Beschäftigte (mittel)' },
-  XLARGE_250_PLUS: { sq: '250 ose më shumë punëtorë (i madh)', en: '250+ employees (large)', de: '250+ Beschäftigte (groß)' },
+  SMALL_1_9: { sq: '1–9 punëtorë', en: '1–9 employees', de: '1–9 Beschäftigte' },
+  MID_10_49: { sq: '10–49 punëtorë', en: '10–49 employees', de: '10–49 Beschäftigte' },
+  LARGE_50_249: { sq: '50–249 punëtorë', en: '50–249 employees', de: '50–249 Beschäftigte' },
+  XLARGE_250_PLUS: { sq: '250 ose më shumë punëtorë', en: '250+ employees', de: '250+ Beschäftigte' },
 }
 
 export function isEmployeeCount(v: unknown): v is EmployeeCount {

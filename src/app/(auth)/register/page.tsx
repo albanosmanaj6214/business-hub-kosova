@@ -12,9 +12,11 @@ import { ActivityPicker } from '@/components/sectors/ActivityPicker'
 import { EMPLOYEE_COUNT_BUCKETS, EMPLOYEE_COUNT_LABEL, isEmployeeCount, activityNeedsSector } from '@/lib/employee-count'
 
 const interestOptions = [
-  { value: 'grants', label: 'Grante & Fonde' },
-  { value: 'fairs', label: 'Panaire Tregtare' },
-  { value: 'guides', label: 'Udhëzues Eksporti' },
+  { value: 'grants', label: 'Burime Financimi' },
+  { value: 'fairs', label: 'Panaire dhe Ngjarje' },
+  { value: 'guides', label: 'Eksporti' },
+  { value: 'news', label: 'Lajme dhe Informata' },
+  { value: 'certifications', label: 'Certifikime' },
   { value: 'consultations', label: 'Konsultime' },
 ]
 
