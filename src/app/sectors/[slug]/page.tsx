@@ -35,7 +35,7 @@ export default async function SectorDetailPage({ params }: { params: { slug: str
 
   const [grants, fairs, guides] = await Promise.all([
     prisma.grant.findMany({
-      where: { isActive: true, deletedAt: null },
+      where: { kind: 'GRANT', isActive: true, deletedAt: null },
       orderBy: { deadline: 'asc' },
     }),
     prisma.tradeFair.findMany({

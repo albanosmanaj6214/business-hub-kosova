@@ -9,7 +9,7 @@ const Body = z.object({
   title: z.string().min(3).max(300),
   titleSq: z.string().max(300).optional().nullable(),
   provider: z.string().min(2).max(200),
-  url: z.string().url(),
+  url: z.string().url().or(z.literal("")).optional(),
   country: z.string().max(80).default('Kosovë'),
   description: z.string().min(3).max(8000),
   descriptionSq: z.string().max(8000).optional().nullable(),
@@ -25,6 +25,8 @@ const Body = z.object({
   // When true, only users where User.femaleOwnership=true see this grant.
   forFemaleOwned: z.boolean().default(false),
   isActive: z.boolean().default(true),
+  // GRANT = grant klasik; SUBVENTION = subvencion paga/investime (p.sh. superpuna).
+  kind: z.enum(["GRANT", "SUBVENTION"]).default("GRANT"),
   // When true, insert a Notification row for every user whose sectors intersect
   // with targetSectors[]. Skipped silently when targetSectors is empty.
   notifySector: z.boolean().default(false),
@@ -54,7 +56,7 @@ export async function POST(req: Request) {
     title: d.title,
     titleSq: d.titleSq ?? null,
     provider: d.provider,
-    url: d.url,
+    url: d.url || null,
     country: d.country,
     description: d.description,
     descriptionSq: d.descriptionSq ?? null,
@@ -67,9 +69,10 @@ export async function POST(req: Request) {
     tags: [...(d.tags ?? []), 'manual-admin'],
     forFemaleOwned: d.forFemaleOwned,
     isActive,
+    kind: d.kind,
   }
 
-  const existing = await prisma.grant.findFirst({ where: { url: d.url } })
+  const existing = d.url ? await prisma.grant.findFirst({ where: { url: d.url } }) : null
   let result
   if (existing) {
     result = await prisma.grant.update({ where: { id: existing.id }, data })

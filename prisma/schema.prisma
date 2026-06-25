@@ -163,6 +163,8 @@ model Grant {
   // When true, this grant is restricted to businesses with female ownership.
   // Only users where `User.femaleOwnership=true` see it in the dashboard.
   forFemaleOwned Boolean  @default(false)
+  // Lloji i programit financiar: GRANT (grant klasik) ose SUBVENTION (subvencion paga/investime, p.sh. superpuna).
+  kind          String    @default("GRANT")
   // Audienca eksplicite. isGeneral=true => te te gjithe (perfshire tregtine).
   isGeneral           Boolean  @default(false)
   // Slug-et e aktivitetit qe targeton (bosh = pa kufizim aktiviteti).

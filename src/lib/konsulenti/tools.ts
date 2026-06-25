@@ -120,6 +120,7 @@ async function searchGrants(args: Record<string, unknown>, ctx: UserContext) {
 
   const grants = await prisma.grant.findMany({
     where: {
+      kind: 'GRANT',
       isActive: true,
       deletedAt: null,
       dispatchStatus: 'DISPATCHED',

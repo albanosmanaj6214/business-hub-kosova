@@ -54,6 +54,7 @@ export default async function BurimeFinancimiPage() {
   if (profile) {
     const grantsRaw = await prisma.grant.findMany({
       where: {
+        kind: 'GRANT',
         deletedAt: null,
         isActive: true,
         dispatchStatus: 'DISPATCHED',
@@ -63,6 +64,20 @@ export default async function BurimeFinancimiPage() {
     const today = new Date(); today.setUTCHours(0, 0, 0, 0)
     const visible = feedFor(profile, grantsRaw)
     activeGrantsCount = visible.filter((g) => g.isOngoing || (g.deadline && new Date(g.deadline) >= today)).length
+  }
+
+  let subvencioneCount = 0
+  if (profile) {
+    const sub = await prisma.grant.findMany({
+      where: {
+        kind: 'SUBVENTION',
+        deletedAt: null,
+        isActive: true,
+        dispatchStatus: 'DISPATCHED',
+      },
+      select: { isGeneral: true, targetSectors: true, targetActivityTypes: true, forFemaleOwned: true },
+    })
+    subvencioneCount = feedFor(profile, sub).length
   }
 
   return (
@@ -85,9 +100,9 @@ export default async function BurimeFinancimiPage() {
         <HubCard
           icon={Building2}
           title="Subvencione"
-          description="SuperPuna: subvencionim i pagës për të rinjtë 18–28 vjeç për 6 muaj, në nivelin e pagës minimale."
+          description="Skema qeveritare që mbulojnë një pjesë të kostove tuaja për punësim, paga ose investime (superpuna 425€/muaj, MZHR, ME, MBPZHR)."
           href="/dashboard/burime-financimi/subvencione"
-          count="SuperPuna"
+          count={subvencioneCount > 0 ? `${subvencioneCount} aktive` : 'Po vjen'}
         />
         <HubCard
           icon={Wallet}

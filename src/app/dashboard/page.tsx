@@ -32,7 +32,7 @@ export default async function DashboardPage() {
   ])
 
   const recentGrants = await prisma.grant.findMany({
-    where: { isActive: true, deletedAt: null, deadline: { gte: new Date() } },
+    where: { kind: 'GRANT', isActive: true, deletedAt: null, deadline: { gte: new Date() } },
     orderBy: { deadline: 'asc' },
     take: 5,
   })

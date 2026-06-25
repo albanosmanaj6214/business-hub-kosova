@@ -45,13 +45,14 @@ interface FormState {
   showInDashboard: boolean
   // When true, only users with User.femaleOwnership=true see this grant.
   forFemaleOwned: boolean
+  kind: 'GRANT' | 'SUBVENTION'
 }
 
 const EMPTY: FormState = {
   title: '', titleSq: '', provider: '', url: '',
   description: '', descriptionSq: '', amount: '', currency: 'EUR',
   deadline: '', eligibility: '', sectors: [], targetSectors: [], tags: [],
-  notifySector: false, showInDashboard: true, forFemaleOwned: false,
+  notifySector: false, showInDashboard: true, forFemaleOwned: false, kind: 'GRANT',
 }
 
 export default function NewGrantPage() {
@@ -131,6 +132,7 @@ export default function NewGrantPage() {
           amount: form.amount || null,
           descriptionSq: form.descriptionSq || null,
           titleSq: form.titleSq || null,
+          url: form.url || '',
         }),
       })
       const data = await res.json()
@@ -161,13 +163,50 @@ export default function NewGrantPage() {
       </Link>
 
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Shto grant të ri</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Shto grant ose subvencion</h2>
         <p className="text-gray-500 mt-1">
-          Vendos URL-në e thirrjes. Haiku 4.5 do ekstraktojë afatin, përshkrimin dhe sektorët automatikisht. Ti i shqyrton dhe publikon.
+          Grant me URL: Haiku 4.5 ekstrakton automatikisht. Subvencion: shkruaj me dorë (skemat qeveritare janë të qëndrueshme).
         </p>
       </div>
 
-      {step === 'url' && (
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-gray-700">Lloji:</span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => { setForm((f) => ({ ...f, kind: 'GRANT' })); setStep('url') }}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${
+                  form.kind === 'GRANT'
+                    ? 'bg-[#1B4F72] text-white border-[#1B4F72]'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-[#2E86C1]'
+                }`}
+              >
+                Grant
+              </button>
+              <button
+                type="button"
+                onClick={() => { setForm((f) => ({ ...f, kind: 'SUBVENTION' })); setStep('edit') }}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${
+                  form.kind === 'SUBVENTION'
+                    ? 'bg-[#1B4F72] text-white border-[#1B4F72]'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-[#2E86C1]'
+                }`}
+              >
+                Subvencion
+              </button>
+            </div>
+            <span className="text-xs text-gray-500 ml-2">
+              {form.kind === 'GRANT'
+                ? 'Thirrje me URL + afat (ekstraktohet me Haiku).'
+                : 'Skemë e qëndrueshme qeveritare (futet me dorë).'}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {step === 'url' && form.kind === 'GRANT' && (
         <Card>
           <CardContent className="p-6 space-y-4">
             <div>

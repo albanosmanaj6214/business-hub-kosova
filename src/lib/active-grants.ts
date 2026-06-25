@@ -23,6 +23,7 @@ function isFairStandCall(g: { title: string; titleSq: string | null }): boolean 
 export async function countActiveGrants(): Promise<number> {
   const grants = await prisma.grant.findMany({
     where: {
+      kind: "GRANT",
       isActive: true,
       deletedAt: null,
       NOT: [{ audience: "civil_society" }, { tags: { has: "legacy_synthetic" } }],

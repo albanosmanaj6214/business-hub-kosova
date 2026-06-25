@@ -30,7 +30,7 @@ export default async function SectorsLandingPage() {
   const locale: Locale = getServerLocale()
   const [grants, fairs, guides] = await Promise.all([
     prisma.grant.findMany({
-      where: { isActive: true, deletedAt: null },
+      where: { kind: 'GRANT', isActive: true, deletedAt: null },
       select: { sectors: true },
     }),
     prisma.tradeFair.findMany({

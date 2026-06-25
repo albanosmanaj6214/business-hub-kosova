@@ -141,6 +141,7 @@ export default async function GrantsPage({
   // profilit te biznesit (aktivitet + entitledSectors + gra). Pa "shiko te gjitha".
   const grantsRaw = (await prisma.grant.findMany({
     where: {
+      kind: 'GRANT',
       deletedAt: null,
       dispatchStatus: 'DISPATCHED',
       NOT: [{ audience: 'civil_society' }, { tags: { has: 'legacy_synthetic' } }],
