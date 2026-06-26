@@ -4,15 +4,15 @@ import { valueToCriteria, isValueComplete, deriveAudienceValue, parseAudience } 
 describe('valueToCriteria', () => {
   it('maps "all" without female to general', () => {
     expect(valueToCriteria({ mode: 'all', activityTypes: [], sectors: [], forFemaleOwned: false }))
-      .toEqual({ isGeneral: true, targetActivityTypes: [], targetSectors: [], forFemaleOwned: false })
+      .toEqual({ isGeneral: true, targetActivityTypes: [], targetSectors: [], forFemaleOwned: false, targetSegments: [], targetCountries: [] })
   })
   it('maps "all" with female to non-general female-only', () => {
     expect(valueToCriteria({ mode: 'all', activityTypes: [], sectors: [], forFemaleOwned: true }))
-      .toEqual({ isGeneral: false, targetActivityTypes: [], targetSectors: [], forFemaleOwned: true })
+      .toEqual({ isGeneral: false, targetActivityTypes: [], targetSectors: [], forFemaleOwned: true, targetSegments: [], targetCountries: [] })
   })
   it('maps activity mode', () => {
     expect(valueToCriteria({ mode: 'activity', activityTypes: ['prodhues-perpunues'], sectors: ['x'], forFemaleOwned: false }))
-      .toEqual({ isGeneral: false, targetActivityTypes: ['prodhues-perpunues'], targetSectors: [], forFemaleOwned: false })
+      .toEqual({ isGeneral: false, targetActivityTypes: ['prodhues-perpunues'], targetSectors: [], forFemaleOwned: false, targetSegments: [], targetCountries: [] })
   })
 })
 
@@ -46,5 +46,36 @@ describe('parseAudience', () => {
       expect(r.criteria.targetSectors).toEqual(['ushqim-dhe-pije'])
       expect(r.criteria.targetActivityTypes).toEqual([])
     }
+  })
+})
+
+const v0 = { mode: 'all' as const, activityTypes: [], sectors: [], forFemaleOwned: false, segments: [], countries: [] }
+
+describe('dispatch: segment + shtet', () => {
+  it('mode=all pa narrowing => isGeneral true', () => {
+    expect(valueToCriteria(v0).isGeneral).toBe(true)
+  })
+  it('segments te zgjedhura => isGeneral false + targetSegments te mbushura', () => {
+    const c = valueToCriteria({ ...v0, segments: ['DIASPORA'] })
+    expect(c.isGeneral).toBe(false)
+    expect(c.targetSegments).toEqual(['DIASPORA'])
+  })
+  it('deriveAudienceValue round-trip per segmente/shtete', () => {
+    const dv = deriveAudienceValue({ targetActivityTypes: [], targetSectors: [], forFemaleOwned: false, targetSegments: ['DIASPORA'], targetCountries: ['DE'] })
+    expect(dv.segments).toEqual(['DIASPORA'])
+    expect(dv.countries).toEqual(['DE'])
+  })
+  it('parseAudience pranon segment valid + shtet ISO2, filtron te pavlefshmet', () => {
+    const r = parseAudience({ targetSegments: ['DIASPORA', 'OJQ'], targetCountries: ['DE', 'de', 'XXX'] })
+    expect(r.ok).toBe(true)
+    if (r.ok) {
+      expect(r.criteria.targetSegments).toEqual(['DIASPORA'])
+      expect(r.criteria.targetCountries).toEqual(['DE'])
+      expect(r.criteria.isGeneral).toBe(false)
+    }
+  })
+  it('parseAudience refuzon audience plotesisht boshe', () => {
+    const r = parseAudience({})
+    expect(r.ok).toBe(false)
   })
 })
