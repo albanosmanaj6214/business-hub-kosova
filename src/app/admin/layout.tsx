@@ -7,11 +7,13 @@ import { cn } from '@/lib/utils'
 import {
   Shield, Users, Search, Calendar, BookOpen, Bot, Bell, Inbox,
   LayoutDashboard, Menu, X, ArrowLeft, Trash2, Database, ClipboardCheck, Send, Newspaper, KeyRound,
+  Building2,
 } from 'lucide-react'
 import { Toaster } from '@/components/admin/Toaster'
 
 const adminNav = [
   { name: 'Overview', href: '/admin', icon: LayoutDashboard },
+  { name: 'Bizneset', href: '/admin/segments', icon: Building2 },
   { name: 'Qendra e Dispeçimit', href: '/admin/dispatch', icon: Send },
   { name: 'Lajme', href: '/admin/news', icon: Newspaper },
   { name: 'Perdoruesit', href: '/admin/users', icon: Users },
