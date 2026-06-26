@@ -5,6 +5,8 @@ export interface AudienceProfile {
   activityType: string | null
   entitledSectors: string[]
   femaleOwnership: boolean | null
+  businessSegment?: string | null
+  diasporaCountry?: string | null
 }
 
 export interface AudienceCriteria {
@@ -12,6 +14,8 @@ export interface AudienceCriteria {
   targetActivityTypes: string[]
   targetSectors: string[]
   forFemaleOwned: boolean
+  targetSegments?: string[]
+  targetCountries?: string[]
 }
 
 export function matchesAudience(user: AudienceProfile, item: AudienceCriteria): boolean {
@@ -27,7 +31,17 @@ export function matchesAudience(user: AudienceProfile, item: AudienceCriteria): 
 
   const femaleOk = !item.forFemaleOwned || user.femaleOwnership === true
 
-  return activityOk && sectorOk && femaleOk
+  const segments = item.targetSegments ?? []
+  const segmentOk =
+    segments.length === 0 ||
+    (user.businessSegment != null && segments.includes(user.businessSegment))
+
+  const countries = item.targetCountries ?? []
+  const countryOk =
+    countries.length === 0 ||
+    (user.diasporaCountry != null && countries.includes(user.diasporaCountry))
+
+  return activityOk && sectorOk && femaleOk && segmentOk && countryOk
 }
 
 export function filterForUser<T extends AudienceCriteria>(user: AudienceProfile, items: T[]): T[] {

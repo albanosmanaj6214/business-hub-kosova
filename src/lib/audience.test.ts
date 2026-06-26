@@ -48,3 +48,36 @@ describe('matchesAudience', () => {
     expect(filterForUser(foodProducerWoman, items)).toHaveLength(2)
   })
 })
+
+// --- Faza 0: boshtet segment + shtet ---
+const woodDiaspora: AudienceProfile = { activityType: 'prodhues-perpunues', entitledSectors: ['druri-mobilje'], femaleOwnership: null, businessSegment: 'DIASPORA', diasporaCountry: 'DE' }
+const woodStandard: AudienceProfile = { activityType: 'prodhues-perpunues', entitledSectors: ['druri-mobilje'], femaleOwnership: null, businessSegment: 'STANDARD' }
+
+describe('audience: boshti i segmentit', () => {
+  it('targetSegments bosh => pa kufizim segmenti', () => {
+    expect(matchesAudience(woodStandard, crit({}))).toBe(true)
+  })
+  it('targetSegments=[DIASPORA] sheh vetem diasporen', () => {
+    const item = crit({ targetSegments: ['DIASPORA'] })
+    expect(matchesAudience(woodDiaspora, item)).toBe(true)
+    expect(matchesAudience(woodStandard, item)).toBe(false)
+    expect(matchesAudience({ ...woodStandard, businessSegment: null }, item)).toBe(false)
+  })
+  it('isGeneral mbizoteron segmentin', () => {
+    const item = crit({ isGeneral: true, targetSegments: ['DIASPORA'] })
+    expect(matchesAudience(woodStandard, item)).toBe(true)
+  })
+})
+
+describe('audience: boshti i shtetit te diaspores', () => {
+  it('targetCountries=[DE] sheh vetem diasporen nga DE', () => {
+    const item = crit({ targetSegments: ['DIASPORA'], targetCountries: ['DE'] })
+    expect(matchesAudience(woodDiaspora, item)).toBe(true)
+    expect(matchesAudience({ ...woodDiaspora, diasporaCountry: 'CH' }, item)).toBe(false)
+  })
+  it('segment + aktivitet kombinohen me AND', () => {
+    const item = crit({ targetSegments: ['STANDARD'], targetActivityTypes: ['sherbime'] })
+    expect(matchesAudience({ ...woodStandard, activityType: 'sherbime' }, item)).toBe(true)
+    expect(matchesAudience({ ...woodStandard, activityType: 'prodhues-perpunues' }, item)).toBe(false)
+  })
+})
