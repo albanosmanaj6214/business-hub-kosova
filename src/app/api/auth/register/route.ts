@@ -4,6 +4,7 @@ import { randomBytes } from 'crypto'
 import { prisma } from '@/lib/prisma'
 import { sectorBySlug, sectorsLabel } from '@/lib/sectors'
 import { isActivityType } from '@/lib/activity'
+import { parseSegmentInput } from '@/lib/segment-input'
 import { isEmployeeCount, activityNeedsSector } from '@/lib/employee-count'
 import { sendVerificationEmail } from '@/lib/email'
 import {
@@ -112,6 +113,13 @@ export async function POST(req: Request) {
       )
     }
 
+    // Segmenti i biznesit (i detyrueshem) + fushat e degeve te pastruara sipas segmentit.
+    const segParsed = parseSegmentInput(body)
+    if (!segParsed.ok) {
+      return NextResponse.json({ error: segParsed.error }, { status: 400 })
+    }
+    const seg = segParsed.value
+
     const hashedPassword = await hash(password, 12)
 
     const user = await prisma.user.create({
@@ -128,6 +136,11 @@ export async function POST(req: Request) {
         employeeCount,
         // Baza falas jep qasje ne sektorin e deklaruar. Sektore shtese hapen nga admini (Faza E).
         entitledSectors: activityNeedsSector(activityType) ? normalisedSectors : [],
+        businessSegment: seg.businessSegment,
+        diasporaCountry: seg.diasporaCountry,
+        diasporaRole: seg.diasporaRole,
+        startupStage: seg.startupStage,
+        lookingFor: seg.lookingFor,
         interests: interests || [],
         language: language || 'sq',
         // Tri-state: only persist boolean if explicitly true/false; otherwise leave NULL

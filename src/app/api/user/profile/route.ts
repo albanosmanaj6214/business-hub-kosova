@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { sectorBySlug } from '@/lib/sectors'
 import { isActivityType } from '@/lib/activity'
 import { isEmployeeCount } from '@/lib/employee-count'
+import { parseSegmentInput } from '@/lib/segment-input'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -14,7 +15,7 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { name: true, companyName: true, sector: true, sectors: true, activityType: true, employeeCount: true, entitledSectors: true, interests: true, language: true, femaleOwnership: true },
+    select: { name: true, companyName: true, sector: true, sectors: true, activityType: true, employeeCount: true, entitledSectors: true, interests: true, language: true, femaleOwnership: true, businessSegment: true, diasporaCountry: true, diasporaRole: true, startupStage: true, lookingFor: true },
   })
 
   return NextResponse.json({ user })
@@ -59,6 +60,19 @@ export async function PUT(req: Request) {
   else if (femaleOwnership === null) femaleOwnershipUpdate = null
   else femaleOwnershipUpdate = undefined
 
+  // Segmenti: aplikohet vetem nese body permban nje businessSegment valid; ndryshe lihet i paprekur.
+  // Forma e cilesimeve (Faza 0b) duhet ta dergoje bllokun e plote te segmentit per te shmangur fshirjen parciale.
+  const segUpdate = parseSegmentInput(body)
+  const segData = segUpdate.ok
+    ? {
+        businessSegment: segUpdate.value.businessSegment,
+        diasporaCountry: segUpdate.value.diasporaCountry,
+        diasporaRole: segUpdate.value.diasporaRole,
+        startupStage: segUpdate.value.startupStage,
+        lookingFor: segUpdate.value.lookingFor,
+      }
+    : {}
+
   // Undefined fields are ignored by Prisma, so a partial update
   // leaves everything else untouched.
   const user = await prisma.user.update({
@@ -74,6 +88,7 @@ export async function PUT(req: Request) {
       interests,
       language,
       femaleOwnership: femaleOwnershipUpdate,
+      ...segData,
     },
   })
 
