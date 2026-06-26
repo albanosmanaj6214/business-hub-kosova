@@ -11,13 +11,15 @@ export async function currentBusinessProfile(): Promise<BusinessProfile | null> 
   if (!id) return null
   const u = await prisma.user.findUnique({
     where: { id },
-    select: { activityType: true, entitledSectors: true, femaleOwnership: true },
+    select: { activityType: true, entitledSectors: true, femaleOwnership: true, businessSegment: true, diasporaCountry: true },
   })
   if (!u) return null
   return {
     activityType: u.activityType,
     entitledSectors: u.entitledSectors,
     femaleOwnership: u.femaleOwnership,
+    businessSegment: u.businessSegment,
+    diasporaCountry: u.diasporaCountry,
   }
 }
 
@@ -26,12 +28,14 @@ export async function currentBusinessProfile(): Promise<BusinessProfile | null> 
 // (qindra-mijera perdorues) ngarkimi i te gjithe profileve eshte mjaft i shpejte dhe i sakte.
 async function audienceProfiles(): Promise<AudienceProfile[]> {
   const users = await prisma.user.findMany({
-    select: { activityType: true, entitledSectors: true, femaleOwnership: true },
+    select: { activityType: true, entitledSectors: true, femaleOwnership: true, businessSegment: true, diasporaCountry: true },
   })
   return users.map((u) => ({
     activityType: u.activityType,
     entitledSectors: u.entitledSectors,
     femaleOwnership: u.femaleOwnership,
+    businessSegment: u.businessSegment,
+    diasporaCountry: u.diasporaCountry,
   }))
 }
 
@@ -43,12 +47,12 @@ export async function countAudience(criteria: AudienceCriteria): Promise<number>
 // Id-te e bizneseve qe e marrin artikullin (per krijimin e njoftimeve gjate dispeçimit).
 export async function audienceUserIds(criteria: AudienceCriteria): Promise<string[]> {
   const users = await prisma.user.findMany({
-    select: { id: true, activityType: true, entitledSectors: true, femaleOwnership: true },
+    select: { id: true, activityType: true, entitledSectors: true, femaleOwnership: true, businessSegment: true, diasporaCountry: true },
   })
   return users
     .filter((u) =>
       matchesAudience(
-        { activityType: u.activityType, entitledSectors: u.entitledSectors, femaleOwnership: u.femaleOwnership },
+        { activityType: u.activityType, entitledSectors: u.entitledSectors, femaleOwnership: u.femaleOwnership, businessSegment: u.businessSegment, diasporaCountry: u.diasporaCountry },
         criteria,
       ),
     )
