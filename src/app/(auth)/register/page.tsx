@@ -9,6 +9,7 @@ import { Loader2, MailCheck } from 'lucide-react'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { SectorPicker } from '@/components/sectors/SectorPicker'
 import { ActivityPicker } from '@/components/sectors/ActivityPicker'
+import { SegmentPicker } from '@/components/sectors/SegmentPicker'
 import { EMPLOYEE_COUNT_BUCKETS, EMPLOYEE_COUNT_LABEL, isEmployeeCount, activityNeedsSector } from '@/lib/employee-count'
 
 const interestOptions = [
@@ -45,6 +46,10 @@ export default function RegisterPage() {
     interests: [] as string[],
     language: 'sq',
     femaleOwnership: false,
+    businessSegment: 'STANDARD',
+    diasporaCountry: null as string | null,
+    diasporaRole: null as string | null,
+    startupStage: null as string | null,
   })
 
   const toggleInterest = (value: string) => {
@@ -106,6 +111,10 @@ export default function RegisterPage() {
           interests: form.interests,
           language: form.language,
           femaleOwnership: form.femaleOwnership,
+          businessSegment: form.businessSegment,
+          diasporaCountry: form.diasporaCountry,
+          diasporaRole: form.diasporaRole,
+          startupStage: form.startupStage,
           turnstileToken,
         }),
       })
@@ -254,6 +263,16 @@ export default function RegisterPage() {
                 required
               />
             </div>
+
+            <SegmentPicker
+              value={{
+                businessSegment: form.businessSegment,
+                diasporaCountry: form.diasporaCountry,
+                diasporaRole: form.diasporaRole,
+                startupStage: form.startupStage,
+              }}
+              onChange={(seg) => setForm({ ...form, ...seg })}
+            />
 
             <ActivityPicker
               value={form.activityType}
