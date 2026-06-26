@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Loader2, Save } from 'lucide-react'
 import { SectorPicker } from '@/components/sectors/SectorPicker'
 import { ActivityPicker } from '@/components/sectors/ActivityPicker'
+import { SegmentPicker } from '@/components/sectors/SegmentPicker'
 import { EMPLOYEE_COUNT_BUCKETS, EMPLOYEE_COUNT_LABEL, isEmployeeCount, activityNeedsSector } from '@/lib/employee-count'
 
 const interestOptions = [
@@ -32,6 +33,10 @@ export default function SettingsPage() {
     language: 'sq',
     // Tri-state: null means "not declared". Persisted as such to the API.
     femaleOwnership: null as boolean | null,
+    businessSegment: 'STANDARD',
+    diasporaCountry: null as string | null,
+    diasporaRole: null as string | null,
+    startupStage: null as string | null,
   })
 
   useEffect(() => {
@@ -48,6 +53,10 @@ export default function SettingsPage() {
             interests: data.user.interests || [],
             language: data.user.language || 'sq',
             femaleOwnership: typeof data.user.femaleOwnership === 'boolean' ? data.user.femaleOwnership : null,
+            businessSegment: data.user.businessSegment || 'STANDARD',
+            diasporaCountry: data.user.diasporaCountry ?? null,
+            diasporaRole: data.user.diasporaRole ?? null,
+            startupStage: data.user.startupStage ?? null,
           })
         }
       })
@@ -116,6 +125,16 @@ export default function SettingsPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <Input id="name" label="Emri" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             <Input id="company" label="Kompania" value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} required />
+
+            <SegmentPicker
+              value={{
+                businessSegment: form.businessSegment,
+                diasporaCountry: form.diasporaCountry,
+                diasporaRole: form.diasporaRole,
+                startupStage: form.startupStage,
+              }}
+              onChange={(seg) => setForm({ ...form, ...seg })}
+            />
 
             <ActivityPicker
               value={form.activityType}
