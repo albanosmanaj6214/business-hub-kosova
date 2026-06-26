@@ -105,9 +105,11 @@ export default async function DiasporaPage() {
                 {treaty.inForce && <span className="text-gray-500">Në fuqi: {treaty.inForce}</span>}
               </div>
               {treaty.note?.sq && <p className="text-gray-600">{treaty.note.sq}</p>}
-              <a href={treaty.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[#2E86C1] hover:underline">
-                Burimi zyrtar <ExternalLink className="h-3.5 w-3.5" />
-              </a>
+              {treaty.url && (
+                <a href={treaty.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[#2E86C1] hover:underline">
+                  Burimi zyrtar <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              )}
             </div>
           ) : (
             <p className="text-sm text-gray-500">Lista zyrtare e marrëveshjeve po përgatitet. Do të shtohet së shpejti.</p>
