@@ -4,14 +4,23 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { DispatchCenter, DispatchItem } from '@/components/admin/DispatchCenter'
 import { deriveAudienceValue } from '@/lib/dispatch'
+import { BUSINESS_SEGMENTS } from '@/lib/segments'
 
 export const dynamic = 'force-dynamic'
 
-export default async function DispatchPage() {
+export default async function DispatchPage({
+  searchParams,
+}: {
+  searchParams?: { segment?: string }
+}) {
   const session = await getServerSession(authOptions)
   if ((session?.user as { role?: string })?.role !== 'ADMIN') {
     redirect('/login')
   }
+
+  const seg = searchParams?.segment
+  const initialSegment =
+    seg && (BUSINESS_SEGMENTS as readonly string[]).includes(seg) ? seg : undefined
 
   const [grants, fairs, news] = await Promise.all([
     prisma.grant.findMany({
@@ -61,5 +70,5 @@ export default async function DispatchPage() {
     })),
   ]
 
-  return <DispatchCenter initialItems={items} />
+  return <DispatchCenter initialItems={items} initialSegment={initialSegment} />
 }

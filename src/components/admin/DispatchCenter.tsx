@@ -19,6 +19,7 @@ export interface DispatchItem {
 
 interface Props {
   initialItems: DispatchItem[]
+  initialSegment?: string
 }
 
 const TYPE_LABEL: Record<DispatchType, string> = { grant: 'Grant', fair: 'Panair', news: 'Lajm' }
@@ -28,11 +29,19 @@ const TYPE_BADGE: Record<DispatchType, string> = {
   news: 'bg-[#F39C12] text-white',
 }
 
-export function DispatchCenter({ initialItems }: Props) {
+export function DispatchCenter({ initialItems, initialSegment }: Props) {
+  // Kur arrihet nga "Dërgo te ky segment" (?segment=X), e mban segmentin të para-zgjedhur
+  // dhe ngjitur ndërsa admini ndërron artikujt, që targetimi i segmentit të mos humbasë.
+  const withSegment = (av: AudienceValue): AudienceValue => {
+    if (!initialSegment) return av
+    const segs = av.segments ?? []
+    return segs.includes(initialSegment) ? av : { ...av, segments: [...segs, initialSegment] }
+  }
+
   const [items, setItems] = useState(initialItems)
   const [filter, setFilter] = useState<DispatchType | 'all'>('all')
   const [selectedId, setSelectedId] = useState<string | null>(initialItems[0]?.id ?? null)
-  const [audience, setAudience] = useState<AudienceValue>(initialItems[0]?.audience ?? { mode: 'all', activityTypes: [], sectors: [], forFemaleOwned: false })
+  const [audience, setAudience] = useState<AudienceValue>(withSegment(initialItems[0]?.audience ?? { mode: 'all', activityTypes: [], sectors: [], forFemaleOwned: false }))
   const [notify, setNotify] = useState(true)
   const [emailNotify, setEmailNotify] = useState(false)
   const [sending, setSending] = useState(false)
@@ -52,7 +61,7 @@ export function DispatchCenter({ initialItems }: Props) {
 
   function select(item: DispatchItem) {
     setSelectedId(item.id)
-    setAudience(item.audience)
+    setAudience(withSegment(item.audience))
     setError('')
     setDoneMsg('')
   }
@@ -79,7 +88,7 @@ export function DispatchCenter({ initialItems }: Props) {
       )
       const next = remaining.find((i) => filter === 'all' || i.type === filter) ?? null
       setSelectedId(next?.id ?? null)
-      if (next) setAudience(next.audience)
+      if (next) setAudience(withSegment(next.audience))
     } catch {
       setError('Gabim rrjeti.')
     } finally {
