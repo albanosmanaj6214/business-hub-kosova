@@ -23,7 +23,7 @@ export const NACE_CODES: NaceCode[] = [
   { code: '62.01', name: { sq: 'Programim kompjuterik' }, section: 'J', variants: ['softuer', 'zhvillim softueri', 'web', 'aplikacione', 'programim'], sectorSlug: 'tik' },
   { code: '62.02', name: { sq: 'Veprimtari konsulence në teknologji informacioni' }, section: 'J', variants: ['konsulencë it', 'teknologji', 'ti'], sectorSlug: 'tik' },
   { code: '68.20', name: { sq: 'Dhënia me qira e pasurive të paluajtshme' }, section: 'L', variants: ['qira', 'patundshmëri', 'prona'] },
-  { code: '69.20', name: { sq: 'Veprimtari kontabiliteti, auditimi dhe konsulence tatimore' }, section: 'M', variants: ['kontabilitet', 'financa', 'auditim', 'tatime'] },
+  { code: '69.20', name: { sq: 'Veprimtari kontabiliteti, auditimi dhe konsulencë tatimore' }, section: 'M', variants: ['kontabilitet', 'financa', 'auditim', 'tatime'] },
   { code: '70.22', name: { sq: 'Konsulencë biznesi dhe menaxhimi' }, section: 'M', variants: ['konsulencë', 'menaxhim', 'biznes plan'] },
   { code: '96.02', name: { sq: 'Veprimtari të parukerisë dhe trajtimit të bukurisë' }, section: 'S', variants: ['parukeri', 'sallon', 'bukuri', 'estetikë'], sectorSlug: 'kozmetike' },
 ]
