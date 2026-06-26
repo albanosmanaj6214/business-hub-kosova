@@ -153,7 +153,7 @@ export default function StartupPage({ searchParams }: { searchParams?: { forma?:
             </CardContent>
           </Card>
           <p className="mt-2 text-right">
-            <Link href="/dashboard/startup/dokumente" className="text-sm text-[#2E86C1] hover:underline">Të gjitha dokumentet</Link>
+            <Link href={`/dashboard/startup/dokumente?forma=${form.slug}`} className="text-sm text-[#2E86C1] hover:underline">Të gjitha dokumentet</Link>
           </p>
         </div>
       )}
