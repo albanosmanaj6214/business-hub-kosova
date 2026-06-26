@@ -58,7 +58,7 @@ export function SegmentPicker({ value, onChange }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label htmlFor="diaspora-country" className="block text-sm font-medium text-gray-700 mb-1">
-              Shteti ku operon <span className="text-red-500">*</span>
+              Shteti ku operon
             </label>
             <select
               id="diaspora-country"

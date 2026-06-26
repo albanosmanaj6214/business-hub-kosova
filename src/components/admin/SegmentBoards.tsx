@@ -29,10 +29,10 @@ interface Props {
 }
 
 function roleLabel(r: string | null): string {
-  return r && r in DIASPORA_ROLE_LABELS ? DIASPORA_ROLE_LABELS[r as DiasporaRole].sq : '—'
+  return r && r in DIASPORA_ROLE_LABELS ? DIASPORA_ROLE_LABELS[r as DiasporaRole].sq : '-'
 }
 function stageLabel(s: string | null): string {
-  return s && s in STARTUP_STAGE_LABELS ? STARTUP_STAGE_LABELS[s as StartupStage].sq : '—'
+  return s && s in STARTUP_STAGE_LABELS ? STARTUP_STAGE_LABELS[s as StartupStage].sq : '-'
 }
 
 export function SegmentBoards({ rows }: Props) {
@@ -103,25 +103,25 @@ export function SegmentBoards({ rows }: Props) {
             <tbody className="divide-y divide-gray-100">
               {current.map((r) => (
                 <tr key={r.id} className="hover:bg-gray-50">
-                  <td className="px-3 py-2 text-gray-900">{r.companyName || r.name || '—'}</td>
+                  <td className="px-3 py-2 text-gray-900">{r.companyName || r.name || '-'}</td>
                   <td className="px-3 py-2 text-gray-500">{r.email}</td>
                   {tab === 'DIASPORA' ? (
                     <>
-                      <td className="px-3 py-2">{r.diasporaCountry ? countryLabel(r.diasporaCountry) : '—'}</td>
+                      <td className="px-3 py-2">{r.diasporaCountry ? countryLabel(r.diasporaCountry) : '-'}</td>
                       <td className="px-3 py-2">{roleLabel(r.diasporaRole)}</td>
                     </>
                   ) : tab === 'STARTUP' ? (
                     <>
                       <td className="px-3 py-2">{stageLabel(r.startupStage)}</td>
-                      <td className="px-3 py-2">{r.sectors.join(', ') || '—'}</td>
+                      <td className="px-3 py-2">{r.sectors.join(', ') || '-'}</td>
                     </>
                   ) : (
                     <>
-                      <td className="px-3 py-2">{r.activityType || '—'}</td>
-                      <td className="px-3 py-2">{r.sectors.join(', ') || '—'}</td>
+                      <td className="px-3 py-2">{r.activityType || '-'}</td>
+                      <td className="px-3 py-2">{r.sectors.join(', ') || '-'}</td>
                     </>
                   )}
-                  <td className="px-3 py-2 text-gray-500">{r.interests.join(', ') || '—'}</td>
+                  <td className="px-3 py-2 text-gray-500">{r.interests.join(', ') || '-'}</td>
                   <td className="px-3 py-2">
                     <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">{r.tier}</span>
                   </td>

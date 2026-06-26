@@ -43,6 +43,8 @@ export async function POST(req: Request) {
     targetActivityTypes: c.targetActivityTypes,
     targetSectors: c.targetSectors,
     forFemaleOwned: c.forFemaleOwned,
+    targetSegments: c.targetSegments ?? [],
+    targetCountries: c.targetCountries ?? [],
     dispatchStatus: 'DISPATCHED',
     dispatchedAt: new Date(),
     dispatchedById: adminId ?? null,

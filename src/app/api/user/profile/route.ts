@@ -69,7 +69,11 @@ export async function PUT(req: Request) {
         diasporaCountry: segUpdate.value.diasporaCountry,
         diasporaRole: segUpdate.value.diasporaRole,
         startupStage: segUpdate.value.startupStage,
-        lookingFor: segUpdate.value.lookingFor,
+        // Preke lookingFor vetem nese klienti e dergoi; ndryshe lere te paprekur
+        // (forma e cilesimeve s'e mban ende — UI vjen ne Fazen 5; shmang fshirjen e padashur).
+        ...(Array.isArray((body as { lookingFor?: unknown }).lookingFor)
+          ? { lookingFor: segUpdate.value.lookingFor }
+          : {}),
       }
     : {}
 
