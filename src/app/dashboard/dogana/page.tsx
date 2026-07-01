@@ -3,357 +3,350 @@ import { Card, CardContent } from '@/components/ui/card'
 import {
   Truck, FileText, Ship, Plane, Package, MapPin, ExternalLink, AlertTriangle,
   ChevronRight, CheckCircle2, FileSearch, Award, Sprout, ShieldCheck, ArrowRight,
+  Info, Monitor, Building, FileCheck,
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
-const LAST_VERIFIED = '2026-06-15'
+const LAST_VERIFIED = '2026-07-01'
 const OFFICIAL_URL = 'https://dogana.rks-gov.net'
-const ASYCUDA_URL = 'https://asycuda.rks-gov.net'
+const ASYCUDA_URL = 'https://portali.dogana-rks.org/portal/'
 
 interface Procedure {
   icon: React.ComponentType<{ className?: string }>
   title: string
-  summary: string
+  intro: string
   content: {
     section: string
     text?: string
     list?: string[]
   }[]
+  goodToKnow?: string[]
   officialLink?: string
 }
 
 const PROCEDURES: Procedure[] = [
   {
+    icon: FileCheck,
+    title: 'Aktivizimi në sistemin ASYCUDA World',
+    intro: 'ASYCUDA World është sistemi elektronik i Doganës së Kosovës ku bëhen të gjitha deklarimet e importit dhe eksportit. Para se të fillosh të tregtosh ndërkombëtarisht, biznesi yt duhet të jetë i aktivizuar në këtë sistem. Nëse s\'je i aktivizuar, nuk mund të kalojë asnjë mall nëpër kufi në emrin tënd.',
+    content: [
+      {
+        section: 'Kur duhet ta bësh',
+        text: 'Menjëherë pas certifikatës ARBK dhe regjistrimit te ATK (nëse je i regjistruar për TVSH). Kryesisht bëhet para eksportit/importit të parë. Në praktikë, shpediteri që zgjedh e bën këtë aktivizim për ty ose të ndihmon ta bësh.',
+      },
+      {
+        section: 'Dokumentet',
+        list: [
+          'Certifikata ARBK me numër fiskal',
+          'Certifikata e TVSH-së (nëse je i regjistruar)',
+          'Letërnjoftim i drejtorit ose përfaqësuesit ligjor',
+          'Kërkesa formale për aktivizim',
+        ],
+      },
+      {
+        section: 'Hap pas hapi',
+        list: [
+          'Përgatit dokumentet e mësipërme',
+          'Dorëzoji te zyra qendrore e Doganës ose përmes shpediterit',
+          'Dogana verifikon dhe krijon llogarinë tënde në ASYCUDA World',
+          'Merr kredencialet dhe udhëzimet për përdorim',
+          'Nëse do të përdorësh shpediter, autorizoje atë të veprojë në sistemin tënd',
+        ],
+      },
+    ],
+    goodToKnow: [
+      'Shumica e bizneseve nuk përdorin ASYCUDA-n direkt — shpediterët e licencuar e bëjnë punën për ta. Por biznesi duhet të jetë i regjistruar aty në emrin e vet.',
+      'Aktualisht Dogana ka sistemin ASYCUDA World me interfejs të përditësuar dhe procedura më të shpejta.',
+    ],
+    officialLink: ASYCUDA_URL,
+  },
+  {
     icon: ArrowRight,
     title: 'Eksporti — hap pas hapi',
-    summary: 'Dalja e mallit nga Kosova drejt vendeve të tjera. Procedura standarde.',
+    intro: 'Kur mall del nga Kosova drejt një vendi tjetër, procedura e eksportit është e obligueshme. Ky proces mbron interesat tuaja tregtare, siguron që malli të mos ndalohet në kufi, dhe të lejon të përfitosh nga marrëveshjet tregtare (0% doganë në BE dhe CEFTA).',
     content: [
       {
         section: 'Përgatitja para eksportit',
         list: [
-          'Sigurohu që biznesi është i regjistruar në ARBK dhe ATK',
-          'Njihu me kërkesat specifike të vendit të destinacionit (rregullore importi, taksa, standarde)',
-          'Verifikoni nëse produkti bie brenda ndonjë marrëveshjeje tregtare preferenciale (CEFTA, MSA me BE, etj.)',
-          'Përgatit kodin HS për produktin që eksporton',
-          'Sigurohu që ke certifikatat e kërkuara (origjinë, cilësi, sanitare, veterinare, etj.)',
+          'Sigurohu që biznesi është i aktivizuar në ASYCUDA World',
+          'Njihu me kërkesat e vendit të destinacionit — çdo shtet ka rregulla të vetat për import',
+          'Verifiko a bie malli nën ndonjë marrëveshje preferenciale (CEFTA për Ballkanin, MSA për BE-në, marrëveshjet EFTA)',
+          'Përgatit kodin HS për produktin që eksporton — kjo është klasifikimi ndërkombëtar 6-shifror',
+          'Sigurohu që ke të gjitha certifikatat e nevojshme sipas produktit (origjinë, cilësi, sanitare, veterinare, fitosanitare)',
         ],
       },
       {
-        section: 'Dokumentet doganore bazë',
+        section: 'Dokumentet doganore',
         list: [
-          'Fatura eksportuese (Commercial Invoice) — me përshkrim, sasi, çmim, Incoterms',
+          'Fatura komerciale (Commercial Invoice) me përshkrim, sasi, çmim, Incoterms',
           'Packing List (lista e ambalazhimit)',
-          'Fletë-udhëtimi (CMR për rrugor, B/L për detar, AWB për ajror)',
-          'Certifikata e origjinës (EUR.1 për BE ose CEFTA)',
-          'Deklarata e Eksportit (DEV) — plotësohet online në ASYCUDA',
-          'Certifikata sanitare/veterinare/fitosanitare (nëse aplikohet)',
-          'Autorizim shpediteri (nëse përdor shpediter)',
+          'Fletë-udhëtimi — CMR për transport rrugor, B/L (Bill of Lading) për detar, AWB (Air Waybill) për ajror',
+          'Dëshmi e origjinës (EUR.1 për BE/CEFTA, ose deklaratë origjine në fatura kur vlera është nën 6000 EUR)',
+          'Deklarata e Eksportit (DEV) — plotësohet në ASYCUDA World nga shpediteri',
+          'Certifikata sanitare/veterinare/fitosanitare kur aplikohet',
+          'Autorizim shpediteri nëse përdor shpediter',
         ],
       },
       {
-        section: 'Procedura në doganë',
+        section: 'Procesi doganor',
         list: [
-          'Plotëso Deklaratën e Eksportit (DEV) në sistemin ASYCUDA (bëhet nga shpediteri zakonisht)',
-          'Sistemi jep numër MRN (Movement Reference Number)',
-          'Malli paraqitet në doganë me dokumentet fizike',
-          'Dogana bën kontrollin dokumentar dhe eventualisht fizik të mallit',
+          'Shpediteri plotëson Deklaratën e Eksportit në ASYCUDA World',
+          'Sistemi jep numër MRN (Movement Reference Number) — identifikuesi unik për këtë ngarkesë',
+          'Malli paraqitet fizikisht në doganë me dokumentet',
+          'Dogana bën kontrollin dokumentar dhe eventualisht kontroll fizik të mallit',
           'Nëse gjithçka është në rregull, lëshohet leja për eksport',
-          'Malli mund të kalojë kufirin drejt destinacionit',
-          'Për CEFTA/BE: certifikata EUR.1 verifikohet dhe vuloset',
+          'Malli kalon kufirin drejt destinacionit',
         ],
       },
       {
         section: 'Pas eksportit',
-        text: 'Ruaje deklaratën e eksportit dhe të gjitha dokumentet për së paku 5 vjet (kërkohet për kontrolle tatimore dhe doganore). Eksporti është i liruar nga TVSH — pra në faturë ke 0% TVSH, por duhet të deklarosh eksportin te TVSH mujore me kod 0%.',
+        text: 'Ruaj deklaratën e eksportit dhe të gjitha dokumentet për së paku 6 vjet — nevojiten për kontrollet tatimore dhe doganore. Në TVSH mujore, eksporti deklarohet me 0% dhe pas dorëzimit të DEV-it, mund të kërkosh rimbursimin e TVSH-së në blerjet e mallit që eksportove.',
       },
+    ],
+    goodToKnow: [
+      'Nga 1 janar 2026, Dogana ka thjeshtuar disa procedura për SME — kohë më e shkurtër e zhdoganimit.',
+      'Për shipmentet nën 6,000 EUR në BE ose CEFTA, s\'të duhet EUR.1 e veçantë — mjafton "deklaratë origjine" e shtypur në faturë me tekstin standard.',
+      'Për eksporte të para, shpediteri të kushton më shumë por të kursen kohën dhe gabimet. Mëso nga eksporti i parë dhe pastaj mund të bësh vetë.',
     ],
     officialLink: ASYCUDA_URL,
   },
   {
     icon: Package,
     title: 'Importi — hap pas hapi',
-    summary: 'Hyrja e mallit në Kosovë. Përfshin taksa doganore + TVSH + akciza (për disa produkte).',
+    intro: 'Importi është kur mall hyn në Kosovë nga jashtë. Këtu paguan tarifat doganore (varet nga kodi HS + origjina), TVSH-në 18%, dhe akcizat (për disa produkte specifike si duhan, alkool, karburant, vetura).',
     content: [
       {
         section: 'Përgatitja para importit',
         list: [
           'Verifiko kodin HS të produktit dhe normën doganore që aplikohet',
           'Llogarit koston totale: çmimi + transporti + taksa doganore + TVSH 18% + akciza (nëse aplikohet)',
-          'Verifiko nëse produkti kërkon licencë import (medikamente, armë, kimikate)',
-          'Zgjidh Incoterms me eksportuesin (FOB, CIF, DDP, etj.)',
-          'Sigurohu që malli ka certifikatat e kërkuara (CE për teknologji, EUR.1 nëse vjen nga BE/CEFTA)',
+          'Verifiko nëse produkti kërkon licencë import (medikamente, armë, kimikate, ushqime specifike)',
+          'Zgjidh Incoterms me shitësin e huaj (EXW, FOB, CIF, DAP, DDP)',
+          'Sigurohu që malli ka certifikatat e kërkuara nga vendi importues (CE për teknologji, EUR.1 nga BE/CEFTA)',
         ],
       },
       {
-        section: 'Dokumentet për import',
+        section: 'Dokumentet',
         list: [
           'Fatura komerciale nga shitësi i huaj',
           'Packing list',
           'Fletë-udhëtimi (CMR/B/L/AWB)',
-          'Certifikata e origjinës (EUR.1 nga BE/CEFTA për tarifa preferenciale)',
-          'Deklarata e Importit (DIM) — plotësohet në ASYCUDA',
-          'Sertifikata specifike sipas produktit (CE, ISO, sanitare)',
+          'Certifikata e origjinës (EUR.1 ose deklaratë e origjinës për tarifa preferenciale)',
+          'Deklarata e Importit (DIM) — plotësohet në ASYCUDA World',
+          'Certifikata specifike sipas produktit',
           'Autorizim shpediteri',
         ],
       },
       {
-        section: 'Procesi doganor',
+        section: 'Procesi',
         list: [
           'Malli arrin në pikë-kalimin doganor',
-          'Shpediteri plotëson DIM në ASYCUDA',
-          'Llogariten taksa doganore + TVSH + akcizë',
-          'Paguhen taksat online ose te banka doganore',
-          'Dogana bën verifikim dokumentar + eventualisht kontroll fizik',
-          'Pas pagesës dhe kontrollit, malli lirohet dhe transportohet te blerësi',
+          'Shpediteri plotëson DIM në ASYCUDA World',
+          'Llogariten taksa doganore + TVSH + akciza',
+          'Paguan taksat online ose te banka doganore',
+          'Dogana bën verifikimin dokumentar dhe eventualisht kontroll fizik',
+          'Pas pagesës dhe kontrollit, malli lirohet dhe transportohet te ty',
         ],
       },
       {
-        section: 'Marrëveshje preferenciale',
-        text: 'Kosova ka marrëveshje me BE-në (MSA — Marrëveshja e Stabilizim-Asocimit) dhe CEFTA (me vendet e Ballkanit). Nëse malli vjen me EUR.1 nga këto zona, mund të ketë 0% taksë doganore (kursim i madh). EUR.1 duhet të lëshohet nga dogana e vendit eksportues.',
+        section: 'Marrëveshjet preferenciale',
+        text: 'Kosova ka marrëveshje me BE-në (MSA), CEFTA (vendet e Ballkanit) dhe EFTA (Zvicër, Norvegji, Islandë). Nëse malli vjen me EUR.1 nga këto zona, taksa doganore mund të jetë 0%. Kjo është kursim i madh — verifikoje gjithmonë origjinën para se ta blesh.',
       },
+    ],
+    goodToKnow: [
+      'TVSH-në 18% e paguan në doganë kur importoni, por nëse je i regjistruar për TVSH, mund ta kthesh mbrapa përmes deklarimit mujor.',
+      'Për vetura, akciza është e vecantë dhe llogaritet sipas fuqisë së motorit + emisioneve.',
+      'Ke të drejtë të kërkosh "vendim klasifikimi paraprak" nga Dogana nëse s\'je i sigurt për kodin HS të produktit tënd — kjo të mbron nga surprizat në kufi.',
     ],
     officialLink: OFFICIAL_URL,
   },
   {
     icon: Ship,
     title: 'Re-eksporti (Transit)',
-    summary: 'Mall që kalon nëpër Kosovë por s\'ndalohet për konsum vendor — thjesht kalon.',
+    intro: 'Re-eksporti është kur mall kalon nëpër Kosovë por s\'ndalohet për konsum vendor — thjesht kalon. Përdoret shpesh nga kompanitë logjistike që shërbejnë Ballkanin. Nuk paguhen taksa doganore vendore dhe TVSH sepse malli s\'hyn në qarkullim të lirë.',
     content: [
       {
         section: 'Kur aplikohet',
-        text: 'Kur importon mall nga një vend, e paketon ose thjesht e ri-transporton drejt një vendi tjetër pa e vënë në qarkullim të lirë në Kosovë. Përdoret shpesh për transport ndërkombëtar, hub logjistik.',
-      },
-      {
-        section: 'Përfitimet',
-        list: [
-          'Nuk paguan taksat doganore lokale',
-          'Nuk paguan TVSH',
-          'Shkurton kohën e transportit ndërkufitar',
-        ],
+        text: 'Kur importon mall nga një vend dhe e ri-transporton drejt një vendi tjetër pa e vënë në qarkullim të lirë në Kosovë. P.sh. mall nga Turqia që kalon Kosovën për në Gjermani.',
       },
       {
         section: 'Kërkesat',
         list: [
           'Deklaratë tranziti (T1 ose T2 sipas rastit)',
           'Garancion bankar ose depozit që siguron doganën në rast se malli s\'del me kohë',
-          'Afati zakonisht 8 ditë për të dalur',
+          'Afati zakonisht 8 ditë për të dalur nga territori i Kosovës',
           'ASYCUDA-Transit sistemi',
         ],
       },
-      {
-        section: 'Ku përdoret më shpesh',
-        text: 'Për kompani logjistike që shërbejnë Ballkanin, për shpediterë të mëdhenj, dhe për firma që trajtojnë depozita të përkohshme. Për një prodhues tipik, re-eksporti nuk ndodh shpesh.',
-      },
+    ],
+    goodToKnow: [
+      'Për prodhuesin tipik, re-eksporti nuk ndodh shpesh. Përdoret më shumë nga kompanitë logjistike, shpediterë të mëdhenj, dhe hubs.',
+      'Nëse malli s\'del brenda afatit, garancioni humbet dhe konsiderohet import — me të gjitha taksat.',
     ],
   },
   {
     icon: FileSearch,
     title: 'HS Code — si të gjesh kodin',
-    summary: 'Sistemi i Harmonizuar (HS) është nomenklatura ndërkombëtare 6-shifrore që klasifikon të gjitha mallrat.',
+    intro: 'HS Code (Harmonized System) është sistemi ndërkombëtar 6-shifror që klasifikon çdo mall të tregtueshëm. Pa kodin e saktë, deklarimet janë të gabuara — tarifa e gabuar, kërkesa të gabuara për certifikata, dhe probleme me doganën.',
     content: [
       {
-        section: 'Pse është i rëndësishëm',
-        text: 'HS Code përcakton normën e taksës doganore, kërkesat për licenca, statusin e marrëveshjeve preferenciale, dhe klasifikimin statistikor. Kod i gabuar = tarifë e gabuar = probleme me doganën.',
-      },
-      {
-        section: 'Struktura e HS Code',
+        section: 'Struktura',
         list: [
           '2 shifra: Kapitulli (p.sh. 94 = mobilje)',
           '4 shifra: Titulli (p.sh. 9403 = mobilje të tjera dhe pjesë)',
-          '6 shifra: Nën-titulli (p.sh. 940330 = mobilje druri për zyra)',
-          '8-10 shifra: Kodet kombëtare të Kosovës (për doganë specifike)',
+          '6 shifra: Nën-titulli ndërkombëtar (p.sh. 940330 = mobilje druri për zyra)',
+          '8-10 shifra: Kodet kombëtare të Kosovës për doganën specifike',
         ],
       },
       {
-        section: 'Si të gjesh kodin',
+        section: 'Ku ta gjesh',
         list: [
-          'Përdor HS Code Finder brenda platformës KBH',
-          'Konsulto Tarifën Doganore të Kosovës te dogana.rks-gov.net',
-          'Për raste komplekse, kërko Vendim Klasifikimi paraprak nga Dogana e Kosovës',
+          'Përdor HS Code Finder brenda platformës KBH (te "Termet e Eksportit")',
+          'Konsulto Tarifën Doganore të Kosovës në dogana.rks-gov.net',
+          'Për raste komplekse, kërko "Vendim Klasifikimi paraprak" nga Dogana',
         ],
       },
+    ],
+    goodToKnow: [
+      'Kodi HS përcakton normën doganore, licencat e nevojshme, dhe përfitimet nga marrëveshjet preferenciale.',
+      'Nëse nuk je i sigurt, konsulto shpediterin ose kërko vendim paraprak. Kodi i gabuar ka kosto.',
     ],
     officialLink: OFFICIAL_URL,
   },
   {
     icon: Award,
-    title: 'Certifikata e Origjinës (EUR.1)',
-    summary: 'Dokument që dëshmon se malli është prodhuar në Kosovë (ose në vend me marrëveshje preferenciale) për të përfituar tarifa më të ulëta.',
+    title: 'Dëshmia e origjinës (EUR.1 dhe deklarata në faturë)',
+    intro: 'Dëshmia e origjinës është dokument që tregon se malli është prodhuar në Kosovë ose në një vend me marrëveshje preferenciale. Pa këtë, blerësi paguan tarifën doganore të plotë — çka i bën produktet tona më pak konkurruese.',
     content: [
       {
-        section: 'Për çka nevojitet',
-        text: 'Kur eksporton në BE, CEFTA ose vende tjera me marrëveshje preferenciale me Kosovën, EUR.1 lejon blerësin të paguajë 0% ose tarifë të reduktuar doganore. Pa EUR.1, blerësi paguan tarifën e plotë — çka i bën produktet tona më pak konkurruese.',
+        section: 'Dy mënyra për të dëshmuar origjinën',
+        list: [
+          'EUR.1 (certifikatë zyrtare) — për shipmentet me vlerë mbi 6,000 EUR ose sipas kërkesës së blerësit',
+          'Deklarata e origjinës në faturë — për shipmentet nën 6,000 EUR, mjafton të shtosh një tekst standard në faturën komerciale',
+        ],
       },
       {
-        section: 'Kush e lëshon',
-        text: 'Dogana e Kosovës e lëshon EUR.1 me kërkesë të eksportuesit. Nuk mund ta bësh vetë.',
-      },
-      {
-        section: 'Dokumentet për të kërkuar EUR.1',
+        section: 'EUR.1 — kush dhe si',
+        text: 'EUR.1 lëshohet nga Dogana e Kosovës me kërkesë të eksportuesit. Nuk mund ta bësh vetë.',
         list: [
           'Kërkesa formale (formulari EUR.1 i plotësuar)',
           'Fatura komerciale',
           'Deklaratë e furnizuesit që dëshmon origjinën (nëse mallin e ke blerë, jo prodhuar vetë)',
           'Për prodhues: dëshmi për origjinën e lëndëve të para dhe procesin e prodhimit',
-          'Për shumë raste, do të kesh nevojë për "Autorizim si Eksportues i Miratuar" nga dogana',
         ],
       },
       {
-        section: 'Rregullat e origjinës',
-        text: 'Malli konsiderohet me origjinë kosovare nëse: (a) është prodhuar plotësisht në Kosovë, ose (b) ka pësuar transformim të mjaftueshëm në Kosovë sipas rregullave preferenciale. Rregullat janë komplekse dhe ndryshojnë sipas marrëveshjes (BE vs CEFTA vs EFTA). Konsulto Doganën ose kontabilistin.',
+        section: 'Deklarata e origjinës në faturë',
+        text: 'Për ngarkesa nën 6,000 EUR, s\'të duhet EUR.1. Mjafton të shtosh në faturë tekstin: "Eksportuesi i produkteve të mbuluara nga ky dokument deklaron se, përveç nëse tregohet ndryshe qartë, këto produkte janë me origjinë preferenciale të Kosovës". Kjo pranohet në BE dhe CEFTA.',
       },
+      {
+        section: 'Rregullat e origjinës',
+        text: 'Malli konsiderohet me origjinë kosovare nëse: (a) është prodhuar plotësisht në Kosovë, ose (b) ka pësuar transformim të mjaftueshëm në Kosovë sipas rregullave preferenciale (rregulla specifike sipas kodit HS). Konsulto Doganën për raste konkrete.',
+      },
+    ],
+    goodToKnow: [
+      'Për bizneset që eksportojnë shpesh me vlera të mëdha, kërko statusin "Eksportues i Miratuar" nga Dogana. Kjo të lejon të vetë-lëshosh dëshminë e origjinës pa kaluar çdo herë përmes Doganës.',
+      'Rregullat e origjinës ndryshojnë sipas marrëveshjes (BE vs CEFTA vs EFTA). Konsulto shpediterin.',
     ],
     officialLink: OFFICIAL_URL,
   },
   {
     icon: Sprout,
-    title: 'AUV / Fitocertifikatë / Veterinare',
-    summary: 'Certifikata specifike për produkte bujqësore, blegtorale dhe ushqimore.',
+    title: 'Certifikata sanitare, veterinare, fitosanitare (AUV)',
+    intro: 'Për eksport të produkteve ushqimore, bujqësore ose me origjinë shtazore, nevojiten certifikata të veçanta nga Agjencia e Ushqimit dhe Veterinarisë (AUV). Këto dëshmojnë se produkti është i sigurt dhe përmbush standardet e vendit importues.',
     content: [
       {
-        section: 'AUV — Agjencia për Ushqim dhe Veterinari',
-        text: 'AUV është autoriteti kompetent për kontrollin e sigurisë ushqimore, shëndetit të kafshëve dhe fitosanitetit. Çdo eksport i produkteve me origjinë shtazore ose me përpunim ushqimor kalon përmes AUV-së.',
+        section: 'AUV — çka bën',
+        text: 'AUV është autoriteti kompetent për sigurinë ushqimore, shëndetin e kafshëve dhe fitosanitetit në Kosovë. Çdo eksport i produkteve me origjinë shtazore ose ushqimore kalon përmes tyre.',
       },
       {
-        section: 'Certifikata Fitosanitare',
-        text: 'Për eksport të produkteve bimore (frutash, perimesh, drithërave, farave). Dëshmon se produkti është pa sëmundje bimore. Kërkohet nga çdo vend importues.',
+        section: 'Certifikata Fitosanitare (bimë, fruta, perime, drithëra)',
         list: [
           'Kërkohet nga AUV — Departamenti Fitosanitar',
-          'Inspektim fizik i produktit',
-          'Certifikohet nëse produkti kalon standardet',
+          'Inspektim fizik i produktit para eksportit',
+          'Certifikohet nëse produkti është pa sëmundje bimore',
           'Vlefshmëri: zakonisht 14 ditë nga lëshimi',
         ],
       },
       {
-        section: 'Certifikata Veterinare',
-        text: 'Për eksport të produkteve me origjinë shtazore (mish, qumësht, vezë, mjaltë, peshku).',
+        section: 'Certifikata Veterinare (mish, qumësht, vezë, mjaltë, peshku)',
         list: [
           'Kërkohet nga AUV — Departamenti Veterinar',
           'Kontroll në origjinë (fermë, thertore, fabrikë përpunimi)',
           'Kontroll në produktin final',
-          'Nëse vendi importues kërkon kërkesa specifike (p.sh. BE-ja për mish), duhet të plotësohen para eksportit',
+          'Për BE-në: fabrika duhet të jetë e miratuar nga autoriteti kompetent i vendit importues',
         ],
       },
-      {
-        section: 'Përjashtime dhe kufizime',
-        text: 'Disa vende (BE, Zvicër, ShBA) kanë kërkesa shumë strikte për importin e produkteve ushqimore. Fabrika duhet të jetë e miratuar nga autoriteti kompetent i vendit importues. Konsulto AUV-në përpara se të organizosh eksportin.',
-      },
+    ],
+    goodToKnow: [
+      'BE, Zvicër, dhe ShBA kanë kërkesa strikte. Për eksport në këto tregje, konsulto AUV-në herët — procesi i aprovimit mund të marrë muaj.',
+      'Certifikatat kanë vlefshmëri të kufizuar. Planifiko marrjen afër datës së eksportit.',
     ],
     officialLink: 'https://auv.rks-gov.net',
   },
   {
     icon: ShieldCheck,
-    title: 'Incoterms 2020 (shkurt)',
-    summary: '11 termat standarde ndërkombëtare që përcaktojnë kush mban rrezikun dhe koston në cilën fazë të transportit.',
+    title: 'Incoterms 2020',
+    intro: 'Incoterms janë 11 termat standarde ndërkombëtare të Odës Ndërkombëtare të Tregtisë (ICC) që përcaktojnë kush mban rrezikun dhe koston në cilën fazë të transportit. Përcakto Incoterm-in gjithmonë në kontratë dhe faturë — pa këtë, ka konfuzion pas transportit.',
     content: [
       {
-        section: 'Grupet e Incoterms',
+        section: 'Katër grupet',
         list: [
-          'E-termat (EXW): blerësi merr përgjegjësinë që në magazinën e shitësit',
+          'E-termat (EXW): blerësi merr përgjegjësinë që te magazina e shitësit — më e thjeshtë për shitësin',
           'F-termat (FCA, FAS, FOB): shitësi dorëzon te transportuesi, kostoja e transportit është e blerësit',
-          'C-termat (CFR, CIF, CPT, CIP): shitësi paguan transportin deri në destinacion, por rreziku kalon te blerësi më herët',
-          'D-termat (DAP, DPU, DDP): shitësi mban rrezikun dhe koston deri në destinacion (DDP përfshin edhe taksat doganore)',
+          'C-termat (CFR, CIF, CPT, CIP): shitësi paguan transportin deri në destinacion, rreziku kalon te blerësi më herët',
+          'D-termat (DAP, DPU, DDP): shitësi mban rrezikun dhe koston deri në destinacion (DDP përfshin edhe taksat)',
         ],
       },
       {
-        section: 'Më të përdorurat në praktikë',
+        section: 'Më të përdorurat në Kosovë',
         list: [
-          'EXW (Ex Works): më e thjeshtë për shitësin, blerësi organizon gjithçka',
-          'FOB (Free On Board): pas ngarkimit në anije, rreziku i blerësit',
-          'CIF (Cost, Insurance, Freight): shitësi paguan transport + sigurim deri në portin e destinacionit',
-          'DAP (Delivered At Place): shitësi dorëzon deri te vendi i rëne dakord, por blerësi shlyen taksa doganore',
-          'DDP (Delivered Duty Paid): shitësi shlyen çdo gjë, blerësi vetëm merr mallin',
+          'EXW: më e thjeshtë për shitësin, blerësi organizon gjithçka',
+          'FOB: pas ngarkimit në anije/kamion, rreziku i blerësit',
+          'CIF: shitësi paguan transport + sigurim deri në portin e destinacionit',
+          'DAP: shitësi dorëzon deri te vendi i dakorduar, por blerësi shlyen taksat doganore',
+          'DDP: shitësi shlyen çdo gjë, blerësi vetëm merr mallin',
         ],
       },
-      {
-        section: 'Këshillë praktike',
-        text: 'Për eksporte nga Kosova, FOB, CIF ose DAP janë më të përdorurat. DDP është më i favorshëm për blerësin por rrit koston tënde. Përcakto Incoterm-in në kontratë dhe në fatura që të mos ketë keqkuptime pas transportit.',
-      },
+    ],
+    goodToKnow: [
+      'Për eksporte të para nga Kosova, FOB ose CIF janë më të përdorurat.',
+      'DDP është më i favorshëm për blerësin por të rrit koston tënde. Ki kujdes: paguan taksat doganore në vendin e destinacionit.',
+      'Përcaktoje Incoterm-in në kontratë me qytetin: p.sh. "FOB Durrës", "CIF Hamburg", "DAP Berlin".',
     ],
   },
   {
     icon: MapPin,
     title: 'Shpediter — si ta zgjedhësh',
-    summary: 'Shpediteri organizon transportin dhe doganën për ty. Zgjedhja e duhur kursen kohë dhe para.',
+    intro: 'Shpediteri organizon transportin dhe procedurat doganore për ty. Për eksporte të para, është pothuajse i domosdoshëm — kursen kohë dhe të mëson procesin. Ki kujdes ta zgjedhësh të mirë.',
     content: [
       {
         section: 'Çka bën shpediteri',
         list: [
           'Organizon transportin (rrugor, ajror, detar)',
-          'Plotëson deklaratat doganore (DEV, DIM, T1)',
-          'Ndërmjeton me doganën për verifikime',
+          'Plotëson deklaratat doganore në ASYCUDA (DEV, DIM, T1)',
+          'Ndërmjeton me doganën për verifikime dhe kontrolle',
           'Menaxhon dokumentacionin dhe komunikimin me palët',
-          'Për shumë biznese, shërben si këshilltar për eksport/import',
+          'Shpesh shërben si këshilltar për eksport/import për SME',
         ],
       },
       {
-        section: 'Si të zgjedhësh',
+        section: 'Kritere për zgjedhjen',
         list: [
-          'Verifiko licencën e shpediterit te Dogana e Kosovës',
+          'Verifiko licencën e shpediterit te dogana.rks-gov.net',
           'Kërko referenca nga biznese të tjera në sektorin tënd',
           'Krahaso çmime nga 2-3 shpediterë të ndryshëm',
-          'Për destinacione specifike (p.sh. Gjermani, Zvicër), zgjidh shpediter me eksperiencë të dëshmuar në atë rrugë',
+          'Për destinacione specifike (Gjermani, Zvicër), zgjidh shpediter me eksperiencë të dëshmuar në atë rrugë',
           'Sigurohu që ka mbulim sigurimi për mallin',
         ],
       },
-      {
-        section: 'Kosto tipike',
-        text: 'Ndryshon shumë sipas rrugës, sasisë dhe kompleksitetit. Për një transport të thjeshtë Kosovë → Gjermani (kamion 20 tonëshe), përafërsisht 800-1500 EUR + dogana. Kërko oferta konkrete për rastin tënd.',
-      },
     ],
-  },
-  {
-    icon: FileText,
-    title: 'Fatura eksportuese — çka duhet të përmbajë',
-    summary: 'Fatura komerciale për eksport ka kërkesa më strikte se një faturë e brendshme.',
-    content: [
-      {
-        section: 'Elementet e detyrueshme',
-        list: [
-          'Numër serik dhe datë',
-          'Emri, adresa, numri fiskal i eksportuesit',
-          'Emri, adresa e blerësit (importuesit) + numri fiskal (VAT/EORI nëse është BE)',
-          'Përshkrimi i saktë i mallit (jo vetëm "produkte" — duhet specifikë)',
-          'Kodi HS për secilin artikull',
-          'Sasia (numër copësh, kg, m³, sipas rastit)',
-          'Çmimi për njësi + total',
-          'Valuta (EUR, USD, etj.)',
-          'Incoterms (p.sh. "FOB Prishtinë", "CIF Hamburg")',
-          'Vendi i origjinës së mallit',
-          'Peshë neto + peshë bruto',
-          'Numri i CMR ose fletë-udhëtimit',
-          'Kushtet e pagesës',
-          'Nënshkrim + vulë (shpesh e kërkuar)',
-        ],
-      },
-      {
-        section: 'Çka të mos harrosh',
-        text: 'TVSH duhet të jetë 0% për eksport, por duhet të përmendet qartë "0% TVSH — eksport i liruar sipas Ligjit të TVSH-së". Kjo është e rëndësishme si dëshmi tatimore.',
-      },
+    goodToKnow: [
+      'Kosto tipike varion sipas rrugës. Për transport Kosovë-Gjermani rrugor (kamion 20 ton), përafërsisht 800-1500 EUR + tarifat doganore. Kërko oferta për rastin tënd konkret.',
+      'Shpediteri i mirë ka network në Ballkan dhe BE — nuk mbetesh me mall të bllokuar në kufi.',
     ],
-  },
-  {
-    icon: Package,
-    title: 'Packing List',
-    summary: 'Lista e paketimit tregon detajisht si është ambalazhuar malli. E kërkojnë të gjitha doganat.',
-    content: [
-      {
-        section: 'Çka përmban',
-        list: [
-          'Numri i kutive/palletave/kolive dhe secilës i vendoset numër identifikimi',
-          'Përmbajtja e secilës koli/paletë (sasi + përshkrim)',
-          'Pesha neto dhe bruto për secilën njësi ambalazhi',
-          'Dimensionet (L × W × H) të paletave',
-          'Marka/kodi i produktit',
-          'Referencë te fatura komerciale (numri i faturës)',
-        ],
-      },
-      {
-        section: 'Pse është i rëndësishëm',
-        text: 'Dogana e përdor për kontroll fizik: nëse konteineri ka 20 pallet dhe packing list thotë 22, ka mospërputhje. Blerësi e përdor për të pranuar mallin dhe për kontrolle të cilësisë. Sigurimi e përdor për të llogaritur mbulesën.',
-      },
-    ],
+    officialLink: OFFICIAL_URL,
   },
 ]
 
@@ -367,19 +360,23 @@ function ProcedureCard({ p }: { p: Procedure }) {
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-gray-900">{p.title}</h3>
-          <p className="text-sm text-gray-600 mt-0.5">{p.summary}</p>
+          <p className="text-sm text-gray-600 mt-0.5 line-clamp-2">{p.intro}</p>
         </div>
         <ChevronRight className="h-4 w-4 text-gray-400 group-open:rotate-90 transition-transform shrink-0 mt-1" />
       </summary>
       <div className="px-4 pb-4 pt-2 border-t border-gray-100 space-y-4">
+        <div>
+          <p className="text-sm text-gray-700 leading-relaxed">{p.intro}</p>
+        </div>
+
         {p.content.map((sec, i) => (
           <div key={i}>
             <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{sec.section}</h4>
-            {sec.text && <p className="text-sm text-gray-700 leading-relaxed">{sec.text}</p>}
+            {sec.text && <p className="text-sm text-gray-700 leading-relaxed mb-2">{sec.text}</p>}
             {sec.list && (
-              <ul className="space-y-1.5 mt-2">
+              <ul className="space-y-1.5">
                 {sec.list.map((item, j) => (
-                  <li key={j} className="text-sm text-gray-700 flex items-start gap-2">
+                  <li key={j} className="text-sm text-gray-700 flex items-start gap-2 leading-relaxed">
                     <span className="text-[#1B4F72] mt-1">•</span>
                     <span>{item}</span>
                   </li>
@@ -389,8 +386,25 @@ function ProcedureCard({ p }: { p: Procedure }) {
           </div>
         ))}
 
+        {p.goodToKnow && p.goodToKnow.length > 0 && (
+          <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Info className="h-4 w-4 text-blue-700" />
+              <h4 className="text-xs font-semibold text-blue-900 uppercase tracking-wider">Mirë të dish</h4>
+            </div>
+            <ul className="space-y-1.5">
+              {p.goodToKnow.map((tip, i) => (
+                <li key={i} className="text-xs text-blue-900 leading-relaxed flex items-start gap-1.5">
+                  <span className="text-blue-700 mt-0.5">•</span>
+                  <span>{tip}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {p.officialLink && (
-          <div className="rounded-lg bg-[#1B4F72]/5 border border-[#1B4F72]/10 p-3">
+          <div className="rounded-lg bg-gray-50 border border-gray-200 p-3">
             <a href={p.officialLink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm text-[#1B4F72] font-medium hover:text-[#2E86C1]">
               Portal zyrtar <ExternalLink className="h-3.5 w-3.5" />
             </a>
@@ -411,32 +425,54 @@ export default function DoganaGuidePage() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Udhëzuesi Doganor</h1>
         </div>
-        <p className="text-gray-500 mt-2 max-w-3xl">
-          Dogana e Republikës së Kosovës. Eksporti, importi, re-eksporti, HS Code, Incoterms, certifikatat
-          dhe shpediteri. Portali zyrtar: <a href={OFFICIAL_URL} target="_blank" rel="noreferrer" className="text-[#2E86C1] hover:underline">dogana.rks-gov.net</a>.
+        <p className="text-gray-500 mt-2 max-w-3xl leading-relaxed">
+          Dogana e Republikës së Kosovës është nën Ministrinë e Financave. Këtu do të gjesh të gjitha
+          procedurat e importit dhe eksportit — nga aktivizimi në ASYCUDA World, HS Code, EUR.1, Incoterms,
+          deri te zgjedhja e shpediterit.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Link href="/dashboard/terma/hs-code" className="rounded-xl border border-[#1B4F72]/20 bg-[#1B4F72]/5 p-4 hover:bg-[#1B4F72]/10 transition-colors group">
-          <div className="flex items-center gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <Card>
+          <CardContent className="p-5">
+            <div className="rounded-lg bg-[#1B4F72]/10 p-2 w-fit mb-3">
+              <Monitor className="h-5 w-5 text-[#1B4F72]" />
+            </div>
+            <h3 className="font-semibold text-gray-900 mb-2">ASYCUDA World</h3>
+            <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+              Sistemi elektronik ku bëhen të gjitha deklarimet doganore. Biznesi juaj duhet të aktivizohet
+              këtu pas certifikatës ARBK.
+            </p>
+            <a href={ASYCUDA_URL} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm text-[#2E86C1] hover:underline font-medium">
+              portali.dogana-rks.org <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          </CardContent>
+        </Card>
+
+        <Link href="/dashboard/terma/hs-code" className="rounded-xl border border-[#1B4F72]/20 bg-[#1B4F72]/5 p-5 hover:bg-[#1B4F72]/10 transition-colors group">
+          <div className="rounded-lg bg-[#1B4F72]/10 p-2 w-fit mb-3">
             <FileSearch className="h-5 w-5 text-[#1B4F72]" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-[#1B4F72]">HS Code Finder</p>
-              <p className="text-xs text-gray-600">Kërko kodin HS për produktin tënd</p>
-            </div>
-            <ArrowRight className="h-4 w-4 text-[#1B4F72] group-hover:translate-x-0.5 transition-transform" />
           </div>
+          <h3 className="font-semibold text-[#1B4F72] mb-2">HS Code Finder</h3>
+          <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+            Kërko kodin HS për produktin tënd — nevojitet për çdo deklarim doganor.
+          </p>
+          <span className="inline-flex items-center gap-1.5 text-sm text-[#1B4F72] font-medium">
+            Hape mjetin <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </span>
         </Link>
-        <Link href="/dashboard/terma/incoterms" className="rounded-xl border border-[#1B4F72]/20 bg-[#1B4F72]/5 p-4 hover:bg-[#1B4F72]/10 transition-colors group">
-          <div className="flex items-center gap-3">
+
+        <Link href="/dashboard/terma/incoterms" className="rounded-xl border border-[#1B4F72]/20 bg-[#1B4F72]/5 p-5 hover:bg-[#1B4F72]/10 transition-colors group">
+          <div className="rounded-lg bg-[#1B4F72]/10 p-2 w-fit mb-3">
             <ShieldCheck className="h-5 w-5 text-[#1B4F72]" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-[#1B4F72]">Incoterms Glossary</p>
-              <p className="text-xs text-gray-600">11 termat me shpjegim të plotë</p>
-            </div>
-            <ArrowRight className="h-4 w-4 text-[#1B4F72] group-hover:translate-x-0.5 transition-transform" />
           </div>
+          <h3 className="font-semibold text-[#1B4F72] mb-2">Incoterms Glossary</h3>
+          <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+            11 termat e Odës Ndërkombëtare të Tregtisë — kush mban çka.
+          </p>
+          <span className="inline-flex items-center gap-1.5 text-sm text-[#1B4F72] font-medium">
+            Hape glossary <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </span>
         </Link>
       </div>
 
@@ -444,11 +480,11 @@ export default function DoganaGuidePage() {
         <AlertTriangle className="h-5 w-5 text-amber-700 shrink-0 mt-0.5" />
         <div className="text-sm text-amber-900">
           <p className="font-semibold mb-1">Verifiko procedurat aktuale</p>
-          <p>
-            Ky udhëzues bazohet në procedurat deri më <strong>{LAST_VERIFIED}</strong>. Tarifat doganore,
+          <p className="leading-relaxed">
+            Të dhënat janë verifikuar me faqet zyrtare deri më <strong>{LAST_VERIFIED}</strong>. Tarifat doganore,
             kërkesat për certifikata dhe procedurat mund të ndryshojnë. Verifikoji te{' '}
             <a href={OFFICIAL_URL} target="_blank" rel="noreferrer" className="underline font-medium">dogana.rks-gov.net</a>{' '}
-            ose te shpediteri yt para se të planifikosh eksport/import.
+            ose me shpediterin tënd.
           </p>
         </div>
       </div>
@@ -472,8 +508,8 @@ export default function DoganaGuidePage() {
                 <Truck className="h-5 w-5 text-[#1B4F72]" />
                 <h3 className="font-semibold text-gray-900">Rrugor (CMR)</h3>
               </div>
-              <p className="text-sm text-gray-600">
-                Më i përdoruri për destinacione në Ballkan dhe BE. Kohë 2-5 ditë. Dokumenti: CMR.
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Më i përdoruri për destinacione në Ballkan dhe BE. Kohë 2-7 ditë. Dokumenti: CMR.
               </p>
             </CardContent>
           </Card>
@@ -483,8 +519,8 @@ export default function DoganaGuidePage() {
                 <Ship className="h-5 w-5 text-[#1B4F72]" />
                 <h3 className="font-semibold text-gray-900">Detar (B/L)</h3>
               </div>
-              <p className="text-sm text-gray-600">
-                Për destinacione përtej Evropës (SHBA, Azi). Kohë 3-6 javë. Port kryesor: Durrës ose Selanik. Dokumenti: B/L.
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Për destinacione përtej Evropës (ShBA, Azi). Kohë 3-6 javë. Port kryesor: Durrës ose Selanik.
               </p>
             </CardContent>
           </Card>
@@ -494,18 +530,17 @@ export default function DoganaGuidePage() {
                 <Plane className="h-5 w-5 text-[#1B4F72]" />
                 <h3 className="font-semibold text-gray-900">Ajror (AWB)</h3>
               </div>
-              <p className="text-sm text-gray-600">
-                Për mall me vlerë të lartë ose urgjent. Kohë 1-3 ditë. Aeroporti: Prishtinë. Dokumenti: AWB.
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Për mall me vlerë të lartë ose urgjent. Kohë 1-3 ditë. Aeroporti: Prishtinë.
               </p>
             </CardContent>
           </Card>
         </div>
       </section>
 
-      <p className="text-xs text-gray-400 max-w-3xl">
-        Ky udhëzues është për orientim të përgjithshëm. Për transportet e para, punësoni një shpediter të licencuar
-        që të kryejë procedurat për ju. Baza ligjore: Kodi Doganor i Kosovës (Ligji Nr. 03/L-109) dhe rregulloret
-        e AUV-së për produkte specifike. Data e verifikimit: {LAST_VERIFIED}.
+      <p className="text-xs text-gray-400 max-w-3xl leading-relaxed">
+        Ky udhëzues është për orientim. Për transportet e para, punëso shpediter të licencuar. Baza ligjore: Kodi
+        Doganor i Kosovës (Ligji Nr. 03/L-109) + rregulloret e AUV-së. Data e verifikimit: {LAST_VERIFIED}.
       </p>
     </div>
   )
