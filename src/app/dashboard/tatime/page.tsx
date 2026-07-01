@@ -17,7 +17,7 @@ interface Topic {
   summary: string
   content: {
     section: string
-    text: string
+    text?: string
     list?: string[]
   }[]
   officialLink?: string
