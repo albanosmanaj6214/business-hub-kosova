@@ -9,7 +9,12 @@ datasource db {
 
 enum Role {
   USER
+  KOSOVO_BUSINESS
+  STARTUP
+  DIASPORA
+  INDIVIDUAL
   ADMIN
+  SUPER_ADMIN
 }
 
 enum SubscriptionStatus {
@@ -32,6 +37,52 @@ enum NotificationType {
   FAIR
   GUIDE
   SYSTEM
+  NEWS
+  SUBVENTION
+  OFFER_REQUEST
+  MATCH
+  PROFILE
+}
+
+enum VisibilityLevel {
+  PRIVATE
+  MEMBERS
+  PUBLIC
+  VERIFIED
+  FEATURED
+}
+
+enum ProfileStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum StartupStage {
+  IDEA
+  IN_REGISTRATION
+  REGISTERED_NO_REVENUE
+  EARLY_REVENUE
+  GROWING
+}
+
+enum LegalForm {
+  BIZNES_INDIVIDUAL
+  SHPK
+  SHA
+  ORTAKERI_E_PERGJITHSHME
+  ORTAKERI_E_KUFIZUAR
+  DEGE_E_HUAJ
+}
+
+enum DiasporaSubRole {
+  BUYER
+  INVESTOR
+  DISTRIBUTOR
+  IMPORTER
+  PARTNER
+  SERVICE_PROVIDER
 }
 
 enum BookingStatus {
@@ -51,20 +102,20 @@ enum EventType {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  password      String
-  name          String?
-  companyName   String?
-  sector        String?
+  id              String    @id @default(cuid())
+  email           String    @unique
+  password        String
+  name            String?
+  companyName     String?
+  sector          String?
   // Canonical multi-sector list (slugs from src/lib/sectors.ts). Default behaviour
   // across the platform is to filter content by these. The legacy `sector` column
   // is kept for one release as a fallback bridge and will be dropped in a follow-up.
-  sectors       String[]  @default([])
-  language      String    @default("sq")
-  role          Role      @default(USER)
-  interests     String[]  @default([])
-  onlyMySector  Boolean   @default(false)
+  sectors         String[]  @default([])
+  language        String    @default("sq")
+  role            Role      @default(USER)
+  interests       String[]  @default([])
+  onlyMySector    Boolean   @default(false)
   // Female-ownership self-declaration. Tri-state:
   //   true  = user declared the business has female ownership/co-ownership.
   //   false = user declared it explicitly does NOT.
@@ -79,18 +130,21 @@ model User {
   // Sektoret e aktivizuar/faturuar nga admini; keta percaktojne dukshmerine.
   // Ndahen nga `sectors` (vetedeklarim). Default bosh => sheh vetem permbajtje te pergjithshme.
   entitledSectors String[]  @default([])
-  emailVerified DateTime?
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  emailVerified   DateTime?
+  image           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  subscription  Subscription?
-  notifications Notification[]
-  bookings      ConsultationBooking[]
+  subscription         Subscription?
+  notifications        Notification[]
+  bookings             ConsultationBooking[]
   consultationRequests ConsultationRequest[]
-  chatSessions  ChatSession[]
-  accounts      Account[]
-  sessions      Session[]
+  chatSessions         ChatSession[]
+  accounts             Account[]
+  sessions             Session[]
+
+  // Faza 2 (Version 5): profil biznesi 1:1. Company.ownerUserId @unique => 1:1.
+  company Company?
 }
 
 model Account {
@@ -145,85 +199,85 @@ model Subscription {
 }
 
 model Grant {
-  id            String    @id @default(cuid())
-  title         String
-  titleSq       String?
-  description   String    @db.Text
-  descriptionSq String?   @db.Text
-  provider      String
-  amount        String?
-  currency      String    @default("EUR")
-  deadline      DateTime?
-  eligibility   String?   @db.Text
-  url           String?
-  country       String?
-  sectors       String[]  @default([])
+  id                   String    @id @default(cuid())
+  title                String
+  titleSq              String?
+  description          String    @db.Text
+  descriptionSq        String?   @db.Text
+  provider             String
+  amount               String?
+  currency             String    @default("EUR")
+  deadline             DateTime?
+  eligibility          String?   @db.Text
+  url                  String?
+  country              String?
+  sectors              String[]  @default([])
   // Canonical sector slugs this opportunity targets. Empty array = universal
   // (shows to everyone). Non-empty = shows only to users whose sectors[] intersect.
   // A `cross-cutting` tag overrides this and always shows it as universal.
-  targetSectors String[]  @default([])
-  tags          String[]  @default([])
+  targetSectors        String[]  @default([])
+  tags                 String[]  @default([])
   // When true, this grant is restricted to businesses with female ownership.
   // Only users where `User.femaleOwnership=true` see it in the dashboard.
-  forFemaleOwned Boolean  @default(false)
+  forFemaleOwned       Boolean   @default(false)
   // Lloji i programit financiar: GRANT (grant klasik) ose SUBVENTION (subvencion paga/investime, p.sh. superpuna).
-  kind          String    @default("GRANT")
+  kind                 String    @default("GRANT")
   // Audienca eksplicite. isGeneral=true => te te gjithe (perfshire tregtine).
-  isGeneral           Boolean  @default(false)
+  isGeneral            Boolean   @default(false)
   // Slug-et e aktivitetit qe targeton (bosh = pa kufizim aktiviteti).
-  targetActivityTypes String[] @default([])
+  targetActivityTypes  String[]  @default([])
   // Dispeçimi nga admini: PENDING derisa admini te caktoje audiencen dhe te dergoje.
-  dispatchStatus String    @default("PENDING")
-  dispatchedAt   DateTime?
-  dispatchedById String?
-  isActive      Boolean   @default(true)
-  scrapedAt     DateTime  @default(now())
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt DateTime?
+  dispatchStatus       String    @default("PENDING")
+  dispatchedAt         DateTime?
+  dispatchedById       String?
+  isActive             Boolean   @default(true)
+  scrapedAt            DateTime  @default(now())
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  deletedAt            DateTime?
   isOngoing            Boolean   @default(false)
   classifiedAt         DateTime?
   classificationSource String?
-  audience             String?  // 'business' | 'civil_society' | 'mixed' | 'unknown'
+  audience             String? // 'business' | 'civil_society' | 'mixed' | 'unknown'
 
   @@index([deadline])
   @@index([isActive])
 }
 
 model TradeFair {
-  id            String   @id @default(cuid())
-  name          String
-  nameSq        String?
-  description   String?  @db.Text
-  descriptionSq String?  @db.Text
-  location      String
-  country       String
-  startDate     DateTime
-  endDate       DateTime
-  website       String?
-  sectors       String[] @default([])
+  id                  String    @id @default(cuid())
+  name                String
+  nameSq              String?
+  description         String?   @db.Text
+  descriptionSq       String?   @db.Text
+  location            String
+  country             String
+  startDate           DateTime
+  endDate             DateTime
+  website             String?
+  sectors             String[]  @default([])
   // Canonical sector slugs this fair targets. See Grant.targetSectors for semantics.
-  targetSectors String[] @default([])
-  tags          String[] @default([])
+  targetSectors       String[]  @default([])
+  tags                String[]  @default([])
   // When true, this fair/event is restricted to businesses with female ownership.
   // Only users where `User.femaleOwnership=true` see it in the dashboard.
-  forFemaleOwned Boolean @default(false)
+  forFemaleOwned      Boolean   @default(false)
   // Audienca eksplicite. isGeneral=true => te te gjithe (perfshire tregtine).
-  isGeneral           Boolean  @default(false)
+  isGeneral           Boolean   @default(false)
   // Slug-et e aktivitetit qe targeton (bosh = pa kufizim aktiviteti).
-  targetActivityTypes String[] @default([])
+  targetActivityTypes String[]  @default([])
   // Dispeçimi nga admini: PENDING derisa admini te caktoje audiencen dhe te dergoje.
-  dispatchStatus String    @default("PENDING")
-  dispatchedAt   DateTime?
-  dispatchedById String?
-  eventType     EventType @default(FAIR)
-  organizer     String?
-  registrationUrl String?
-  isActive      Boolean  @default(true)
-  scrapedAt     DateTime @default(now())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  deletedAt DateTime?
+  dispatchStatus      String    @default("PENDING")
+  dispatchedAt        DateTime?
+  dispatchedById      String?
+  eventType           EventType @default(FAIR)
+  organizer           String?
+  registrationUrl     String?
+  isActive            Boolean   @default(true)
+  scrapedAt           DateTime  @default(now())
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
 
   @@index([startDate])
   @@index([isActive])
@@ -245,15 +299,15 @@ model NewsItem {
   scrapedAt   DateTime  @default(now())
 
   // Audienca eksplicite. isGeneral=true => te te gjithe (perfshire tregtine).
-  isGeneral           Boolean  @default(true)
+  isGeneral           Boolean   @default(true)
   // Slug-et e aktivitetit/sektoreve qe targeton (bosh = pa kufizim ne ate bosht).
-  targetActivityTypes String[] @default([])
-  targetSectors       String[] @default([])
-  forFemaleOwned      Boolean  @default(false)
+  targetActivityTypes String[]  @default([])
+  targetSectors       String[]  @default([])
+  forFemaleOwned      Boolean   @default(false)
   // Dispeçimi nga admini: PENDING derisa admini te caktoje audiencen dhe te dergoje.
-  dispatchStatus String    @default("PENDING")
-  dispatchedAt   DateTime?
-  dispatchedById String?
+  dispatchStatus      String    @default("PENDING")
+  dispatchedAt        DateTime?
+  dispatchedById      String?
 
   isActive  Boolean   @default(true)
   deletedAt DateTime?
@@ -265,24 +319,24 @@ model NewsItem {
 }
 
 model ExportGuide {
-  id          String   @id @default(cuid())
-  title       String
-  titleSq     String?
-  titleEn     String?
-  titleDe     String?
-  content     String   @db.Text
-  contentSq   String?  @db.Text
-  contentEn   String?  @db.Text
-  contentDe   String?  @db.Text
-  country     String
-  countryCode String?  @unique // ISO 3166-1 alpha-2 (e.g. "DE", "US")
-  flag        String? // emoji or short code
-  sectors     String[] @default([])
+  id            String   @id @default(cuid())
+  title         String
+  titleSq       String?
+  titleEn       String?
+  titleDe       String?
+  content       String   @db.Text
+  contentSq     String?  @db.Text
+  contentEn     String?  @db.Text
+  contentDe     String?  @db.Text
+  country       String
+  countryCode   String?  @unique // ISO 3166-1 alpha-2 (e.g. "DE", "US")
+  flag          String? // emoji or short code
+  sectors       String[] @default([])
   // Canonical sector slugs this guide targets. Empty = universal (most guides are
   // country-scoped, not sector-scoped, so default is empty).
   targetSectors String[] @default([])
-  tags        String[] @default([])
-  isPublished Boolean  @default(true)
+  tags          String[] @default([])
+  isPublished   Boolean  @default(true)
 
   // Structured guide content (Phase 12 - Claude-researched). All bilingual
   // string fields use { sq, en } shape inside the JSON.
@@ -302,14 +356,16 @@ model ExportGuide {
   reviewedBy       String?
   reviewedAt       DateTime?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   @@index([country])
 }
 
 model Notification {
+  // Arsyeja e transparencës (§14.6): 'Po e sheh sepse ke zgjedhur sektorin X'.
+  reason    String?
   id        String           @id @default(cuid())
   userId    String
   type      NotificationType
@@ -397,28 +453,28 @@ model Source {
   // CONVENTION: Never DELETE a Source - use isActive=false instead.
   // CASCADE on child tables (Opportunity, ScrapeAttempt, SourceHealth) is for
   // emergency cleanup only. Admin UI must expose Deactivate, not Delete.
-  id         String         @id @default(cuid())
-  code       String         @unique
-  name       String
-  tier       SourceTier
-  baseUrl    String
-  category   SourceCategory
-  language   String         @default("sq")
-  strategies Json
-  isActive   Boolean        @default(true)
-  schedule   String?
+  id            String         @id @default(cuid())
+  code          String         @unique
+  name          String
+  tier          SourceTier
+  baseUrl       String
+  category      SourceCategory
+  language      String         @default("sq")
+  strategies    Json
+  isActive      Boolean        @default(true)
+  schedule      String?
   // --- Source Registry / framework (additive) ---
-  kind          String?   // html | rss | wordpress | pdf | custom
-  orgCategory   String?   // government | municipality | donor | chamber | association
-  reliability   String?   @default("medium") // high | medium | low
-  publishMode   String    @default("review") // auto | review
-  frequency     String    @default("daily")  // daily | weekly
-  sectorsHint   String[]  @default([])
-  keywords      String[]  @default([])
-  selectors     Json?     // adapter config (feed url, list/item selectors, etc.)
+  kind          String? // html | rss | wordpress | pdf | custom
+  orgCategory   String? // government | municipality | donor | chamber | association
+  reliability   String?        @default("medium") // high | medium | low
+  publishMode   String         @default("review") // auto | review
+  frequency     String         @default("daily") // daily | weekly
+  sectorsHint   String[]       @default([])
+  keywords      String[]       @default([])
+  selectors     Json? // adapter config (feed url, list/item selectors, etc.)
   lastCheckedAt DateTime?
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   opportunities Opportunity[]
   attempts      ScrapeAttempt[]
@@ -429,33 +485,33 @@ model Source {
 }
 
 model Opportunity {
-  id          String            @id @default(cuid())
-  sourceId    String
-  externalId  String
-  type        OpportunityType
-  title       String
-  titleEn     String?
-  description String?           @db.Text
-  deadline    DateTime?
-  amount      String?
-  currency    String?           @default("EUR")
-  eligibility String?           @db.Text
-  sourceUrl   String
-  rawHtml     String?           @db.Text
-  status      OpportunityStatus @default(NEW)
-  firstSeenAt DateTime          @default(now())
-  lastSeenAt  DateTime          @default(now())
-  attemptId   String?
+  id                  String            @id @default(cuid())
+  sourceId            String
+  externalId          String
+  type                OpportunityType
+  title               String
+  titleEn             String?
+  description         String?           @db.Text
+  deadline            DateTime?
+  amount              String?
+  currency            String?           @default("EUR")
+  eligibility         String?           @db.Text
+  sourceUrl           String
+  rawHtml             String?           @db.Text
+  status              OpportunityStatus @default(NEW)
+  firstSeenAt         DateTime          @default(now())
+  lastSeenAt          DateTime          @default(now())
+  attemptId           String?
   // --- Framework fields (additive) ---
-  verificationStatus  String?   // auto_publish | needs_review | published | rejected
+  verificationStatus  String? // auto_publish | needs_review | published | rejected
   fingerprint         String?
   publishedAt         DateTime?
   amountMin           Int?
   amountMax           Int?
-  supportTypes        String[]  @default([])
+  supportTypes        String[]          @default([])
   documents           Json?
   attachments         Json?
-  originalTextSnippet String?   @db.Text
+  originalTextSnippet String?           @db.Text
   extractedFrom       String?
   scrapedAt           DateTime?
 
@@ -589,18 +645,125 @@ model ChatMessage {
 }
 
 model HsQuery {
-  id          String   @id @default(cuid())
+  id         String   @id @default(cuid())
   // Normalized query key (lowercase, trimmed) used for cache lookup.
-  queryKey    String   @unique
+  queryKey   String   @unique
   // The raw user input (preserved as typed).
-  queryRaw    String
+  queryRaw   String
   // JSON returned by Haiku: { candidates: [...], notes: "...", documents: [...], disclaimer: "..." }
-  result      Json
+  result     Json
   // Optional: which user triggered the first lookup (for analytics; nullable).
-  userId      String?
-  createdAt   DateTime @default(now())
-  lastUsedAt  DateTime @default(now())
-  usageCount  Int      @default(1)
+  userId     String?
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+  usageCount Int      @default(1)
 
   @@index([lastUsedAt])
+}
+
+// -----------------------------------------------------------------------------
+// Faza 2 (Version 5): Company entity dhe extension-e sipas rolit.
+// 1:1 me User përmes Company.ownerUserId @unique.
+// -----------------------------------------------------------------------------
+
+model Company {
+  id          String @id @default(cuid())
+  ownerUserId String @unique
+  owner       User   @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+
+  // Roli i biznesit — pasqyron User.role (KOSOVO_BUSINESS/STARTUP/DIASPORA).
+  // Individual/Admin/SuperAdmin nuk kanë Company.
+  roleType Role
+
+  // Identifikuesit përgjithësi. name = emri i biznesit ose emri i personit (Diaspora individ).
+  name      String
+  legalName String?
+
+  // Fushat e migruara nga User (backward compat: mbeten edhe në User për 1 release).
+  activityType    String?
+  sectors         String[] @default([])
+  employeeCount   String?
+  femaleOwnership Boolean?
+
+  // Vendndodhja / kontakti
+  municipality  String?
+  country       String? @default("Kosovë")
+  address       String?
+  email         String?
+  phone         String?
+  website       String?
+  contactPerson String?
+
+  // Prezantimi publik
+  logoUrl          String?
+  coverImageUrl    String?
+  shortDescription String? @db.Text
+  longDescription  String? @db.Text
+
+  // Kontroll i shiküshmërisë + approval
+  visibilityLevel VisibilityLevel @default(PRIVATE)
+  profileStatus   ProfileStatus   @default(DRAFT)
+  approvedAt      DateTime?
+  approvedById    String?
+  rejectedReason  String?
+
+  // Ekstensione sipas rolit (1:1)
+  startupProfile  StartupProfile?
+  diasporaProfile DiasporaProfile?
+
+  // Interesat / lookingFor si string arrays (§1.3, §2). Vlerat: buyer, investor,
+  // distributor, importer, partner, service_provider, export/import, industrial_parks etj.
+  interests String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([roleType, profileStatus])
+  @@index([visibilityLevel])
+  @@index([country])
+}
+
+model StartupProfile {
+  companyId String  @id
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  stage             StartupStage @default(IDEA)
+  intendedLegalForm LegalForm?
+
+  // Nevojat si string arrays: ARBK, NACE, statut, banke, atk_edi, kontabilist,
+  // grant, mentorim, business_plan, investitor, buyer, distributor.
+  needs String[] @default([])
+
+  hasProduct   Boolean @default(false)
+  prototypeUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DiasporaProfile {
+  companyId String  @id
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Vendi kryesor ku vepron biznesi i diasporës (p.sh. "DE" ose "Gjermani").
+  countryOfOperation String
+  city               String?
+  // Shtete të tjera ku ka aktivitet tregtar.
+  countriesActive    String[] @default([])
+
+  // Nën-rolet e shumefishta (§1.3): buyer/investor/distributor/importer/partner/service_provider.
+  subRoles DiasporaSubRole[] @default([])
+
+  // Sektorët e interesit + produktet që kërkon ose ofron (string arrays për fleksibilitet).
+  sectorsOfInterest String[] @default([])
+  productsSought    String[] @default([])
+  productsOffered   String[] @default([])
+
+  // Deklarata + kapitali orientues (opsional).
+  purposeSummary   String? @db.Text
+  investmentBudget String?
+  marketShare      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

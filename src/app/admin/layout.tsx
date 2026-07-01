@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   Shield, Users, Search, Calendar, BookOpen, Bot, Bell, Inbox,
-  LayoutDashboard, Menu, X, ArrowLeft, Trash2, Database, ClipboardCheck, Send, Newspaper, KeyRound,
+  LayoutDashboard, Menu, X, ArrowLeft, Trash2, Database, ClipboardCheck, Send, Newspaper, KeyRound, Beaker,
 } from 'lucide-react'
 import { Toaster } from '@/components/admin/Toaster'
 
@@ -24,6 +24,7 @@ const adminNav = [
   { name: 'Review Queue', href: '/admin/review', icon: ClipboardCheck },
   { name: 'Njoftimet', href: '/admin/notifications', icon: Bell },
   { name: 'Leads', href: '/admin/leads', icon: Inbox },
+  { name: 'Llogari Testuese', href: '/admin/test-users', icon: Beaker },
   { name: 'Trash', href: '/admin/trash', icon: Trash2 },
 ]
 

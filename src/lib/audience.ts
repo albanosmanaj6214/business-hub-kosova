@@ -1,10 +1,19 @@
 // Rregulli i vetem i dukshmerise: a e sheh nje biznes nje artikull.
 // Funksion i paster, pa DB, qe te testohet plotesisht ne izolim.
+//
+// Faza 2 (Version 5): u shtuan 4 boshte të reja që feedFor() të mbulojë të gjithë
+// personalizimin: role, country, interests, products.
+// Rregulli i pandryshuar: fusha bosh në target = pa kufizim (§4 master prompt).
 
 export interface AudienceProfile {
   activityType: string | null
   entitledSectors: string[]
   femaleOwnership: boolean | null
+  // Faza 2:
+  role?: string | null
+  country?: string | null
+  interests?: string[]
+  productSlugs?: string[]
 }
 
 export interface AudienceCriteria {
@@ -12,6 +21,11 @@ export interface AudienceCriteria {
   targetActivityTypes: string[]
   targetSectors: string[]
   forFemaleOwned: boolean
+  // Faza 2:
+  targetRoles?: string[]
+  targetCountries?: string[]
+  targetInterests?: string[]
+  targetProducts?: string[]
 }
 
 export function matchesAudience(user: AudienceProfile, item: AudienceCriteria): boolean {
@@ -27,7 +41,23 @@ export function matchesAudience(user: AudienceProfile, item: AudienceCriteria): 
 
   const femaleOk = !item.forFemaleOwned || user.femaleOwnership === true
 
-  return activityOk && sectorOk && femaleOk
+  const roleOk =
+    !item.targetRoles?.length ||
+    (user.role != null && item.targetRoles.includes(user.role))
+
+  const countryOk =
+    !item.targetCountries?.length ||
+    (user.country != null && item.targetCountries.includes(user.country))
+
+  const interestOk =
+    !item.targetInterests?.length ||
+    item.targetInterests.some((i) => (user.interests ?? []).includes(i))
+
+  const productOk =
+    !item.targetProducts?.length ||
+    item.targetProducts.some((p) => (user.productSlugs ?? []).includes(p))
+
+  return activityOk && sectorOk && femaleOk && roleOk && countryOk && interestOk && productOk
 }
 
 export function filterForUser<T extends AudienceCriteria>(user: AudienceProfile, items: T[]): T[] {

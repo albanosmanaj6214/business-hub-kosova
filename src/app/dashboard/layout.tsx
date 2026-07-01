@@ -7,28 +7,20 @@ import { useSession, signOut } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { KonsulentiWidget, openKonsulenti } from '@/components/konsulenti/KonsulentiWidget'
+import { navigationForRole } from '@/lib/role-navigation'
 import {
   LayoutDashboard, Search, Calendar, BookOpen,
   Bell, Settings, CreditCard, MessageSquare, MessagesSquare, Menu, X, GraduationCap,
   LogOut, Shield, ChevronRight, ShieldCheck, ClipboardCheck, Newspaper} from 'lucide-react'
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Burime Financimi', href: '/dashboard/burime-financimi', icon: Search },
-  { name: 'Panaire dhe Ngjarje', href: '/dashboard/panaire-evente', icon: Calendar },
-  { name: 'Eksporti', href: '/dashboard/eksporti', icon: BookOpen },
-  { name: 'Certifikime', href: '/dashboard/certifikime', icon: ShieldCheck },
-  { name: 'Lajme dhe Informata', href: '/dashboard/lajme', icon: Newspaper },
-  { name: 'Njoftime', href: '/dashboard/notifications', icon: Bell },
-  { name: 'Konsultime', href: '/dashboard/bookings', icon: MessageSquare },
-  { name: 'Abonimi', href: '/dashboard/subscription', icon: CreditCard },
-  { name: 'Cilësimet', href: '/dashboard/settings', icon: Settings },
-]
+
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { data: session } = useSession()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const role = (session?.user as { role?: string })?.role
+  const navigation = navigationForRole(role)
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -42,6 +42,10 @@ export async function POST(req: Request) {
       activityType,
       employeeCount,
       interests,
+      role,
+      countryOfOperation,
+      city,
+      diasporaSubRoles,
       language,
       femaleOwnership,
       turnstileToken,
@@ -69,17 +73,31 @@ export async function POST(req: Request) {
         { status: 400 }
       )
     }
-    if (typeof companyName !== 'string' || !companyName.trim()) {
+    const validRoles = ['KOSOVO_BUSINESS', 'STARTUP', 'DIASPORA', 'INDIVIDUAL'] as const
+    if (typeof role !== 'string' || !(validRoles as readonly string[]).includes(role)) {
       return NextResponse.json(
-        { error: 'Shkruaj emrin e kompanisë' },
+        { error: 'Zgjidh rolin: Biznes Kosovar, Start Up, Diaspora ose Individ' },
         { status: 400 }
       )
     }
-    if (!isEmployeeCount(employeeCount)) {
-      return NextResponse.json(
-        { error: 'Zgjidh madhësinë e ndërmarrjes' },
-        { status: 400 }
-      )
+    const roleValue = role as (typeof validRoles)[number]
+
+    // Fushat mandatore ndryshojnë sipas rolit.
+    if (roleValue !== 'INDIVIDUAL') {
+      if (typeof companyName !== 'string' || !companyName.trim()) {
+        return NextResponse.json(
+          { error: roleValue === 'DIASPORA' ? 'Shkruaj emrin e biznesit ose personit' : 'Shkruaj emrin e kompanisë' },
+          { status: 400 }
+        )
+      }
+    }
+    if (roleValue === 'KOSOVO_BUSINESS' || roleValue === 'STARTUP') {
+      if (!isEmployeeCount(employeeCount)) {
+        return NextResponse.json(
+          { error: 'Zgjidh madhësinë e ndërmarrjes' },
+          { status: 400 }
+        )
+      }
     }
 
     const existingUser = await prisma.user.findUnique({ where: { email } })
@@ -95,45 +113,52 @@ export async function POST(req: Request) {
     const normalisedSectors: string[] = Array.isArray(sectors)
       ? Array.from(new Set(sectors.filter((s: unknown): s is string => typeof s === "string" && !!sectorBySlug(s)))).slice(0, 1)
       : []
-    // Lloji i aktivitetit eshte i detyrueshem dhe boshti kryesor i targetimit.
-    if (typeof activityType !== 'string' || !isActivityType(activityType)) {
-      return NextResponse.json(
-        { error: 'Zgjidh llojin e aktivitetit të biznesit' },
-        { status: 400 }
-      )
+    // Aktiviteti + sektori kërkohen vetëm për KOSOVO_BUSINESS + STARTUP.
+    // Diaspora ka DiasporaProfile me fusha të veta. Individ nuk ka Company.
+    if (roleValue === 'KOSOVO_BUSINESS' || roleValue === 'STARTUP') {
+      if (typeof activityType !== 'string' || !isActivityType(activityType)) {
+        return NextResponse.json(
+          { error: 'Zgjidh llojin e aktivitetit të biznesit' },
+          { status: 400 }
+        )
+      }
+      if (activityNeedsSector(activityType) && normalisedSectors.length === 0) {
+        return NextResponse.json(
+          { error: 'Zgjidh sektorin e biznesit' },
+          { status: 400 }
+        )
+      }
     }
-
-    // Sektori kerkohet vetem per aktivitete qe e kane sektorin si dimension shtese
-    // (prodhues-perpunues, sherbime). Tregti / bujqesi nuk e kerkojne.
-    if (activityNeedsSector(activityType) && normalisedSectors.length === 0) {
-      return NextResponse.json(
-        { error: 'Zgjidh sektorin e biznesit' },
-        { status: 400 }
-      )
+    if (roleValue === 'DIASPORA') {
+      if (typeof countryOfOperation !== 'string' || !countryOfOperation.trim()) {
+        return NextResponse.json({ error: 'Shkruaj vendin ku operon' }, { status: 400 })
+      }
+      if (typeof city !== 'string' || !city.trim()) {
+        return NextResponse.json({ error: 'Shkruaj qytetin' }, { status: 400 })
+      }
+      if (!Array.isArray(diasporaSubRoles) || diasporaSubRoles.length === 0) {
+        return NextResponse.json({ error: 'Zgjidh të paktën një rol Diaspora' }, { status: 400 })
+      }
     }
 
     const hashedPassword = await hash(password, 12)
 
+    // Krijim User + Subscription. Company + profil-i rol-specifik krijohen menjëherë pas.
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         name,
-        companyName,
-        // Keep legacy sector populated with a human-readable label for any old
-        // code paths still reading it. Will be removed in a follow-up migration.
-        sector: typeof sector === 'string' && sector ? sector : sectorsLabel(normalisedSectors),
-        sectors: normalisedSectors,
-        activityType,
-        employeeCount,
-        // Baza falas jep qasje ne sektorin e deklaruar. Sektore shtese hapen nga admini (Faza E).
-        entitledSectors: activityNeedsSector(activityType) ? normalisedSectors : [],
+        companyName: roleValue === 'INDIVIDUAL' ? null : companyName,
+        role: roleValue,
+        sector: roleValue === 'INDIVIDUAL' || roleValue === 'DIASPORA' ? null : (typeof sector === 'string' && sector ? sector : sectorsLabel(normalisedSectors)),
+        sectors: roleValue === 'INDIVIDUAL' || roleValue === 'DIASPORA' ? [] : normalisedSectors,
+        activityType: roleValue === 'KOSOVO_BUSINESS' || roleValue === 'STARTUP' ? activityType : null,
+        employeeCount: roleValue === 'KOSOVO_BUSINESS' || roleValue === 'STARTUP' ? employeeCount : null,
+        entitledSectors: (roleValue === 'KOSOVO_BUSINESS' || roleValue === 'STARTUP') && activityNeedsSector(activityType) ? normalisedSectors : [],
         interests: interests || [],
         language: language || 'sq',
-        // Tri-state: only persist boolean if explicitly true/false; otherwise leave NULL
-        // so we can distinguish "user did not declare" from "user said no".
         femaleOwnership: typeof femaleOwnership === 'boolean' ? femaleOwnership : null,
-        // emailVerified intentionally left null — user must click email link.
         subscription: {
           create: {
             tier: 'FREE',
@@ -142,6 +167,46 @@ export async function POST(req: Request) {
         },
       },
     })
+
+    // Krijim Company për çdo rol biznesor (jo INDIVIDUAL, jo ADMIN).
+    if (roleValue !== 'INDIVIDUAL') {
+      const company = await prisma.company.create({
+        data: {
+          ownerUserId: user.id,
+          roleType: roleValue,
+          name: companyName,
+          activityType: roleValue === 'DIASPORA' ? null : activityType,
+          sectors: roleValue === 'DIASPORA' ? [] : normalisedSectors,
+          employeeCount: roleValue === 'DIASPORA' ? null : employeeCount,
+          femaleOwnership: typeof femaleOwnership === 'boolean' ? femaleOwnership : null,
+          country: roleValue === 'DIASPORA' ? countryOfOperation : 'Kosovë',
+          email: email,
+          visibilityLevel: 'PRIVATE',
+          profileStatus: 'DRAFT',
+          interests: interests || [],
+        },
+      })
+
+      if (roleValue === 'STARTUP') {
+        await prisma.startupProfile.create({
+          data: { companyId: company.id, stage: 'IDEA', needs: [], hasProduct: false },
+        })
+      }
+      if (roleValue === 'DIASPORA') {
+        await prisma.diasporaProfile.create({
+          data: {
+            companyId: company.id,
+            countryOfOperation,
+            city,
+            subRoles: diasporaSubRoles.filter((r: unknown): r is string => typeof r === 'string') as any,
+            sectorsOfInterest: [],
+            productsSought: [],
+            productsOffered: [],
+            countriesActive: [],
+          },
+        })
+      }
+    }
 
     // Generate verification token + persist + send email.
     const token = randomBytes(32).toString('hex')
