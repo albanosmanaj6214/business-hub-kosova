@@ -7,18 +7,28 @@ import { Bell, Search, Calendar, BookOpen, Info } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
-const typeIcons = {
+const typeIcons: Record<string, typeof Search> = {
   GRANT: Search,
   FAIR: Calendar,
   GUIDE: BookOpen,
   SYSTEM: Info,
+  NEWS: Info,
+  SUBVENTION: Search,
+  OFFER_REQUEST: Info,
+  MATCH: Info,
+  PROFILE: Info,
 }
 
-const typeColors = {
-  GRANT: 'success' as const,
-  FAIR: 'secondary' as const,
-  GUIDE: 'default' as const,
-  SYSTEM: 'warning' as const,
+const typeColors: Record<string, 'success' | 'secondary' | 'default' | 'warning'> = {
+  GRANT: 'success',
+  FAIR: 'secondary',
+  GUIDE: 'default',
+  SYSTEM: 'warning',
+  NEWS: 'default',
+  SUBVENTION: 'success',
+  OFFER_REQUEST: 'secondary',
+  MATCH: 'secondary',
+  PROFILE: 'warning',
 }
 
 export default async function NotificationsPage() {
