@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sectorBySlug } from '@/lib/sectors'
 import { softDelete, restore } from '@/lib/soft-delete'
+import { logAudit } from '@/lib/audit'
 
 export const dynamic = 'force-dynamic'
 
@@ -144,6 +145,7 @@ export async function POST(req: Request) {
         forFemaleOwned: d.forFemaleOwned ?? false,
       },
     })
+    await logAudit({ action: 'CREATE', entityType: d.type, entityId: item.id, summary: `Krijoi manualisht: ${d.title.slice(0, 120)}` })
     return NextResponse.json({ ok: true, id: item.id, type: d.type })
   }
 
@@ -171,6 +173,7 @@ export async function POST(req: Request) {
         forFemaleOwned: d.forFemaleOwned ?? false,
       },
     })
+    await logAudit({ action: 'CREATE', entityType: 'FAIR', entityId: item.id, summary: `Krijoi manualisht ngjarjen: ${d.name.slice(0, 120)}` })
     return NextResponse.json({ ok: true, id: item.id, type: 'FAIR' })
   }
 
@@ -192,6 +195,7 @@ export async function POST(req: Request) {
       targetActivityTypes: cleanActivities(n.targetActivityTypes),
     },
   })
+  await logAudit({ action: 'CREATE', entityType: 'NEWS', entityId: item.id, summary: `Krijoi manualisht lajmin: ${n.title.slice(0, 120)}` })
   return NextResponse.json({ ok: true, id: item.id, type: 'NEWS' })
 }
 
@@ -286,6 +290,7 @@ export async function PATCH(req: Request) {
         },
       })
     }
+    await logAudit({ action: 'EDIT', entityType: type, entityId: id, summary: `Editoi artikullin (${type})` })
     return NextResponse.json({ ok: true })
   } catch (err: any) {
     if (err?.code === 'P2025') return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -304,6 +309,12 @@ export async function DELETE(req: Request) {
   if (!type || !id) return NextResponse.json({ error: 'type + id required' }, { status: 400 })
 
   const entity = type === 'FAIR' ? 'fair' : type === 'NEWS' ? 'news' : 'grant'
-  if (action === 'restore') return restore(entity as any, id)
-  return softDelete(entity as any, id)
+  if (action === 'restore') {
+    const res = await restore(entity as any, id)
+    await logAudit({ action: 'RESTORE', entityType: type, entityId: id, summary: `Riktheu nga arkivi (${type})` })
+    return res
+  }
+  const res = await softDelete(entity as any, id)
+  await logAudit({ action: 'ARCHIVE', entityType: type, entityId: id, summary: `Arkivoi artikullin (${type})` })
+  return res
 }

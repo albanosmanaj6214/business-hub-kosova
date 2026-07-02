@@ -7,7 +7,7 @@ import { useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 import {
   Shield, Users, Search, Calendar, BookOpen, Bot, Bell, Inbox,
-  LayoutDashboard, Menu, X, ArrowLeft, Trash2, Database, ClipboardCheck, Send, Newspaper, KeyRound, Building2, Beaker, FolderOpen,
+  LayoutDashboard, Menu, X, ArrowLeft, Trash2, Database, ClipboardCheck, Send, Newspaper, KeyRound, Building2, Beaker, FolderOpen, ScrollText,
 } from 'lucide-react'
 import { Toaster } from '@/components/admin/Toaster'
 
@@ -28,6 +28,7 @@ const adminNav = [
   { name: 'Njoftimet', href: '/admin/notifications', icon: Bell },
   { name: 'Leads', href: '/admin/leads', icon: Inbox },
   { name: 'Llogari Testuese', href: '/admin/test-users', icon: Beaker, superOnly: true },
+  { name: 'Audit Trail', href: '/admin/audit', icon: ScrollText, superOnly: true },
   { name: 'Trash', href: '/admin/trash', icon: Trash2 },
 ]
 

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   Search, Plus, Link2, Rss, Pencil, Archive, RotateCcw, Send, Loader2,
-  FileText, Calendar, Newspaper, Wallet, ChevronDown,
+  FileText, Calendar, Newspaper, Wallet, ChevronDown, Undo2,
 } from 'lucide-react'
 
 export interface ContentRow {
@@ -68,6 +68,22 @@ export function ContentHub({ rows, isSuper }: { rows: ContentRow[]; isSuper: boo
   }, [rows])
 
   const pendingCount = rows.filter((r) => r.status === 'PENDING').length
+
+  async function withdraw(row: ContentRow) {
+    if (!confirm('Tërheqja e heq artikullin nga platforma menjëherë (kthehet në pritje). Njoftimet e dërguara nuk tërhiqen. Vazhdo?')) return
+    setBusy(row.id)
+    try {
+      const dtype = row.type === 'FAIR' ? 'fair' : row.type === 'NEWS' ? 'news' : 'grant'
+      const res = await fetch('/api/admin/dispatch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'withdraw', type: dtype, id: row.id }),
+      })
+      if (res.ok) router.refresh()
+    } finally {
+      setBusy(null)
+    }
+  }
 
   async function archive(row: ContentRow, restoreIt: boolean) {
     setBusy(row.id)
@@ -216,6 +232,16 @@ export function ContentHub({ rows, isSuper }: { rows: ContentRow[]; isSuper: boo
                         >
                           <Pencil className="h-4 w-4" />
                         </Link>
+                        {r.status === 'DISPATCHED' && (
+                          <button
+                            onClick={() => withdraw(r)}
+                            disabled={busy === r.id}
+                            className="p-1.5 rounded-md text-gray-500 hover:text-amber-700 hover:bg-amber-50"
+                            title="Tërhiqe nga platforma (kthehet në pritje)"
+                          >
+                            <Undo2 className="h-4 w-4" />
+                          </button>
+                        )}
                         {r.status === 'ARCHIVED' ? (
                           <button
                             onClick={() => archive(r, true)}

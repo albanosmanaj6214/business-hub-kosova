@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { logAudit } from '@/lib/audit'
 
 async function requireAdmin(): Promise<string | null> {
   const session = await getServerSession(authOptions)
@@ -60,6 +61,7 @@ export async function POST(req: Request) {
         reason: 'Njoftim mbi statusin e profilit tënd të biznesit.',
       },
     })
+    await logAudit({ action: 'APPROVE_PROFILE', entityType: 'COMPANY', entityId: companyId, summary: `Aprovoi profilin: ${company.name}` })
     return NextResponse.json({ ok: true, status: 'APPROVED' })
   }
 
@@ -83,6 +85,7 @@ export async function POST(req: Request) {
         reason: 'Njoftim mbi statusin e profilit tënd të biznesit.',
       },
     })
+    await logAudit({ action: 'REJECT_PROFILE', entityType: 'COMPANY', entityId: companyId, summary: `Ktheu profilin "${company.name}": ${(reason ?? '').slice(0, 100)}` })
     return NextResponse.json({ ok: true, status: 'REJECTED' })
   }
 
@@ -110,6 +113,7 @@ export async function POST(req: Request) {
         },
       })
     }
+    await logAudit({ action: action === 'UNSET_BADGE' ? 'UNSET_BADGE' : 'SET_BADGE', entityType: 'COMPANY', entityId: companyId, summary: `${company.name}: visibility -> ${level}` })
     return NextResponse.json({ ok: true, visibilityLevel: level })
   }
 

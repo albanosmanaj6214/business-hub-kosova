@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { runRegistrySource, REGISTRY_KINDS } from '@/lib/scrapers/framework/runner'
+import { logAudit } from '@/lib/audit'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,6 +54,7 @@ export async function POST(req: Request) {
         orgCategory: cat === 'GRANT' ? 'institucion' : null,
       },
     })
+    await logAudit({ action: 'SOURCE_CREATE', entityType: 'SOURCE', entityId: created.id, summary: `Regjistroi burim të ri: ${created.name} (${kind})` })
     return NextResponse.json({ ok: true, id: created.id, code: created.code })
   }
 
@@ -63,6 +65,7 @@ export async function POST(req: Request) {
 
   if (action === 'toggle') {
     const updated = await prisma.source.update({ where: { id }, data: { isActive: !source.isActive } })
+    await logAudit({ action: 'SOURCE_TOGGLE', entityType: 'SOURCE', entityId: id, summary: `${source.name}: ${updated.isActive ? 'aktivizua' : 'çaktivizua'}` })
     return NextResponse.json({ ok: true, isActive: updated.isActive })
   }
 

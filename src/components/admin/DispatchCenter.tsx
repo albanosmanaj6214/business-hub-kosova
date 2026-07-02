@@ -1,7 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { Loader2, Send, ExternalLink, CheckCircle2, Inbox } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Loader2, Send, ExternalLink, CheckCircle2, Inbox, Users, FlaskConical } from 'lucide-react'
 import { AudienceEditor } from '@/components/admin/AudienceEditor'
 import { AudienceValue, isValueComplete, valueToCriteria } from '@/lib/dispatch'
 
@@ -36,8 +36,45 @@ export function DispatchCenter({ initialItems }: Props) {
   const [notify, setNotify] = useState(true)
   const [emailNotify, setEmailNotify] = useState(false)
   const [sending, setSending] = useState(false)
+  const [testing, setTesting] = useState(false)
   const [error, setError] = useState('')
   const [doneMsg, setDoneMsg] = useState('')
+  const [previewCount, setPreviewCount] = useState<number | null>(null)
+
+  // Parapamja live: sa biznese e marrin me audiencën aktuale (§10).
+  useEffect(() => {
+    if (!isValueComplete(audience)) { setPreviewCount(null); return }
+    const t = setTimeout(() => {
+      fetch('/api/admin/dispatch/count', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(valueToCriteria(audience)),
+      })
+        .then((r) => r.json())
+        .then((d) => setPreviewCount(typeof d.count === 'number' ? d.count : null))
+        .catch(() => setPreviewCount(null))
+    }, 400)
+    return () => clearTimeout(t)
+  }, [audience])
+
+  async function testDispatch() {
+    if (!selected) return
+    setTesting(true)
+    setError('')
+    try {
+      const res = await fetch('/api/admin/dispatch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: selected.type, id: selected.id, test: true, ...valueToCriteria(audience) }),
+      })
+      if (res.ok) setDoneMsg('Test-njoftimi u dërgua te ti — kontrollo Njoftimet.')
+      else setError('Testi dështoi.')
+    } catch {
+      setError('Gabim rrjeti.')
+    } finally {
+      setTesting(false)
+    }
+  }
 
   const visible = useMemo(
     () => items.filter((i) => filter === 'all' || i.type === filter),
@@ -183,17 +220,36 @@ export function DispatchCenter({ initialItems }: Props) {
                   </label>
                 )}
 
+                {isValueComplete(audience) && (
+                  <div className="inline-flex items-center gap-2 rounded-lg bg-[#1B4F72]/5 border border-[#1B4F72]/15 px-3 py-2 text-sm text-[#1B4F72]">
+                    <Users className="h-4 w-4" />
+                    {previewCount === null ? 'Po llogaritet...' : `${previewCount} biznese do ta marrin`}
+                  </div>
+                )}
+
                 {error && <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{error}</div>}
 
-                <button
-                  type="button"
-                  onClick={dispatch}
-                  disabled={sending || !isValueComplete(audience)}
-                  className="inline-flex items-center gap-2 rounded-lg bg-[#1B4F72] hover:bg-[#2E86C1] text-white px-4 py-2 text-sm disabled:opacity-60"
-                >
-                  {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  Dërgo
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={dispatch}
+                    disabled={sending || !isValueComplete(audience)}
+                    className="inline-flex items-center gap-2 rounded-lg bg-[#1B4F72] hover:bg-[#2E86C1] text-white px-4 py-2 text-sm disabled:opacity-60"
+                  >
+                    {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    {notify ? 'Publiko + Njofto' : 'Publiko pa njoftim'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={testDispatch}
+                    disabled={testing || !isValueComplete(audience)}
+                    className="inline-flex items-center gap-2 rounded-lg border border-[#1B4F72]/30 text-[#1B4F72] hover:bg-[#1B4F72]/5 px-4 py-2 text-sm disabled:opacity-60"
+                    title="Dërgon njoftimin vetëm te ti, pa e publikuar"
+                  >
+                    {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <FlaskConical className="h-4 w-4" />}
+                    Test te unë
+                  </button>
+                </div>
                 {!isValueComplete(audience) && (
                   <p className="text-xs text-gray-400">Zgjidh të paktën një aktivitet ose sektor (ose "Të gjithë").</p>
                 )}

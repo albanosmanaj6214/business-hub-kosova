@@ -767,3 +767,20 @@ model DiasporaProfile {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// Audit Trail (§12 V5): çdo veprim kritik i adminit — kush, çka, kur.
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorEmail String
+  action     String
+  entityType String
+  entityId   String?
+  summary    String
+  meta       Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@index([actorEmail])
+}

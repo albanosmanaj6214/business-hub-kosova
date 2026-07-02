@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { parseAudience } from '@/lib/dispatch'
 import { audienceUserIds } from '@/lib/audience-server'
 import { sendNewsEmail } from '@/lib/email'
+import { logAudit } from '@/lib/audit'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -34,9 +35,55 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'type duhet grant|fair|news dhe id string' }, { status: 400 })
   }
 
+  // TËRHEQJE (undo): kthen artikullin në PENDING — hiqet nga platforma menjëherë.
+  // Njoftimet tashmë të dërguara nuk mund të tërhiqen (siç s'kthehet një email).
+  if (body.action === 'withdraw') {
+    let title = ''
+    if (type === 'grant') {
+      const g = await prisma.grant.update({ where: { id }, data: { dispatchStatus: 'PENDING', dispatchedAt: null } })
+      title = g.titleSq || g.title
+    } else if (type === 'fair') {
+      const f = await prisma.tradeFair.update({ where: { id }, data: { dispatchStatus: 'PENDING', dispatchedAt: null } })
+      title = f.nameSq || f.name
+    } else {
+      const n = await prisma.newsItem.update({ where: { id }, data: { dispatchStatus: 'PENDING', dispatchedAt: null } })
+      title = n.titleSq || n.title
+    }
+    await logAudit({ action: 'WITHDRAW', entityType: type.toUpperCase(), entityId: id, summary: `Tërhoqi nga platforma: ${title}` })
+    return NextResponse.json({ ok: true, withdrawn: true })
+  }
+
   const parsed = parseAudience(body)
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 })
   const c = parsed.criteria
+
+  // TEST DISPATCH: njoftim vetëm te admini që po vepron — pa ndryshuar statusin.
+  if (body.test === true) {
+    if (!adminId) return NextResponse.json({ error: 'session pa id' }, { status: 400 })
+    let title = ''
+    if (type === 'grant') {
+      const g = await prisma.grant.findUnique({ where: { id } })
+      title = g ? (g.titleSq || g.title) : '(pa titull)'
+    } else if (type === 'fair') {
+      const f = await prisma.tradeFair.findUnique({ where: { id } })
+      title = f ? (f.nameSq || f.name) : '(pa titull)'
+    } else {
+      const n = await prisma.newsItem.findUnique({ where: { id } })
+      title = n ? (n.titleSq || n.title) : '(pa titull)'
+    }
+    const t = '[TEST] ' + NOTIF[type].label + ': ' + title.slice(0, 180)
+    await prisma.notification.create({
+      data: {
+        userId: adminId,
+        type: NOTIF[type].type,
+        title: t, titleSq: t, message: t, messageSq: t,
+        link: NOTIF[type].link,
+        reason: 'Test-dispeçim — e sheh vetëm admini.',
+      },
+    })
+    await logAudit({ action: 'TEST_DISPATCH', entityType: type.toUpperCase(), entityId: id, summary: `Test-dispeçim: ${title}` })
+    return NextResponse.json({ ok: true, test: true })
+  }
 
   const data = {
     isGeneral: c.isGeneral,
@@ -65,6 +112,14 @@ export async function POST(req: Request) {
 
   const ids = await audienceUserIds(c)
   const recipients = ids.length
+
+  await logAudit({
+    action: 'DISPATCH',
+    entityType: type.toUpperCase(),
+    entityId: id,
+    summary: `Dispeçoi "${title.slice(0, 120)}" te ${ids.length} biznese` + (body.notify === false ? ' (pa njoftim)' : ''),
+    meta: { recipients: ids.length, notify: body.notify !== false },
+  })
 
   // Njoftim brenda platformes (default: po).
   if (body.notify !== false && ids.length > 0) {
