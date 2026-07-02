@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { feedFor } from '@/lib/audience'
 import { currentBusinessProfile } from '@/lib/audience-server'
+import { matchesForCompany, MATCH_TYPE_LABEL } from '@/lib/matchmaking'
 import { sectorsLabel } from '@/lib/sectors'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -340,6 +341,8 @@ async function KosovoBusinessDashboard({ firstName, company, unreadNotifs, isAdm
         </Card>
       </div>
 
+      <MatchesTeaser companyId={company?.id} />
+
       <section>
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Vegla për punën e përditshme</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -481,6 +484,8 @@ async function StartupDashboard({ firstName, company, unreadNotifs }: {
         </Card>
       </div>
 
+      <MatchesTeaser companyId={company?.id} />
+
       <section>
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Veglat e themelimit</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -559,6 +564,8 @@ async function DiasporaDashboard({ firstName, company, unreadNotifs }: {
           </CardContent>
         </Card>
       )}
+
+      <MatchesTeaser companyId={company?.id} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <QuickAction href="/dashboard/directory" icon={Users} title="Kompani Kosovare" subtitle={`${approvedCompanies} biznese të gatshme për bashkëpunim`} />
@@ -693,3 +700,43 @@ async function IndividualDashboard({ firstName, unreadNotifs, restricted }: {
     </div>
   )
 }
+
+// ---------------------------------------------------------------------------
+// Rekomandimet e matchmaking-ut në ballinë (§13.3) — top 3 me arsyen kryesore.
+// ---------------------------------------------------------------------------
+async function MatchesTeaser({ companyId }: { companyId: string | undefined }) {
+  if (!companyId) return null
+  const matches = await matchesForCompany(companyId, 3)
+  if (matches.length === 0) return null
+  return (
+    <Card className="border-[#27AE60]/30">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">Rekomandime bashkëpunimi</h2>
+          <Link href="/dashboard/matchmaking" className="text-sm text-[#2E86C1] hover:underline">Të gjitha</Link>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {matches.map((m) => (
+          <Link
+            key={m.company.id}
+            href={`/dashboard/directory/${m.company.id}`}
+            className="flex items-start justify-between gap-3 p-3 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-100"
+          >
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="font-medium text-gray-900 text-sm truncate">{m.company.name}</p>
+                <span className="text-[10px] font-medium text-[#1B4F72] bg-[#1B4F72]/10 rounded-full px-1.5 py-0.5 shrink-0">
+                  {MATCH_TYPE_LABEL[m.matchType]}
+                </span>
+              </div>
+              <p className="text-xs text-gray-600 mt-0.5 truncate">{m.reasons[0]}</p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-gray-300 shrink-0 mt-1" />
+          </Link>
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
+
