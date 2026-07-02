@@ -7,8 +7,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { sectorBySlug } from '@/lib/sectors'
 import {
   Building2, Rocket, Compass, MapPin, Globe, Users, Award, ArrowLeft,
-  Mail, Phone, ExternalLink, Lock, ShieldCheck,
+  Mail, Phone, ExternalLink, Lock, ShieldCheck, User as UserIcon,
 } from 'lucide-react'
+import { ContactRequestButton } from '@/components/dashboard/ContactRequestButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,9 +34,18 @@ export default async function CompanyDetailPage({ params, searchParams }: { para
     notFound()
   }
 
-  // Kontakti shfaqet vetëm kur pronari është vetë userit ose kur ka kërkuar kontakt me approval (Faza 7)
   const isOwner = company.ownerUserId === userId
-  const canSeeContact = isOwner // Faza 7 do të shtojë Approval workflow
+  const tier = String((session?.user as { tier?: string })?.tier ?? 'FREE')
+  const viewerRole = String((session?.user as { role?: string })?.role ?? '')
+
+  // Kontakti hapet: pronarit, ose atij që ka kërkesë kontakti TË APROVUAR (§2.5).
+  const myContactRequest = isOwner
+    ? null
+    : await prisma.contactRequest.findUnique({
+        where: { fromUserId_toCompanyId: { fromUserId: userId, toCompanyId: company.id } },
+        select: { status: true },
+      })
+  const canSeeContact = isOwner || myContactRequest?.status === 'APPROVED'
 
   const RoleIcon = company.roleType === 'STARTUP' ? Rocket : company.roleType === 'DIASPORA' ? Compass : Building2
 
@@ -210,27 +220,39 @@ export default async function CompanyDetailPage({ params, searchParams }: { para
                   )}
                 </div>
               ) : (
-                <div className="space-y-3">
-                  <div className="flex items-start gap-2 text-xs text-gray-600">
-                    <Lock className="h-4 w-4 text-gray-400 shrink-0 mt-0.5" />
-                    <span>Kontakti nuk shfaqet direkt. Dërgo kërkesë kontakti dhe biznesi vendos a e aprovon.</span>
+                canSeeContact ? (
+                  <div className="space-y-2 text-sm">
+                    <p className="text-xs text-green-700 font-medium mb-2">Kontakti i hapur për ty (kërkesa u aprovua):</p>
+                    {company.contactPerson && (
+                      <p className="flex items-center gap-2"><UserIcon className="h-4 w-4 text-gray-400" /> {company.contactPerson}</p>
+                    )}
+                    {company.email && (
+                      <p className="flex items-center gap-2"><Mail className="h-4 w-4 text-gray-400" /> {company.email}</p>
+                    )}
+                    {company.phone && (
+                      <p className="flex items-center gap-2"><Phone className="h-4 w-4 text-gray-400" /> {company.phone}</p>
+                    )}
+                    {company.website && (
+                      <a href={company.website} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[#2E86C1] hover:underline">
+                        <Globe className="h-4 w-4" /> {company.website} <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
                   </div>
-                  <button
-                    disabled
-                    className="w-full px-4 py-2 rounded-lg bg-[#1B4F72] hover:bg-[#2E86C1] text-white text-sm font-medium disabled:opacity-60"
-                  >
-                    Kërko kontakt (së shpejti)
-                  </button>
-                  <button
-                    disabled
-                    className="w-full px-4 py-2 rounded-lg border border-[#1B4F72] text-[#1B4F72] hover:bg-[#1B4F72]/5 text-sm font-medium disabled:opacity-60"
-                  >
-                    Kërko ofertë (së shpejti)
-                  </button>
-                  <p className="text-xs text-gray-500 leading-relaxed">
-                    Kërkesat për kontakt dhe ofertë vijnë me Fazën 7 të platformës.
-                  </p>
-                </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-2 text-xs text-gray-600">
+                      <Lock className="h-4 w-4 text-gray-400 shrink-0 mt-0.5" />
+                      <span>Kontakti nuk shfaqet direkt — dërgo kërkesë dhe biznesi vendos.</span>
+                    </div>
+                    <ContactRequestButton
+                      companyId={company.id}
+                      companyName={company.name}
+                      tier={tier}
+                      role={viewerRole}
+                      existingStatus={myContactRequest?.status ?? null}
+                    />
+                  </div>
+                )
               )}
             </CardContent>
           </Card>
