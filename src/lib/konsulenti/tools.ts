@@ -6,6 +6,7 @@ import { INCOTERMS } from '@/lib/export-terms'
 import { matchesUserSectors, sectorsLabel } from '@/lib/sectors'
 
 export interface UserContext {
+  role?: string | null
   audienceProfile?: AudienceProfile | null
   userId: string
   // Personalization v1: canonical sector slugs the user has picked. May be empty.

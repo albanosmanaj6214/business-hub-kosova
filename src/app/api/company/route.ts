@@ -38,7 +38,8 @@ const BaseBody = z.object({
   coverImageUrl: z.string().max(500).optional().nullable(),
   shortDescription: z.string().max(500).optional().nullable(),
   longDescription: z.string().max(5000).optional().nullable(),
-  visibilityLevel: z.enum(['PRIVATE', 'MEMBERS', 'PUBLIC', 'VERIFIED', 'FEATURED']).optional(),
+  // VERIFIED dhe FEATURED caktohen vetem nga admini; useri zgjedh deri te PUBLIC.
+  visibilityLevel: z.enum(['PRIVATE', 'MEMBERS', 'PUBLIC']).optional(),
   interests: z.array(z.string().max(60)).optional(),
   // Kur useri klikon "Dorëzo për shqyrtim", statusi kalon nga DRAFT në PENDING.
   submitForReview: z.boolean().optional(),

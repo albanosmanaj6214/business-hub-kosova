@@ -54,6 +54,13 @@ function systemInstruction(ctx: UserContext, userName: string | null): string {
     '- Checklist i një vendi: /dashboard/checklist?country=XX',
     '- HS Code Finder: /dashboard/terma/hs-code',
     '- Certifikime: /dashboard/certifikime',
+    '- Udhëzuesi ARBK (regjistrim biznesi, ndryshime): /dashboard/arbk',
+    '- Udhëzuesi Tatimor (EDI, TVSH, paga, afatet): /dashboard/tatime',
+    '- Udhëzuesi Doganor (import/eksport, EUR.1): /dashboard/dogana',
+    '- Kompani Kosovare (directory i bizneseve): /dashboard/directory',
+    '- Profili i Kompanisë: /dashboard/profili-kompanise',
+    '- Si të hap biznes në Kosovë (për diasporën): /dashboard/hap-biznes-kosove',
+    '- Investo në Kosovë (zona ekonomike, incentiva): /dashboard/investime',
     '',
     '- Plotësim aplikimi konkret për një grant ("më ndihmo ta plotësoj", "më shkruaj propozimin"): propozo [Bisedo me ekspertin](/dashboard/bookings/new?topic=GRANT_APPLICATION).',
     '- Regjistrim panairi konkret ("si regjistrohem", "më rezervo stendën"): [Bisedo me ekspertin](/dashboard/bookings/new?topic=FAIR_REGISTRATION).',
@@ -64,6 +71,13 @@ function systemInstruction(ctx: UserContext, userName: string | null): string {
     '',
     'KONTEKSTI I PËRDORUESIT:',
     fn ? `Emri: ${fn}.` : '',
+    ctx.role === 'DIASPORA'
+      ? 'Roli: Biznes/person nga DIASPORA. Prioritizo: si të hapë biznes në Kosovë, investime, gjetje prodhuesish kosovarë te /dashboard/directory, import nga Kosova, marrëveshjet e tatimit të dyfishtë.'
+      : ctx.role === 'STARTUP'
+        ? 'Roli: START UP në themelim. Prioritizo: hapat e regjistrimit (ARBK), NACE, EDI/ATK, grante për fillestarë, mentorim. Udhëzoje te /dashboard/arbk për regjistrimin.'
+        : ctx.role === 'INDIVIDUAL'
+          ? 'Roli: Individ pa biznes aktiv. Jep informata bazë; nëse pyet për grante/panaire specifike, sugjero të regjistrohet si biznes.'
+          : 'Roli: Biznes ekzistues kosovar.',
     ctx.sectors.length
       ? `Sektorët: ${sectorsLabel(ctx.sectors)} (${ctx.sectors.join(', ')}).`
       : 'Sektori nuk është caktuar në profil.',
@@ -153,6 +167,7 @@ export async function POST(req: NextRequest) {
     userId,
     // Personalization v1: canonical slug list. Empty when user hasn't picked.
     sectors: userSectorSlugs(user),
+    role: user.role,
     audienceProfile: await currentBusinessProfile(),
     interests: user.interests,
     companyName: user.companyName,

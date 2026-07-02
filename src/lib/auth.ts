@@ -82,6 +82,30 @@ export const authOptions: NextAuthOptions = {
         token.language = (user as any).language
         token.companyName = (user as any).companyName
         token.tier = (user as any).tier
+        ;(token as any).refreshedAt = Date.now()
+      }
+
+      // Rifresko role/tier nga DB çdo 5 minuta, që ndryshimet e adminit
+      // (rol, pako, çaktivizim) të kapen pa pritur ri-login 30-ditor.
+      const refreshedAt = (token as any).refreshedAt as number | undefined
+      const STALE_MS = 5 * 60 * 1000
+      if (token.id && (!refreshedAt || Date.now() - refreshedAt > STALE_MS)) {
+        const fresh = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: {
+            role: true,
+            language: true,
+            companyName: true,
+            subscription: { select: { tier: true } },
+          },
+        })
+        if (fresh) {
+          token.role = fresh.role
+          token.language = fresh.language
+          token.companyName = fresh.companyName
+          token.tier = fresh.subscription?.tier || 'FREE'
+        }
+        ;(token as any).refreshedAt = Date.now()
       }
       return token
     },
