@@ -21,7 +21,7 @@ const NOTIF: Record<DispatchType, { type: 'GRANT' | 'FAIR' | 'SYSTEM'; link: str
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
   const adminId = (session?.user as { id?: string })?.id
-  if ((session?.user as { role?: string })?.role !== 'ADMIN') {
+  if (!['ADMIN', 'SUPER_ADMIN'].includes(String((session?.user as { role?: string })?.role ?? ''))) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
 

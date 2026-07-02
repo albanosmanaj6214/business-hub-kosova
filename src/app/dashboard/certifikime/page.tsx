@@ -22,16 +22,18 @@ const ICONS: Record<string, any> = {
 export default async function CertificationsPage({
   searchParams,
 }: {
-  searchParams?: { filter?: string }
+  searchParams?: { filter?: string; all?: string }
 }) {
   const filter = searchParams?.filter ?? 'all'
+  const showAll = searchParams?.all === '1'
   const totalAll = CERTIFICATION_CATEGORIES.reduce((a, c) => a + c.certifications.length, 0)
 
-  // Scoping i detyrueshem sipas sektoreve te aktivizuar (entitledSectors). Pa entitled
-  // sektore (profil i paplotesuar) shfaqen te gjitha si referencë.
+  // Personalizim i detyrueshem: shfaqen vetem certifikimet e sektorit te biznesit.
+  // ?all=1 hap pamjen e plote si referencë (me chips te industrive).
   const profile = await currentBusinessProfile()
   const entitled = profile?.entitledSectors ?? []
-  const personalized = entitled.length > 0
+  const isPersonalized = entitled.length > 0 && !showAll
+  const personalized = isPersonalized
     ? filterCertCategoriesByUserSectors(CERTIFICATION_CATEGORIES, entitled)
     : CERTIFICATION_CATEGORIES
 
@@ -54,9 +56,24 @@ export default async function CertificationsPage({
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Certifikime për Eksport</h1>
         <p className="text-gray-500 mt-1 max-w-3xl">
-          Çfarë certifikimi i duhet produktit tënd për të hyrë në një treg specifik, sa kushton, sa zgjat,
-          dhe kush e jep. Të organizuara sipas industrisë dhe shkallës së detyrueshmërisë.
+          Çfarë certifikimi i duhet produktit tënd, sa kushton, sa zgjat dhe kush e jep.
         </p>
+        {isPersonalized && (
+          <p className="text-sm text-[#2E86C1] mt-2">
+            Po sheh vetëm certifikimet për sektorin tënd.{' '}
+            <Link href="/dashboard/certifikime?all=1" className="underline hover:text-[#1B4F72]">
+              Shiko të gjitha industritë
+            </Link>
+          </p>
+        )}
+        {!isPersonalized && entitled.length > 0 && (
+          <p className="text-sm text-gray-500 mt-2">
+            Pamje e plotë referimi.{' '}
+            <Link href="/dashboard/certifikime" className="text-[#2E86C1] underline hover:text-[#1B4F72]">
+              Kthehu te certifikimet e sektorit tënd
+            </Link>
+          </p>
+        )}
       </div>
 
       {/* Filter pills */}
@@ -69,7 +86,7 @@ export default async function CertificationsPage({
               : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
           }`}
         >
-          Të gjitha ({totalAll})
+          Të gjitha ({personalized.reduce((a, c) => a + c.certifications.length, 0)})
         </Link>
         <Link
           href="/dashboard/certifikime?filter=mandatory"
@@ -106,7 +123,7 @@ export default async function CertificationsPage({
 
             <div className="px-6 pb-6 pt-2 border-t border-gray-100 space-y-5">
               {cat.certifications.map((c) => (
-                <CertificationCard key={c.slug} cert={c} />
+                <CertificationCard key={c.slug} cert={c} showIndustries={!isPersonalized} />
               ))}
             </div>
           </details>
@@ -120,7 +137,7 @@ export default async function CertificationsPage({
   )
 }
 
-function CertificationCard({ cert }: { cert: Certification }) {
+function CertificationCard({ cert, showIndustries = true }: { cert: Certification; showIndustries?: boolean }) {
   const m = mandatoryLabel(cert.mandatory)
   const dur = cert.durationMonths
 
@@ -140,8 +157,8 @@ function CertificationCard({ cert }: { cert: Certification }) {
       {/* What is */}
       <p className="text-sm text-gray-700 leading-relaxed">{cert.whatIs}</p>
 
-      {/* Industries */}
-      {cert.industries.length > 0 && (
+      {/* Industries: vetem ne pamjen e plote; ne pamjen e personalizuar s'permenden industrite e tjera */}
+      {showIndustries && cert.industries.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-3">
           {cert.industries.map((ind) => (
             <span

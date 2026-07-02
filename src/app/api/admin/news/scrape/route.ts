@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 // te Qendra e Dispeçimit; asgje s'u shkon bizneseve derisa admini te caktoje audiencen.
 export async function POST() {
   const session = await getServerSession(authOptions)
-  if ((session?.user as { role?: string })?.role !== 'ADMIN') {
+  if (!['ADMIN', 'SUPER_ADMIN'].includes(String((session?.user as { role?: string })?.role ?? ''))) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
 

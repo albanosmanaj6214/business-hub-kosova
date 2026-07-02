@@ -8,7 +8,7 @@ type Feature = { text: string; included: boolean; highlight?: boolean }
 
 interface Plan {
   name: string
-  price: number
+  price: number | null
   description: string
   audience: string
   features: Feature[]
@@ -18,57 +18,57 @@ interface Plan {
 
 const plans: Plan[] = [
   {
-    name: 'Starter',
-    price: 39,
-    description: 'Për biznese të vogla që duan ta fillojnë eksportin pa investim të madh. Përfshin grantet aktive dhe kalendarin e panaireve.',
-    audience: 'Deri në 5 punonjës · 1 përdorues',
+    name: 'Free',
+    price: 0,
+    description: 'Regjistrohu, njihu me platformën dhe përdor udhëzuesit bazë. Pa kartelë, pa afat.',
+    audience: 'Fillimi pa kosto',
     features: [
-      { text: 'Databaza e granteve aktive (KIESA, MZHR, MINT)', included: true },
-      { text: 'Kalendari i panaireve ndërkombëtare', included: true },
-      { text: '5 udhëzues eksporti / muaj', included: true },
-      { text: 'Njoftime me email për thirrje të reja', included: true },
-      { text: 'Filtrim sipas sektorit', included: true },
-      { text: 'Njoftime inteligjente AI sipas profilit', included: false },
-      { text: 'Konsultime me ekspert', included: false },
-      { text: 'Eksport CSV / Excel', included: false },
-      { text: 'API akses', included: false },
+      { text: 'Udhëzuesit ARBK, Tatimor dhe Doganor', included: true },
+      { text: 'Profil bazik i kompanisë', included: true },
+      { text: 'Lajme dhe burime financimi publike', included: true },
+      { text: 'Kompani Kosovare: shikim bazik', included: true },
+      { text: 'Njoftime brenda platformës', included: true },
+      { text: 'Përmbajtje e personalizuar sipas sektorit', included: false },
+      { text: 'Kërkesë kontakti në Directory', included: false },
+      { text: 'Kërko Ofertë dhe Matchmaking', included: false },
+      { text: 'Njoftime me email', included: false },
     ],
-    cta: 'Fillo me Starter',
+    cta: 'Regjistrohu falas',
     popular: false,
   },
   {
     name: 'Professional',
     price: 99,
-    description: 'Për biznese që tashmë eksportojnë dhe kanë nevojë të ndjekin disa tregje paralelisht, me njoftime të personalizuara dhe konsultime mujore.',
-    audience: '5–50 punonjës · 3 përdorues',
+    description: 'Për biznesin që kërkon rezultate: gjithçka e përzgjedhur për sektorin tënd, profil i plotë dhe lidhje të kontrolluara me blerës e partnerë.',
+    audience: 'Për biznese aktive',
     features: [
-      { text: 'Gjithçka nga Starter', included: true, highlight: true },
-      { text: 'Udhëzues eksporti pa limit', included: true },
-      { text: 'Njoftime inteligjente AI sipas profilit', included: true },
-      { text: '2 konsultime / muaj me ekspert eksporti', included: true },
-      { text: 'Eksport CSV / Excel i të dhënave', included: true },
-      { text: 'Filtra të avancuara (vend, sektor, afat, vlerë)', included: true },
-      { text: 'Mbështetje me prioritet (24h)', included: true },
-      { text: 'API akses', included: false },
+      { text: 'Gjithçka nga Free', included: true, highlight: true },
+      { text: 'Grante, panaire dhe lajme sipas sektorit tënd', included: true },
+      { text: 'Profil i plotë: logo, foto, katalog', included: true },
+      { text: 'Kërkesë kontakti në Kompani Kosovare', included: true },
+      { text: 'Kërko Ofertë + përgjigje në oferta', included: true },
+      { text: 'Matchmaking me partnerë e blerës', included: true },
+      { text: 'Njoftime me email për afate të reja', included: true },
+      { text: 'Konsultime me ekspert (sipas pakos)', included: true },
     ],
     cta: 'Fillo me Professional',
     popular: true,
   },
   {
     name: 'Enterprise',
-    price: 249,
-    description: 'Për kompani me ekip të dedikuar për eksport. Qasje API për integrim me sistemet tuaja, raport mujor dhe menaxher i dedikuar i kontaktit.',
-    audience: '50+ punonjës · përdorues të pakufizuar',
+    price: null,
+    description: 'Për kompani me nevoja të zgjeruara: më shumë sektorë, dukshmëri me prioritet dhe mbështetje të dedikuar. Kushtet caktohen me marrëveshje.',
+    audience: 'Me marrëveshje',
     features: [
       { text: 'Gjithçka nga Professional', included: true, highlight: true },
-      { text: 'Konsultime pa limit me ekspert', included: true },
-      { text: 'API i plotë (REST + webhooks)', included: true },
-      { text: 'Raport mujor i personalizuar', included: true },
-      { text: 'Onboarding 1-me-1 me menaxher të dedikuar', included: true },
-      { text: 'SLA 99.9% + mbështetje në kohë reale', included: true },
-      { text: 'Akses për ekipin (përdorues të pakufizuar)', included: true },
+      { text: 'Profil Featured me prioritet në Directory', included: true },
+      { text: 'Shenja Verified pas verifikimit', included: true },
+      { text: 'Matchmaking me prioritet + mbështetje nga ekipi', included: true },
+      { text: 'Më shumë sektorë dhe produkte', included: true },
+      { text: 'Raporte periodike sipas nevojës', included: true },
+      { text: 'Mbështetje me prioritet', included: true },
     ],
-    cta: 'Kontakto për Enterprise',
+    cta: 'Kontakto për ofertë',
     popular: false,
   },
 ]
@@ -98,7 +98,7 @@ const faqs = [
   },
   {
     q: 'A mund ta ndryshoj planin më vonë?',
-    a: 'Po, mund të kalosh nga Starter në Professional ose Enterprise në çdo moment. Faturimi rregullohet automatikisht (pro-rata).',
+    a: 'Po, mund të kalosh nga Free në Professional në çdo moment, dhe anasjelltas. Për Enterprise, kushtet caktohen me marrëveshje.',
   },
   {
     q: 'A janë të dhënat e granteve gjithmonë të përditësuara?',
@@ -129,7 +129,7 @@ export default function PricingPage() {
               Zgjidh planin që të çon në eksport
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Tre plane për tre faza të eksportit. Nga biznesi që sapo po fillon, te kompania që ka nevojë për integrim API.
+              Fillo falas. Kalo në Professional kur të duash personalizim të plotë dhe lidhje me blerës. Enterprise ndërtohet sipas nevojës.
             </p>
           </div>
 
@@ -160,10 +160,18 @@ export default function PricingPage() {
                   <p className="text-xs text-gray-500 mt-1">{plan.audience}</p>
 
                   <div className="mt-5 flex items-baseline justify-center">
-                    <span className="text-5xl font-extrabold text-gray-900">€{plan.price}</span>
-                    <span className="text-gray-500 ml-2">/muaj</span>
+                    {plan.price === null ? (
+                      <span className="text-3xl font-extrabold text-gray-900">Me marrëveshje</span>
+                    ) : (
+                      <>
+                        <span className="text-5xl font-extrabold text-gray-900">€{plan.price}</span>
+                        <span className="text-gray-500 ml-2">/muaj</span>
+                      </>
+                    )}
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">+ TVSH (nëse aplikohet)</p>
+                  {plan.price !== null && plan.price > 0 && (
+                    <p className="text-xs text-gray-400 mt-1">+ TVSH (nëse aplikohet)</p>
+                  )}
 
                   <p className="text-sm text-gray-600 mt-4">{plan.description}</p>
                 </div>

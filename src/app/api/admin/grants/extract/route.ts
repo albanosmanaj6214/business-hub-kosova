@@ -31,7 +31,7 @@ const Body = z.object({
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
-  if ((session?.user as any)?.role !== 'ADMIN') {
+  if (!['ADMIN', 'SUPER_ADMIN'].includes(String((session?.user as any)?.role ?? ''))) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
 

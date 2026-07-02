@@ -10,6 +10,15 @@ function fmt(d: Date | null | undefined): string {
 }
 
 export default async function AdminSourcesPage() {
+  // SUPER_ADMIN_ONLY: burimet dhe scraping jane infrastrukture kritike (PDF §3).
+  {
+    const { getServerSession } = await import('next-auth')
+    const { authOptions } = await import('@/lib/auth')
+    const { redirect } = await import('next/navigation')
+    const session = await getServerSession(authOptions)
+    if ((session?.user as { role?: string })?.role !== 'SUPER_ADMIN') redirect('/admin')
+  }
+
   const sources = await prisma.source.findMany({
     orderBy: [{ isActive: 'desc' }, { code: 'asc' }],
     include: { health: true, attempts: { orderBy: { startedAt: 'desc' }, take: 1 } },

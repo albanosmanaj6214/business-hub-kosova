@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 export async function POST() {
   const session = await getServerSession(authOptions)
-  if (!session?.user?.id || session.user.role !== 'ADMIN') {
+  if (!session?.user?.id || !['ADMIN', 'SUPER_ADMIN'].includes(String(session.user.role ?? ''))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   const result = await purgeOldDeleted(30)

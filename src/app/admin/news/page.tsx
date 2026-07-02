@@ -16,7 +16,7 @@ const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
 
 export default async function AdminNewsPage() {
   const session = await getServerSession(authOptions)
-  if ((session?.user as { role?: string })?.role !== 'ADMIN') redirect('/login')
+  if (!['ADMIN', 'SUPER_ADMIN'].includes(String((session?.user as { role?: string })?.role ?? ''))) redirect('/login')
 
   const [items, pendingCount] = await Promise.all([
     prisma.newsItem.findMany({

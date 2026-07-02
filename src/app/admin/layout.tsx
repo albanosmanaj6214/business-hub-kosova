@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 import {
   Shield, Users, Search, Calendar, BookOpen, Bot, Bell, Inbox,
@@ -20,18 +21,21 @@ const adminNav = [
   { name: 'Grantet', href: '/admin/grants', icon: Search },
   { name: 'Panairet', href: '/admin/fairs', icon: Calendar },
   { name: 'Udhëzuesit', href: '/admin/guides', icon: BookOpen },
-  { name: 'AI Scraper', href: '/admin/scraper', icon: Bot },
-  { name: 'Burimet', href: '/admin/sources', icon: Database },
+  { name: 'AI Scraper', href: '/admin/scraper', icon: Bot, superOnly: true },
+  { name: 'Burimet', href: '/admin/sources', icon: Database, superOnly: true },
   { name: 'Review Queue', href: '/admin/review', icon: ClipboardCheck },
   { name: 'Njoftimet', href: '/admin/notifications', icon: Bell },
   { name: 'Leads', href: '/admin/leads', icon: Inbox },
-  { name: 'Llogari Testuese', href: '/admin/test-users', icon: Beaker },
+  { name: 'Llogari Testuese', href: '/admin/test-users', icon: Beaker, superOnly: true },
   { name: 'Trash', href: '/admin/trash', icon: Trash2 },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const { data: session } = useSession()
+  const isSuper = (session?.user as { role?: string })?.role === 'SUPER_ADMIN'
+  const visibleNav = adminNav.filter((item: any) => !item.superOnly || isSuper)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -52,7 +56,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         <nav className="p-4 space-y-1">
-          {adminNav.map((item) => (
+          {visibleNav.map((item) => (
             <Link
               key={item.name}
               href={item.href}

@@ -563,10 +563,7 @@ async function DiasporaDashboard({ firstName, company, unreadNotifs }: {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <QuickAction href="/dashboard/directory" icon={Users} title="Kompani Kosovare" subtitle={`${approvedCompanies} biznese të gatshme për bashkëpunim`} />
         <QuickAction href="/dashboard/hap-biznes-kosove" icon={Rocket} title="Si të hap biznes në Kosovë" subtitle="Dokumentet, autorizimi, banka" />
-        <QuickAction href="/dashboard/investime" icon={Building2} title="Investo në Kosovë" subtitle="Zona ekonomike, sektorë, incentiva" />
-        <QuickAction href="/dashboard/arbk" icon={Landmark} title="Udhëzuesi ARBK" subtitle="Regjistrim nga jashtë" />
-        <QuickAction href="/dashboard/tatime" icon={Receipt} title="Udhëzuesi Tatimor" subtitle="Tatimet + marrëveshjet e dyfishta" />
-        <QuickAction href="/dashboard/dogana" icon={Truck} title="Udhëzuesi Doganor" subtitle="Import nga Kosova, EUR.1" />
+        <QuickAction href="/dashboard/investime" icon={Building2} title="Investo në Kosovë" subtitle="Statistika, zona ekonomike, hapja e biznesit, tatimet" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

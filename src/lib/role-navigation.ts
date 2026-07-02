@@ -54,20 +54,18 @@ const STARTUP: NavItem[] = [
   { name: 'Cilësimet', href: '/dashboard/settings', icon: Settings },
 ]
 
+// Diaspora: "Investo në Kosovë" është hub-i qendror — brenda tij janë hapja e
+// biznesit dhe butonat drejt udhëzuesve ARBK/Tatimor/Doganor. Pa duplikim në sidebar.
 const DIASPORA: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Si të hap biznes në Kosovë', href: '/dashboard/hap-biznes-kosove', icon: Rocket },
   { name: 'Investo në Kosovë', href: '/dashboard/investime', icon: Building2 },
-  { name: 'Udhëzuesi ARBK', href: '/dashboard/arbk', icon: Landmark },
-  { name: 'Udhëzuesi Tatimor', href: '/dashboard/tatime', icon: Receipt },
-  { name: 'Udhëzuesi Doganor', href: '/dashboard/dogana', icon: Truck },
   { name: 'Kompani Kosovare', href: '/dashboard/directory', icon: Users },
   { name: 'Kërko Ofertë', href: '/dashboard/kerko-oferte', icon: Handshake },
   { name: 'Matchmaking', href: '/dashboard/matchmaking', icon: Compass },
   { name: 'Burime Financimi', href: '/dashboard/burime-financimi', icon: Search },
   { name: 'Panaire dhe Ngjarje', href: '/dashboard/panaire-evente', icon: Calendar },
   { name: 'Lajme dhe Informata', href: '/dashboard/lajme', icon: Newspaper },
-  { name: 'Profili i Diasporës', href: '/dashboard/profili-kompanise', icon: Building2 },
+  { name: 'Profili i Diasporës', href: '/dashboard/profili-kompanise', icon: UserIcon },
   { name: 'Njoftime', href: '/dashboard/notifications', icon: Bell },
   { name: 'Konsultime', href: '/dashboard/bookings', icon: MessageSquare },
   { name: 'Abonimi', href: '/dashboard/subscription', icon: CreditCard },

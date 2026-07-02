@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/auth'
 export async function GET() {
   const session = await getServerSession(authOptions)
   const role = (session?.user as any)?.role
-  if (role !== 'ADMIN') return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+  if (!['ADMIN', 'SUPER_ADMIN'].includes(String(role ?? ''))) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
 
   const [requests, subscribers] = await Promise.all([
     prisma.consultationRequest.findMany({

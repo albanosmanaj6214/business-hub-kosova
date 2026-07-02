@@ -2,6 +2,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -53,6 +55,14 @@ function timeAgo(iso: string | null): string {
 }
 
 export default function ScraperPage() {
+  // Vetem SUPER_ADMIN: scraping eshte infrastrukture kritike (PDF §3).
+  const { data: _session, status: _status } = useSession()
+  const _router = useRouter()
+  const _role = (_session?.user as { role?: string })?.role
+  useEffect(() => {
+    if (_status === 'authenticated' && _role !== 'SUPER_ADMIN') _router.replace('/admin')
+  }, [_status, _role, _router])
+
   const [loading, setLoading] = useState<string | null>(null)
   const [result, setResult] = useState<any>(null)
   const [logs, setLogs] = useState<AttemptLog[]>([])

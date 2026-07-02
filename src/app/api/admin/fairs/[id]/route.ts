@@ -16,7 +16,7 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
 // notify users in the matching sectors. Used by /admin/fairs row-level editor.
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
-  if ((session?.user as { role?: string })?.role !== 'ADMIN') {
+  if (!['ADMIN', 'SUPER_ADMIN'].includes(String((session?.user as { role?: string })?.role ?? ''))) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
 

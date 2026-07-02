@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 // Parapamje live: sa biznese e marrin nje artikull me kete audience.
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
-  if ((session?.user as { role?: string })?.role !== 'ADMIN') {
+  if (!['ADMIN', 'SUPER_ADMIN'].includes(String((session?.user as { role?: string })?.role ?? ''))) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
   let body: unknown

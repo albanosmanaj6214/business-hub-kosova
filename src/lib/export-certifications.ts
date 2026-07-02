@@ -230,6 +230,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
     certifications: [
       {
         slug: 'ce-marking',
+        targetSectors: ['druri-mobilje', 'metale-makineri', 'pajisje-elektrike', 'ndertim-materiale', 'plastika-goma', 'farmaceutike-mjekesore', 'tekstil-konfeksion', 'konstruksion-inxhinieri'],
         name: 'CE Marking',
         fullName: 'Conformité Européenne',
         fullNameSq: 'Konformiteti Europian',
@@ -247,6 +248,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
       },
       {
         slug: 'lvd',
+        targetSectors: ['pajisje-elektrike'],
         name: 'LVD',
         fullName: 'Low Voltage Directive (2014/35/EU)',
         fullNameSq: 'Direktiva për Tensionin e Ulët',
@@ -261,6 +263,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
       },
       {
         slug: 'emc',
+        targetSectors: ['pajisje-elektrike', 'tik'],
         name: 'EMC',
         fullName: 'Electromagnetic Compatibility (2014/30/EU)',
         fullNameSq: 'Përputhshmëria Elektromagnetike',
@@ -275,6 +278,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
       },
       {
         slug: 'rohs',
+        targetSectors: ['pajisje-elektrike'],
         name: 'RoHS',
         fullName: 'Restriction of Hazardous Substances (2011/65/EU)',
         fullNameSq: 'Kufizimi i Substancave të Rrezikshme',
@@ -289,6 +293,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
       },
       {
         slug: 'reach',
+        targetSectors: ['kimi-kozmetike', 'plastika-goma', 'tekstil-konfeksion', 'lekure-kepuce'],
         name: 'REACH',
         fullName: 'Registration, Evaluation, Authorisation and Restriction of Chemicals',
         fullNameSq: 'Regjistrimi, Vlerësimi dhe Autorizimi i Kimikateve',
@@ -304,6 +309,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
       },
       {
         slug: 'mdr',
+        targetSectors: ['farmaceutike-mjekesore'],
         name: 'MDR (CE për pajisje mjekësore)',
         fullName: 'Medical Device Regulation (2017/745)',
         fullNameSq: 'Rregullorja për Pajisje Mjekësore',
@@ -362,7 +368,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
   {
     id: 'religjioze',
     title: 'Certifikime Religjioze',
-    targetSectors: ['ushqim-dhe-pije', 'kozmetike'],
+    targetSectors: ['ushqim-dhe-pije', 'kimi-kozmetike'],
     icon: 'Heart',
     description: 'Hapin tregje që ndryshe janë të mbyllura — Lindjen e Mesme (1.8 miliardë konsumatorë myslimanë) dhe komunitetet hebreje në SHBA/Europë.',
     certifications: [
@@ -568,6 +574,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
       },
       {
         slug: 'energy-star',
+        targetSectors: ['pajisje-elektrike', 'tik'],
         name: 'Energy Star',
         fullName: 'Energy Star',
         whatIs: 'Programi i SHBA për produkte me efikasitet të lartë energjetik (frigoriferë, kompjuterë, ndriçim, etj.). E pranuar globalisht.',

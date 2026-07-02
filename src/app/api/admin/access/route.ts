@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
 // dukshmerine e granteve/panaireve te targetuara. Faturimi behet manualisht (jashte ketij hapi).
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions)
-  if ((session?.user as { role?: string })?.role !== 'ADMIN') {
+  if (!['ADMIN', 'SUPER_ADMIN'].includes(String((session?.user as { role?: string })?.role ?? ''))) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
 

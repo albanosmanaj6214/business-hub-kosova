@@ -186,35 +186,6 @@ const PROCEDURES: Procedure[] = [
     ],
   },
   {
-    icon: FileSearch,
-    title: 'HS Code — si të gjesh kodin',
-    intro: 'HS Code (Harmonized System) është sistemi ndërkombëtar 6-shifror që klasifikon çdo mall të tregtueshëm. Pa kodin e saktë, deklarimet janë të gabuara — tarifa e gabuar, kërkesa të gabuara për certifikata, dhe probleme me doganën.',
-    content: [
-      {
-        section: 'Struktura',
-        list: [
-          '2 shifra: Kapitulli (p.sh. 94 = mobilje)',
-          '4 shifra: Titulli (p.sh. 9403 = mobilje të tjera dhe pjesë)',
-          '6 shifra: Nën-titulli ndërkombëtar (p.sh. 940330 = mobilje druri për zyra)',
-          '8-10 shifra: Kodet kombëtare të Kosovës për doganën specifike',
-        ],
-      },
-      {
-        section: 'Ku ta gjesh',
-        list: [
-          'Përdor HS Code Finder brenda platformës KBH (te "Termet e Eksportit")',
-          'Konsulto Tarifën Doganore të Kosovës në dogana.rks-gov.net',
-          'Për raste komplekse, kërko "Vendim Klasifikimi paraprak" nga Dogana',
-        ],
-      },
-    ],
-    goodToKnow: [
-      'Kodi HS përcakton normën doganore, licencat e nevojshme, dhe përfitimet nga marrëveshjet preferenciale.',
-      'Nëse nuk je i sigurt, konsulto shpediterin ose kërko vendim paraprak. Kodi i gabuar ka kosto.',
-    ],
-    officialLink: OFFICIAL_URL,
-  },
-  {
     icon: Award,
     title: 'Dëshmia e origjinës (EUR.1 dhe deklarata në faturë)',
     intro: 'Dëshmia e origjinës është dokument që tregon se malli është prodhuar në Kosovë ose në një vend me marrëveshje preferenciale. Pa këtë, blerësi paguan tarifën doganore të plotë — çka i bën produktet tona më pak konkurruese.',
@@ -284,37 +255,6 @@ const PROCEDURES: Procedure[] = [
       'Certifikatat kanë vlefshmëri të kufizuar. Planifiko marrjen afër datës së eksportit.',
     ],
     officialLink: 'https://auv.rks-gov.net',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Incoterms 2020',
-    intro: 'Incoterms janë 11 termat standarde ndërkombëtare të Odës Ndërkombëtare të Tregtisë (ICC) që përcaktojnë kush mban rrezikun dhe koston në cilën fazë të transportit. Përcakto Incoterm-in gjithmonë në kontratë dhe faturë — pa këtë, ka konfuzion pas transportit.',
-    content: [
-      {
-        section: 'Katër grupet',
-        list: [
-          'E-termat (EXW): blerësi merr përgjegjësinë që te magazina e shitësit — më e thjeshtë për shitësin',
-          'F-termat (FCA, FAS, FOB): shitësi dorëzon te transportuesi, kostoja e transportit është e blerësit',
-          'C-termat (CFR, CIF, CPT, CIP): shitësi paguan transportin deri në destinacion, rreziku kalon te blerësi më herët',
-          'D-termat (DAP, DPU, DDP): shitësi mban rrezikun dhe koston deri në destinacion (DDP përfshin edhe taksat)',
-        ],
-      },
-      {
-        section: 'Më të përdorurat në Kosovë',
-        list: [
-          'EXW: më e thjeshtë për shitësin, blerësi organizon gjithçka',
-          'FOB: pas ngarkimit në anije/kamion, rreziku i blerësit',
-          'CIF: shitësi paguan transport + sigurim deri në portin e destinacionit',
-          'DAP: shitësi dorëzon deri te vendi i dakorduar, por blerësi shlyen taksat doganore',
-          'DDP: shitësi shlyen çdo gjë, blerësi vetëm merr mallin',
-        ],
-      },
-    ],
-    goodToKnow: [
-      'Për eksporte të para nga Kosova, FOB ose CIF janë më të përdorurat.',
-      'DDP është më i favorshëm për blerësin por të rrit koston tënde. Ki kujdes: paguan taksat doganore në vendin e destinacionit.',
-      'Përcaktoje Incoterm-in në kontratë me qytetin: p.sh. "FOB Durrës", "CIF Hamburg", "DAP Berlin".',
-    ],
   },
   {
     icon: MapPin,

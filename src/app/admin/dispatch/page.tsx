@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function DispatchPage() {
   const session = await getServerSession(authOptions)
-  if ((session?.user as { role?: string })?.role !== 'ADMIN') {
+  if (!['ADMIN', 'SUPER_ADMIN'].includes(String((session?.user as { role?: string })?.role ?? ''))) {
     redirect('/login')
   }
 

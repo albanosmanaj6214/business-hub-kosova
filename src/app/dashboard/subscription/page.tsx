@@ -12,9 +12,9 @@ export const dynamic = 'force-dynamic'
 
 const tierLabels: Record<string, string> = {
   FREE: 'Falas',
-  STARTER: 'Starter — €39/muaj',
+  STARTER: 'Falas',
   PROFESSIONAL: 'Professional — €99/muaj',
-  ENTERPRISE: 'Enterprise — €249/muaj',
+  ENTERPRISE: 'Enterprise — me marrëveshje',
 }
 
 export default async function SubscriptionPage() {

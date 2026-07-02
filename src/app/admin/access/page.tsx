@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function AdminAccessPage() {
   const session = await getServerSession(authOptions)
-  if ((session?.user as { role?: string })?.role !== 'ADMIN') redirect('/login')
+  if (!['ADMIN', 'SUPER_ADMIN'].includes(String((session?.user as { role?: string })?.role ?? ''))) redirect('/login')
 
   const users = await prisma.user.findMany({
     where: { role: 'USER' },
