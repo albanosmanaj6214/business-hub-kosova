@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import NextLink from 'next/link'
+import { Lock as LockIcon } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Landmark, FileText, Building2, MapPin, Briefcase, Users, UserCog, Wallet,
@@ -7,6 +9,17 @@ import {
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
+
+// Gating i pakos (§11): FREE sheh {n} procedurat e para; pjesa tjeter kerkon Professional.
+async function fullAccessForSession(): Promise<boolean> {
+  const { getServerSession } = await import('next-auth')
+  const { authOptions } = await import('@/lib/auth')
+  const session = await getServerSession(authOptions)
+  const tier = String((session?.user as { tier?: string })?.tier ?? 'FREE')
+  const role = String((session?.user as { role?: string })?.role ?? '')
+  return ['PROFESSIONAL', 'ENTERPRISE'].includes(tier) || ['ADMIN', 'SUPER_ADMIN'].includes(role)
+}
+
 
 const LAST_VERIFIED = '2026-06-15'
 const OFFICIAL_URL = 'https://arbk.rks-gov.net'
@@ -517,7 +530,8 @@ function ProcedureCard({ p }: { p: Procedure }) {
   )
 }
 
-export default function ARBKGuidePage() {
+export default async function ARBKGuidePage() {
+  const fullAccess = await fullAccessForSession()
   return (
     <div className="space-y-6">
       <div>
@@ -696,7 +710,7 @@ export default function ARBKGuidePage() {
           Ja gjashtë format kryesore, të renditura nga më e thjeshta te më e komplikuara.
         </p>
         <div className="space-y-2">
-          {REGISTRIME.map((p) => <ProcedureCard key={p.title} p={p} />)}
+          {REGISTRIME.map((p, i) => fullAccess || i < 2 ? <ProcedureCard key={p.title} p={p} /> : <LockedCard key={p.title} title={p.title} summary={p.intro} />)}
         </div>
       </section>
 
@@ -711,7 +725,7 @@ export default function ARBKGuidePage() {
           ARBK-ja duhet të lajmërohet.
         </p>
         <div className="space-y-2">
-          {NDRYSHIMET.map((p) => <ProcedureCard key={p.title} p={p} />)}
+          {NDRYSHIMET.map((p, i) => fullAccess || i < 2 ? <ProcedureCard key={p.title} p={p} /> : <LockedCard key={p.title} title={p.title} summary={p.intro} />)}
         </div>
       </section>
 
@@ -796,6 +810,23 @@ export default function ARBKGuidePage() {
         (Sh.A., degë të huaj, likuidim, çështje me trashëgimi), konsulto avokat ose kontabilist të licencuar. Baza
         ligjore kryesore: Ligji Nr. 06/L-016 për Shoqëritë Tregtare. Data e verifikimit të këtij udhëzuesi: {LAST_VERIFIED}.
       </p>
+    </div>
+  )
+}
+
+function LockedCard({ title, summary }: { title: string; summary: string }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4 flex items-start gap-3">
+      <div className="rounded-lg bg-gray-200 p-2 shrink-0">
+        <LockIcon className="h-5 w-5 text-gray-400" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <h3 className="font-semibold text-gray-500">{title}</h3>
+        <p className="text-sm text-gray-400 mt-0.5 line-clamp-1">{summary}</p>
+        <NextLink href="/dashboard/subscription" className="inline-flex items-center gap-1 mt-1.5 text-xs font-medium text-[#1B4F72] hover:text-[#2E86C1]">
+          Hapet me pakon Professional →
+        </NextLink>
+      </div>
     </div>
   )
 }

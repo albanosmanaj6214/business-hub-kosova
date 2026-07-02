@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sectorBySlug } from '@/lib/sectors'
+import { logAudit } from '@/lib/audit'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -15,11 +16,37 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   }
 
-  let body: { userId?: unknown; entitledSectors?: unknown } = {}
+  let body: { userId?: unknown; entitledSectors?: unknown; action?: unknown; tier?: unknown } = {}
   try { body = await req.json() } catch { return NextResponse.json({ error: 'invalid json' }, { status: 400 }) }
 
   if (typeof body.userId !== 'string') {
     return NextResponse.json({ error: 'userId mungon' }, { status: 400 })
+  }
+
+  // PAKOJA (Faza G): pa Stripe, admini e cakton manualisht pas marreveshjes/pageses.
+  if (body.action === 'setTier') {
+    const tier = body.tier
+    if (tier !== 'FREE' && tier !== 'PROFESSIONAL' && tier !== 'ENTERPRISE') {
+      return NextResponse.json({ error: 'Pako e panjohur' }, { status: 400 })
+    }
+    const target = await prisma.user.findUnique({
+      where: { id: body.userId },
+      select: { email: true, subscription: { select: { tier: true } } },
+    })
+    if (!target) return NextResponse.json({ error: 'Useri s\'u gjet' }, { status: 404 })
+    await prisma.subscription.upsert({
+      where: { userId: body.userId },
+      update: { tier, status: 'ACTIVE' },
+      create: { userId: body.userId, tier, status: 'ACTIVE' },
+    })
+    await logAudit({
+      action: 'TIER_CHANGE',
+      entityType: 'USER',
+      entityId: body.userId,
+      summary: `Pakoja e ${target.email}: ${target.subscription?.tier ?? 'FREE'} -> ${tier}`,
+    })
+    // JWT rifreskohet nga DB brenda 5 min (session callback) — useri e sheh shpejt.
+    return NextResponse.json({ ok: true, tier })
   }
   const entitled = Array.isArray(body.entitledSectors)
     ? Array.from(new Set(body.entitledSectors.filter((s): s is string => typeof s === 'string' && !!sectorBySlug(s))))

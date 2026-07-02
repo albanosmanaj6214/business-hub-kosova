@@ -123,6 +123,22 @@ function RowEditor({ row, onClose }: { row: AccessRow; onClose: () => void }) {
 export function AccessOverview({ rows }: { rows: AccessRow[] }) {
   const [query, setQuery] = useState('')
   const [openId, setOpenId] = useState<string | null>(null)
+  const [tierBusy, setTierBusy] = useState<string | null>(null)
+  const [localTiers, setLocalTiers] = useState<Record<string, TierKey>>({})
+
+  async function changeTier(userId: string, tier: string) {
+    setTierBusy(userId)
+    try {
+      const res = await fetch('/api/admin/access', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, action: 'setTier', tier }),
+      })
+      if (res.ok) setLocalTiers((m) => ({ ...m, [userId]: tier as TierKey }))
+    } finally {
+      setTierBusy(null)
+    }
+  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -181,9 +197,21 @@ export function AccessOverview({ rows }: { rows: AccessRow[] }) {
                         <td className="px-4 py-3 text-gray-700">{employeeShort(row.employeeCount)}</td>
                         <td className="px-4 py-3 text-gray-500 text-xs">{row.email}</td>
                         <td className="px-4 py-3">
-                          <span className="px-2 py-0.5 rounded-full bg-[#1B4F72]/10 text-[#1B4F72] text-xs font-medium">
-                            {TIER_LABEL[row.tier]}
-                          </span>
+                          <select
+                            value={localTiers[row.id] ?? row.tier}
+                            disabled={tierBusy === row.id}
+                            onChange={(e) => {
+                              const t = e.target.value
+                              if (confirm(`Ndrysho pakon e ${row.label} në ${t}? (Faturimi bëhet jashtë platformës)`)) {
+                                changeTier(row.id, t)
+                              }
+                            }}
+                            className="h-8 px-2 rounded-lg border border-gray-300 bg-white text-xs font-medium text-[#1B4F72] disabled:opacity-50"
+                          >
+                            <option value="FREE">Falas</option>
+                            <option value="PROFESSIONAL">Professional</option>
+                            <option value="ENTERPRISE">Enterprise</option>
+                          </select>
                         </td>
                         <td className="px-4 py-3 text-right">
                           <button

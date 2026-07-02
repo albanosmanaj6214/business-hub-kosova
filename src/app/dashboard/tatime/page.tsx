@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import NextLink from 'next/link'
+import { Lock as LockIcon } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Receipt, FileText, Calendar, ExternalLink, AlertTriangle, ChevronRight,
@@ -7,6 +9,17 @@ import {
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
+
+// Gating i pakos (§11): FREE sheh {n} procedurat e para; pjesa tjeter kerkon Professional.
+async function fullAccessForSession(): Promise<boolean> {
+  const { getServerSession } = await import('next-auth')
+  const { authOptions } = await import('@/lib/auth')
+  const session = await getServerSession(authOptions)
+  const tier = String((session?.user as { tier?: string })?.tier ?? 'FREE')
+  const role = String((session?.user as { role?: string })?.role ?? '')
+  return ['PROFESSIONAL', 'ENTERPRISE'].includes(tier) || ['ADMIN', 'SUPER_ADMIN'].includes(role)
+}
+
 
 const LAST_VERIFIED = '2026-07-01'
 const OFFICIAL_URL = 'https://www.atk-ks.org'
@@ -425,7 +438,8 @@ function TopicCard({ t }: { t: Topic }) {
   )
 }
 
-export default function TatimeGuidePage() {
+export default async function TatimeGuidePage() {
+  const fullAccess = await fullAccessForSession()
   return (
     <div className="space-y-6">
       <div>
@@ -543,7 +557,7 @@ export default function TatimeGuidePage() {
           <span className="text-xs text-gray-500">{TOPICS.length} tema</span>
         </div>
         <div className="space-y-2">
-          {TOPICS.map((t) => <TopicCard key={t.title} t={t} />)}
+          {TOPICS.map((t, i) => fullAccess || i < 2 ? <TopicCard key={t.title} t={t} /> : <LockedCard key={t.title} title={t.title} summary={t.intro} />)}
         </div>
       </section>
 
@@ -586,6 +600,23 @@ export default function TatimeGuidePage() {
         Ligji Nr. 05/L-037 (TVSH), Ligji Nr. 05/L-029 (Tatimi Korporativ), Ligji Nr. 05/L-028 (Tatimi Personal),
         Ligji Nr. 04/L-101 (Fondet Pensionale). Data e verifikimit: {LAST_VERIFIED}.
       </p>
+    </div>
+  )
+}
+
+function LockedCard({ title, summary }: { title: string; summary: string }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4 flex items-start gap-3">
+      <div className="rounded-lg bg-gray-200 p-2 shrink-0">
+        <LockIcon className="h-5 w-5 text-gray-400" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <h3 className="font-semibold text-gray-500">{title}</h3>
+        <p className="text-sm text-gray-400 mt-0.5 line-clamp-1">{summary}</p>
+        <NextLink href="/dashboard/subscription" className="inline-flex items-center gap-1 mt-1.5 text-xs font-medium text-[#1B4F72] hover:text-[#2E86C1]">
+          Hapet me pakon Professional →
+        </NextLink>
+      </div>
     </div>
   )
 }

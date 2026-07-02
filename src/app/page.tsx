@@ -19,15 +19,29 @@ export const revalidate = 600
 
 interface Tri { sq: string; en: string; de: string }
 
+// Perjashto llogarite testuese nga statistikat publike — vetem te dhena reale.
+const NOT_TEST_OWNER = {
+  owner: {
+    AND: [
+      { email: { not: { endsWith: '@kbh.test' } } },
+      { email: { not: { endsWith: '@test.local' } } },
+    ],
+  },
+}
+
 async function getStats() {
-  const [grants, fairs, guides, users, sources] = await Promise.all([
+  const [grants, fairs, guides, sources, companies, diaspora, startups, offerings, categories] = await Promise.all([
     countActiveGrants(),
     prisma.tradeFair.count({ where: { isActive: true, deletedAt: null, startDate: { gte: new Date() } } }),
     prisma.exportGuide.count({ where: { isPublished: true, deletedAt: null } }),
-    prisma.user.count(),
     prisma.source.count({ where: { isActive: true } }),
+    prisma.company.count({ where: { profileStatus: 'APPROVED', ...NOT_TEST_OWNER } }),
+    prisma.company.count({ where: { profileStatus: 'APPROVED', roleType: 'DIASPORA', ...NOT_TEST_OWNER } }),
+    prisma.company.count({ where: { profileStatus: 'APPROVED', roleType: 'STARTUP', ...NOT_TEST_OWNER } }),
+    prisma.offering.count({ where: { status: 'APPROVED', company: NOT_TEST_OWNER } }),
+    prisma.productCategory.count({ where: { status: 'APPROVED' } }),
   ])
-  return { grants, fairs, guides, users, sources }
+  return { grants, fairs, guides, sources, companies, diaspora, startups, offerings, categories }
 }
 
 export default async function HomePage() {
@@ -36,11 +50,21 @@ export default async function HomePage() {
   const counts = await getStats()
   const tx = (o: Tri) => o[locale] ?? o.sq
 
+  // §13.2: statistika dinamike nga DB. Numrat e bizneseve dalin kur kalojne
+  // pragun 5 — pa fryrje artificiale, vetem realiteti.
   const stats = [
     { value: String(counts.grants), label: t('stats.grants') },
     { value: String(counts.fairs), label: t('stats.fairs') },
     { value: String(counts.guides), label: t('stats.countries') },
-    { value: '24/7', label: t('stats.ai') },
+    ...(counts.companies >= 5
+      ? [{ value: String(counts.companies), label: tx({ sq: 'Biznese të regjistruara', en: 'Registered businesses', de: 'Registrierte Unternehmen' }) }]
+      : [{ value: String(counts.categories), label: tx({ sq: 'Kategori produktesh', en: 'Product categories', de: 'Produktkategorien' }) }]),
+    ...(counts.diaspora >= 5
+      ? [{ value: String(counts.diaspora), label: tx({ sq: 'Biznese nga diaspora', en: 'Diaspora businesses', de: 'Diaspora-Unternehmen' }) }]
+      : [{ value: String(SECTORS.length), label: tx({ sq: 'Sektorë të mbuluar', en: 'Sectors covered', de: 'Abgedeckte Sektoren' }) }]),
+    ...(counts.offerings >= 10
+      ? [{ value: String(counts.offerings), label: tx({ sq: 'Produkte të listuara', en: 'Listed products', de: 'Gelistete Produkte' }) }]
+      : [{ value: String(counts.sources), label: tx({ sq: 'Burime të monitoruara', en: 'Monitored sources', de: 'Überwachte Quellen' }) }]),
   ]
 
   // ---- Hero ----
@@ -108,7 +132,7 @@ export default async function HomePage() {
   const impactTitle = { sq: 'Impakti që synojmë', en: 'The impact we aim for', de: 'Die angestrebte Wirkung' }
   const impactBody = { sq: 'Kosova Business Hub synon të krijojë ndikim praktik dhe të matshëm te bizneset kosovare duke përmirësuar qasjen në informata, duke rritur pjesëmarrjen në mundësi financimi dhe duke i ndihmuar kompanitë të përgatiten më mirë për eksport.', en: 'Kosova Business Hub aims to create practical, measurable impact  by improving access to information, increasing participation in financing opportunities, and helping companies prepare better for export.', de: 'Kosova Business Hub will mit besserem Informationszugang, höherer Beteiligung an Finanzierungsmöglichkeiten und besserer Exportvorbereitung eine praktische, messbare Wirkung für kosovarische Unternehmen erzielen.' }
   const kpis = [
-    { v: String(counts.users), l: { sq: 'Biznese të regjistruara', en: 'Registered businesses', de: 'Registrierte Unternehmen' } },
+    { v: String(counts.companies), l: { sq: 'Biznese të regjistruara', en: 'Registered businesses', de: 'Registrierte Unternehmen' } },
     { v: String(counts.grants), l: { sq: 'Grante e mundësi të publikuara', en: 'Grants and opportunities published', de: 'Veröffentlichte Förderungen und Chancen' } },
     { v: String(counts.fairs), l: { sq: 'Panaire ndërkombëtare', en: 'International fairs', de: 'Internationale Messen' } },
     { v: String(counts.guides), l: { sq: 'Udhëzues praktikë të eksportit', en: 'Practical export guides', de: 'Praktische Export-Leitfäden' } },
@@ -172,7 +196,7 @@ export default async function HomePage() {
       {/* Live counters */}
       <section className="bg-gray-50 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
             {stats.map((stat) => (
               <div key={stat.label} className="text-center">
                 <div className="text-3xl md:text-4xl font-bold text-[#1B4F72]">{stat.value}</div>
