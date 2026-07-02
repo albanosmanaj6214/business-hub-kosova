@@ -53,14 +53,6 @@ export default function RegisterPage() {
     diasporaSubRoles: [] as string[],
   })
 
-  const toggleInterest = (value: string) => {
-    setForm((prev) => ({
-      ...prev,
-      interests: prev.interests.includes(value)
-        ? prev.interests.filter((i) => i !== value)
-        : [...prev.interests, value],
-    }))
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -415,30 +407,6 @@ export default function RegisterPage() {
                 </label>
               </div>
             )}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Interesat</label>
-              <div className="grid grid-cols-2 gap-2">
-                {interestOptions.map((opt) => (
-                  <label
-                    key={opt.value}
-                    className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-colors ${
-                      form.interests.includes(opt.value)
-                        ? 'border-[#2E86C1] bg-[#2E86C1]/5'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={form.interests.includes(opt.value)}
-                      onChange={() => toggleInterest(opt.value)}
-                      className="sr-only"
-                    />
-                    <span className="text-sm font-medium text-gray-700">{opt.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Gjuha</label>

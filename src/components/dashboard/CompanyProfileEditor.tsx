@@ -380,7 +380,7 @@ export function CompanyProfileEditor({ initial }: Props) {
 
       {/* Interesat për bashkëpunim */}
       {!isDiaspora && (
-        <Section icon={Users} title="Çka kërkon nga platforma">
+        <Section icon={Users} title="Bashkëpunimi që kërkon (për Matchmaking dhe Directory)">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {BUSINESS_INTERESTS.map((i) => (
               <label

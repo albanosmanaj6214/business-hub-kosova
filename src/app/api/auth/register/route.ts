@@ -156,7 +156,10 @@ export async function POST(req: Request) {
         activityType: roleValue === 'KOSOVO_BUSINESS' || roleValue === 'STARTUP' ? activityType : null,
         employeeCount: roleValue === 'KOSOVO_BUSINESS' || roleValue === 'STARTUP' ? employeeCount : null,
         entitledSectors: (roleValue === 'KOSOVO_BUSINESS' || roleValue === 'STARTUP') && activityNeedsSector(activityType) ? normalisedSectors : [],
-        interests: interests || [],
+        // Njoftimet aktive per te gjitha modulet si default; ngushtohen te Cilesimet.
+        interests: Array.isArray(interests) && interests.length > 0
+          ? interests
+          : ['grants', 'fairs', 'guides', 'news', 'certifications', 'consultations'],
         language: language || 'sq',
         femaleOwnership: typeof femaleOwnership === 'boolean' ? femaleOwnership : null,
         subscription: {

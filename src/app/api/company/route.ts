@@ -114,6 +114,34 @@ export async function PATCH(req: Request) {
 
   await prisma.company.update({ where: { id: existing.id }, data: companyData })
 
+  // Sinkronizim me User: Company eshte burimi i vertetes per te dhenat e biznesit.
+  // User-fushat mbahen si pasqyre per kodin ekzistues. entitledSectors ndjek
+  // sektoret e rinj VETEM nese admini s'i ka ndryshuar (bosh ose identike me te vjetrit).
+  {
+    const owner = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { entitledSectors: true },
+    })
+    const oldSectors = existing.sectors
+    const userSync: Record<string, unknown> = {}
+    if (d.name !== undefined) userSync.companyName = d.name
+    if (d.activityType !== undefined) userSync.activityType = d.activityType
+    if (d.employeeCount !== undefined) userSync.employeeCount = d.employeeCount
+    if (d.femaleOwnership !== undefined) userSync.femaleOwnership = d.femaleOwnership
+    if (normalisedSectors !== undefined) {
+      userSync.sectors = normalisedSectors
+      const cur = owner?.entitledSectors ?? []
+      const sameAsDeclared =
+        cur.length === oldSectors.length && cur.every((x) => oldSectors.includes(x))
+      if (cur.length === 0 || sameAsDeclared) {
+        userSync.entitledSectors = normalisedSectors
+      }
+    }
+    if (Object.keys(userSync).length > 0) {
+      await prisma.user.update({ where: { id: userId }, data: userSync })
+    }
+  }
+
   // Startup profile
   if (existing.startupProfile) {
     const spData: any = {
