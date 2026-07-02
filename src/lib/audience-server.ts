@@ -29,6 +29,10 @@ export async function currentBusinessProfile(): Promise<BusinessProfile | null> 
           diasporaProfile: {
             select: { countryOfOperation: true, subRoles: true, sectorsOfInterest: true, productsSought: true },
           },
+          offerings: {
+            where: { status: 'APPROVED' },
+            select: { category: { select: { slug: true } } },
+          },
         },
       },
     },
@@ -56,7 +60,10 @@ export async function currentBusinessProfile(): Promise<BusinessProfile | null> 
     role: u.role,
     country,
     interests: combinedInterests,
-    productSlugs: u.company?.diasporaProfile?.productsSought ?? [],
+    productSlugs: [
+      ...(u.company?.diasporaProfile?.productsSought ?? []),
+      ...((u.company?.offerings ?? []).map((o) => o.category?.slug).filter((x): x is string => !!x)),
+    ],
   }
 }
 

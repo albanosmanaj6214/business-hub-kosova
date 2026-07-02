@@ -10,6 +10,7 @@ import {
   AlertTriangle, Info,
 } from 'lucide-react'
 import { SECTORS } from '@/lib/sectors'
+import { OfferingsSection } from '@/components/dashboard/OfferingsSection'
 import { EMPLOYEE_COUNT_BUCKETS, EMPLOYEE_COUNT_LABEL } from '@/lib/employee-count'
 
 const ACTIVITY_OPTIONS = [
@@ -342,6 +343,9 @@ export function CompanyProfileEditor({ initial }: Props) {
           onChange={(e) => setForm({ ...form, address: e.target.value })}
         />
       </Section>
+
+      {/* Produktet/Shërbimet (§3) — vetëm rolet me ofertë konkrete */}
+      {!isDiaspora && <OfferingsSection />}
 
       {/* Kontakti */}
       <Section icon={Mail} title="Kontakti">

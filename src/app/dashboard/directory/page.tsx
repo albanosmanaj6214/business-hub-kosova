@@ -15,6 +15,7 @@ interface SearchParams {
   role?: string
   activity?: string
   sector?: string
+  product?: string
   country?: string
   municipality?: string
   verified?: string
@@ -42,6 +43,10 @@ export default async function DirectoryPage({ searchParams }: { searchParams: Se
   if (searchParams.country) where.country = { contains: searchParams.country, mode: 'insensitive' }
   if (searchParams.municipality) where.municipality = searchParams.municipality
   if (searchParams.verified === '1') where.visibilityLevel = { in: ['VERIFIED', 'FEATURED'] }
+  // Filtri i produktit (§3/§4): bizneset që kanë ofertë të aprovuar në kategorinë e dhënë.
+  if (searchParams.product) {
+    where.offerings = { some: { status: 'APPROVED', category: { slug: searchParams.product } } }
+  }
 
   const companies = await prisma.company.findMany({
     where,
@@ -64,7 +69,18 @@ export default async function DirectoryPage({ searchParams }: { searchParams: Se
       visibilityLevel: true,
       interests: true,
       createdAt: true,
+      offerings: {
+        where: { status: 'APPROVED' },
+        take: 4,
+        select: { title: true, category: { select: { nameSq: true, slug: true } } },
+      },
     },
+  })
+
+  const productCategories = await prisma.productCategory.findMany({
+    where: { status: 'APPROVED', offerings: { some: { status: 'APPROVED' } } },
+    orderBy: { nameSq: 'asc' },
+    select: { slug: true, nameSq: true },
   })
 
   const totalCount = await prisma.company.count({
@@ -89,6 +105,7 @@ export default async function DirectoryPage({ searchParams }: { searchParams: Se
       <DirectoryFilters
         initial={searchParams}
         sectors={SECTORS.map((s) => ({ value: s.slug, label: s.sq }))}
+        products={productCategories.map((c) => ({ value: c.slug, label: c.nameSq }))}
       />
 
       <div className="flex items-center justify-between">
@@ -165,6 +182,17 @@ function CompanyCard({ c }: { c: any }) {
 
         {c.shortDescription && (
           <p className="text-sm text-gray-700 line-clamp-2">{c.shortDescription}</p>
+        )}
+
+        {c.offerings && c.offerings.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {c.offerings.slice(0, 3).map((o: any, i: number) => (
+              <span key={i} className="inline-flex px-2 py-0.5 rounded-full text-[10px] bg-[#27AE60]/10 text-[#1e8449] font-medium">
+                {o.category?.nameSq ?? o.title}
+              </span>
+            ))}
+            {c.offerings.length > 3 && <span className="text-xs text-gray-400">+{c.offerings.length - 3}</span>}
+          </div>
         )}
 
         {c.sectors && c.sectors.length > 0 && (

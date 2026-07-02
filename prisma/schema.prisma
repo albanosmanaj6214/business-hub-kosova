@@ -715,8 +715,9 @@ model Company {
   // distributor, importer, partner, service_provider, export/import, industrial_parks etj.
   interests String[] @default([])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  offerings          Offering[]
 
   @@index([roleType, profileStatus])
   @@index([visibilityLevel])
@@ -783,4 +784,39 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([createdAt])
   @@index([actorEmail])
+}
+
+// -----------------------------------------------------------------------------
+// Faza A (V5 §3): Taksonomia — Sektor → Kategori produkti/shërbimi → Ofertë.
+// Kategoritë janë të strukturuara (jo tekst i lirë); bizneset propozojnë
+// kategori të reja që presin aprovimin e adminit.
+// -----------------------------------------------------------------------------
+
+model ProductCategory {
+  id         String   @id @default(cuid())
+  sectorSlug String
+  nameSq     String
+  slug       String   @unique
+  status     String   @default("APPROVED") // APPROVED | PENDING (propozim biznesi)
+  proposedBy String? // companyId që e propozoi (për PENDING)
+  createdAt  DateTime @default(now())
+
+  offerings Offering[]
+
+  @@index([sectorSlug, status])
+}
+
+model Offering {
+  id          String           @id @default(cuid())
+  companyId   String
+  company     Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  categoryId  String?
+  category    ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  title       String
+  description String?          @db.Text
+  status      String           @default("APPROVED") // PENDING kur kategoria është propozim i ri
+  createdAt   DateTime         @default(now())
+
+  @@index([companyId])
+  @@index([categoryId, status])
 }

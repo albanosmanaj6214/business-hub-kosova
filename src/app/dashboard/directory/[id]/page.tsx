@@ -19,7 +19,12 @@ export default async function CompanyDetailPage({ params, searchParams }: { para
 
   const company = await prisma.company.findUnique({
     where: { id: params.id },
-    include: { startupProfile: true, diasporaProfile: true, owner: { select: { role: true } } },
+    include: {
+      startupProfile: true,
+      diasporaProfile: true,
+      owner: { select: { role: true } },
+      offerings: { where: { status: 'APPROVED' }, include: { category: { select: { nameSq: true } } }, orderBy: { createdAt: 'desc' } },
+    },
   })
   if (!company) notFound()
 
@@ -93,6 +98,23 @@ export default async function CompanyDetailPage({ params, searchParams }: { para
                 <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
                   {company.longDescription}
                 </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {company.offerings && company.offerings.length > 0 && (
+            <Card>
+              <CardContent className="p-5">
+                <h2 className="text-sm font-semibold text-gray-900 mb-3">Produktet dhe shërbimet</h2>
+                <div className="space-y-2.5">
+                  {company.offerings.map((o: any) => (
+                    <div key={o.id} className="rounded-lg border border-gray-100 bg-gray-50/50 p-3">
+                      <p className="text-sm font-medium text-gray-900">{o.title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{o.category?.nameSq ?? ''}</p>
+                      {o.description && <p className="text-xs text-gray-600 mt-1">{o.description}</p>}
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           )}

@@ -10,19 +10,22 @@ interface Props {
     role?: string
     activity?: string
     sector?: string
+    product?: string
     country?: string
     municipality?: string
     verified?: string
   }
   sectors: { value: string; label: string }[]
+  products?: { value: string; label: string }[]
 }
 
-export function DirectoryFilters({ initial, sectors }: Props) {
+export function DirectoryFilters({ initial, sectors, products = [] }: Props) {
   const router = useRouter()
   const [q, setQ] = useState(initial.q ?? '')
   const [role, setRole] = useState(initial.role ?? '')
   const [activity, setActivity] = useState(initial.activity ?? '')
   const [sector, setSector] = useState(initial.sector ?? '')
+  const [product, setProduct] = useState(initial.product ?? '')
   const [country, setCountry] = useState(initial.country ?? '')
   const [verified, setVerified] = useState(initial.verified === '1')
   const [showAdvanced, setShowAdvanced] = useState(false)
@@ -33,13 +36,14 @@ export function DirectoryFilters({ initial, sectors }: Props) {
     if (role) params.set('role', role)
     if (activity) params.set('activity', activity)
     if (sector) params.set('sector', sector)
+    if (product) params.set('product', product)
     if (country) params.set('country', country)
     if (verified) params.set('verified', '1')
     router.push('/dashboard/directory' + (params.toString() ? '?' + params.toString() : ''))
   }
 
   const clear = () => {
-    setQ(''); setRole(''); setActivity(''); setSector(''); setCountry(''); setVerified(false)
+    setQ(''); setRole(''); setActivity(''); setSector(''); setProduct(''); setCountry(''); setVerified(false)
     router.push('/dashboard/directory')
   }
 
@@ -103,6 +107,15 @@ export function DirectoryFilters({ initial, sectors }: Props) {
           >
             <option value="">Të gjithë sektorët</option>
             {sectors.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </select>
+
+          <select
+            value={product}
+            onChange={(e) => setProduct(e.target.value)}
+            className="h-10 px-3 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2E86C1]"
+          >
+            <option value="">Çdo produkt/shërbim</option>
+            {products.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
           </select>
 
           <input

@@ -7,7 +7,7 @@ import { useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 import {
   Shield, Users, Search, Calendar, BookOpen, Bot, Bell, Inbox,
-  LayoutDashboard, Menu, X, ArrowLeft, Trash2, Database, ClipboardCheck, Send, Newspaper, KeyRound, Building2, Beaker, FolderOpen, ScrollText,
+  LayoutDashboard, Menu, X, ArrowLeft, Trash2, Database, ClipboardCheck, Send, Newspaper, KeyRound, Building2, Beaker, FolderOpen, ScrollText, Package,
 } from 'lucide-react'
 import { Toaster } from '@/components/admin/Toaster'
 
@@ -16,6 +16,7 @@ const adminNav = [
   { name: 'Qendra e Përmbajtjes', href: '/admin/permbajtja', icon: FolderOpen },
   { name: 'Qendra e Dispeçimit', href: '/admin/dispatch', icon: Send },
   { name: 'Profilet e Bizneseve', href: '/admin/profiles', icon: Building2 },
+  { name: 'Taksonomia e Produkteve', href: '/admin/taxonomy', icon: Package },
   { name: 'Lajme', href: '/admin/news', icon: Newspaper },
   { name: 'Perdoruesit', href: '/admin/users', icon: Users },
   { name: 'Qasja e bizneseve', href: '/admin/access', icon: KeyRound },
