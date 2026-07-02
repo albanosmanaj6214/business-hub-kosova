@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
@@ -55,7 +55,7 @@ const EMPTY: FormState = {
   notifySector: false, showInDashboard: true, forFemaleOwned: false, kind: 'GRANT',
 }
 
-export default function NewGrantPage() {
+function NewGrantPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [step, setStep] = useState<'url' | 'edit'>('url')
@@ -472,5 +472,14 @@ function ChipInput({ label, values, placeholder, onAdd, onRemove }: { label: str
         </button>
       </div>
     </div>
+  )
+}
+
+
+export default function NewGrantPage() {
+  return (
+    <Suspense fallback={<div className="p-10 text-center text-sm text-gray-500">Duke u ngarkuar...</div>}>
+      <NewGrantPageInner />
+    </Suspense>
   )
 }
