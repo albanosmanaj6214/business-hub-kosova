@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -57,8 +57,9 @@ const EMPTY: FormState = {
 
 export default function NewGrantPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [step, setStep] = useState<'url' | 'edit'>('url')
-  const [url, setUrl] = useState('')
+  const [url, setUrl] = useState(searchParams.get('url') ?? '')
   const [extractContext, setExtractContext] = useState('')
   const [extracting, setExtracting] = useState(false)
   const [extractError, setExtractError] = useState<string | null>(null)

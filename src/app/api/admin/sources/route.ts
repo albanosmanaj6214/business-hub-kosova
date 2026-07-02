@@ -15,9 +15,49 @@ async function requireAdmin() {
 // POST: run a registry source now, or toggle its active state.
 export async function POST(req: Request) {
   if (!(await requireAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const { id, action } = (await req.json().catch(() => ({}))) as { id?: string; action?: string }
-  if (!id || !action) return NextResponse.json({ error: 'id and action required' }, { status: 400 })
+  const body = (await req.json().catch(() => ({}))) as any
+  const { id, action } = body as { id?: string; action?: string }
+  if (!action) return NextResponse.json({ error: 'action required' }, { status: 400 })
 
+  if (action === 'create') {
+    // Burim i ri i regjistruar vetem me URL (nga /admin/permbajtja/burim-i-ri).
+    // Hyn JOAKTIV + publikim 'review' — asgje s'del pa aprovimin e adminit.
+    const { name, baseUrl, feedUrl, kind, category } = (await Promise.resolve(body)) as any
+    if (!name || !baseUrl || !kind) {
+      return NextResponse.json({ error: 'name, baseUrl dhe kind kerkohen' }, { status: 400 })
+    }
+    const validKinds = ['rss', 'wordpress', 'html', 'pdf']
+    if (!validKinds.includes(kind)) {
+      return NextResponse.json({ error: 'kind i panjohur' }, { status: 400 })
+    }
+    const validCats = ['GRANT', 'FAIR', 'REGULATION', 'MIXED']
+    const cat = validCats.includes(category) ? category : 'MIXED'
+    const code = String(name)
+      .toLowerCase()
+      .replace(/[ëç]/g, (c: string) => (c === 'ë' ? 'e' : 'c'))
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 40) + '-' + Math.random().toString(36).slice(2, 6)
+    const created = await prisma.source.create({
+      data: {
+        code,
+        name: String(name).slice(0, 200),
+        tier: 'B',
+        baseUrl: String(baseUrl).slice(0, 500),
+        category: cat as any,
+        language: 'sq',
+        strategies: { feedUrl: feedUrl ?? baseUrl },
+        kind,
+        publishMode: 'review',
+        isActive: false,
+        orgCategory: cat === 'GRANT' ? 'institucion' : null,
+      },
+    })
+    return NextResponse.json({ ok: true, id: created.id, code: created.code })
+  }
+
+
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
   const source = await prisma.source.findUnique({ where: { id } })
   if (!source) return NextResponse.json({ error: 'Source not found' }, { status: 404 })
 

@@ -3,12 +3,13 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-type Entity = 'grant' | 'fair' | 'guide'
+type Entity = 'grant' | 'fair' | 'guide' | 'news'
 
 const MODEL = {
   grant: () => prisma.grant,
   fair: () => prisma.tradeFair,
   guide: () => prisma.exportGuide,
+  news: () => prisma.newsItem,
 } as const
 
 async function requireAdmin() {
@@ -74,10 +75,11 @@ export async function listTrash() {
 export async function purgeOldDeleted(olderThanDays = 30) {
   const cutoff = new Date(Date.now() - olderThanDays * 86_400_000)
   const where = { deletedAt: { lt: cutoff } }
-  const [g, f, gu] = await Promise.all([
+  const [g, f, gu, n] = await Promise.all([
     prisma.grant.deleteMany({ where }),
     prisma.tradeFair.deleteMany({ where }),
     prisma.exportGuide.deleteMany({ where }),
+    prisma.newsItem.deleteMany({ where }),
   ])
-  return { grants: g.count, fairs: f.count, guides: gu.count }
+  return { grants: g.count, fairs: f.count, guides: gu.count, news: n.count }
 }
