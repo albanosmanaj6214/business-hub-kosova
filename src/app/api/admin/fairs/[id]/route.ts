@@ -57,6 +57,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
           message,
           messageSq: message,
           link: '/dashboard/fairs',
+          reason: `Po e sheh sepse ke zgjedhur sektorin: ${sectorsLabel(targetSectors)}.`,
         })),
       })
       notified = users.length

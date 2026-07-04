@@ -99,6 +99,7 @@ export async function POST(req: Request) {
           message,
           messageSq: message,
           link: '/dashboard/grants',
+          reason: `Po e sheh sepse ke zgjedhur sektorin: ${sectorsLabel(targetSectors)}.`,
         })),
       })
       notified = users.length

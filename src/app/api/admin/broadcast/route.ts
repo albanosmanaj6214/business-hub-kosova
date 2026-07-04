@@ -16,8 +16,11 @@ export async function POST(req: Request) {
     data: users.map((u) => ({
       userId: u.id,
       title,
+      titleSq: title,
       message,
+      messageSq: message,
       type: type as any,
+      reason: 'Njoftim i përgjithshëm nga administrata e platformës.',
     })),
   })
 
