@@ -6,6 +6,7 @@ import { parseAudience } from '@/lib/dispatch'
 import { audienceUserIds } from '@/lib/audience-server'
 import { sendNewsEmail } from '@/lib/email'
 import { logAudit } from '@/lib/audit'
+import { sectorBySlug } from '@/lib/sectors'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -124,6 +125,12 @@ export async function POST(req: Request) {
   // Njoftim brenda platformes (default: po).
   if (body.notify !== false && ids.length > 0) {
     const t = NOTIF[type].label + ': ' + title.slice(0, 200)
+    // §14.6: cdo njoftim ka arsye te qarte — pse po e sheh useri kete.
+    const reason = c.isGeneral
+      ? 'Njoftim i përgjithshëm për të gjithë përdoruesit e platformës.'
+      : c.targetSectors.length > 0
+        ? 'Po e sheh sepse ke zgjedhur sektorin: ' + c.targetSectors.map((sl) => sectorBySlug(sl)?.sq ?? sl).join(', ') + '.'
+        : 'Po e sheh sepse përputhet me profilin e biznesit tënd.'
     await prisma.notification.createMany({
       data: ids.map((uid) => ({
         userId: uid,
@@ -133,6 +140,7 @@ export async function POST(req: Request) {
         message: t,
         messageSq: t,
         link,
+        reason,
       })),
     })
   }

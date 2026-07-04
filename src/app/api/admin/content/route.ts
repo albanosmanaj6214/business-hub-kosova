@@ -302,6 +302,7 @@ export async function PATCH(req: Request) {
 // DELETE ?type=&id=&action=archive|restore — arkivim / rikthim (soft-delete)
 // ---------------------------------------------------------------------------
 export async function DELETE(req: Request) {
+  if (!(await requireAdmin())) return NextResponse.json({ error: 'forbidden' }, { status: 403 })
   const { searchParams } = new URL(req.url)
   const type = searchParams.get('type')
   const id = searchParams.get('id')

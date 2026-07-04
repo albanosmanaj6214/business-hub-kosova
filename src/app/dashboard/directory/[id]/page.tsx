@@ -29,14 +29,15 @@ export default async function CompanyDetailPage({ params, searchParams }: { para
   })
   if (!company) notFound()
 
-  // Kontrolli i dukshmërisë: nuk mund të shfaqet nëse s'është approved + visible
-  if (company.profileStatus !== 'APPROVED' && company.ownerUserId !== userId) {
-    notFound()
-  }
-
   const isOwner = company.ownerUserId === userId
   const tier = String((session?.user as { tier?: string })?.tier ?? 'FREE')
   const viewerRole = String((session?.user as { role?: string })?.role ?? '')
+  const viewerIsAdmin = viewerRole === 'ADMIN' || viewerRole === 'SUPER_ADMIN'
+
+  // Kontrolli i dukshmërisë: duhet APPROVED dhe jo PRIVATE — hapet vetëm për pronarin dhe adminët.
+  if ((company.profileStatus !== 'APPROVED' || company.visibilityLevel === 'PRIVATE') && !isOwner && !viewerIsAdmin) {
+    notFound()
+  }
 
   // Kontakti hapet: pronarit, ose atij që ka kërkesë kontakti TË APROVUAR (§2.5).
   const myContactRequest = isOwner
@@ -257,7 +258,7 @@ export default async function CompanyDetailPage({ params, searchParams }: { para
             </CardContent>
           </Card>
 
-          {company.website && !isOwner && (
+          {company.website && !isOwner && canSeeContact && (
             <Card>
               <CardContent className="p-5">
                 <a href={company.website} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-[#2E86C1] hover:underline">

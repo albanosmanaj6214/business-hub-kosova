@@ -112,6 +112,12 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   }
 
   if (d.action === 'shortlist' || d.action === 'reject') {
+    if (request.status === 'AWARDED') {
+      return NextResponse.json({ error: 'Kjo kërkesë tashmë ka ofertë të pranuar.' }, { status: 400 })
+    }
+    if (response.status === 'ACCEPTED') {
+      return NextResponse.json({ error: 'Oferta e pranuar nuk mund të ndryshohet.' }, { status: 400 })
+    }
     await prisma.offerResponse.update({
       where: { id: response.id },
       data: { status: d.action === 'shortlist' ? 'SHORTLISTED' : 'REJECTED' },
@@ -120,8 +126,19 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   }
 
   if (d.action === 'accept') {
+    if (response.status === 'REJECTED') {
+      return NextResponse.json({ error: 'Nuk mund të pranosh një ofertë të refuzuar.' }, { status: 400 })
+    }
+    // Vetëm NJË ofertë pranohet: tranzicioni në AWARDED bëhet atomik (updateMany me kusht),
+    // që as kërkesat paralele të mos hapin kontakte shtesë.
+    const awarded = await prisma.offerRequest.updateMany({
+      where: { id: request.id, status: { notIn: ['AWARDED', 'WITHDRAWN'] } },
+      data: { status: 'AWARDED' },
+    })
+    if (awarded.count === 0) {
+      return NextResponse.json({ error: 'Kjo kërkesë tashmë ka ofertë të pranuar.' }, { status: 400 })
+    }
     await prisma.offerResponse.update({ where: { id: response.id }, data: { status: 'ACCEPTED' } })
-    await prisma.offerRequest.update({ where: { id: request.id }, data: { status: 'AWARDED' } })
 
     // KONTAKTI HAPET (§2.5/§5): të dyja palët njoftohen — detajet i shohin te faqja e kërkesës.
     await prisma.notification.create({

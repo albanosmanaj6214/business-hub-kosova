@@ -40,8 +40,16 @@ function norm(s: string): string {
 function textMatches(sought: string, offering: { title: string; catName: string | null; catSlug: string | null }): boolean {
   const s = norm(sought)
   if (s.length < 3) return false
-  const targets = [offering.title, offering.catName ?? '', offering.catSlug ?? ''].map(norm)
-  return targets.some((t) => t.includes(s) || s.includes(t.split(' ')[0] ?? '###'))
+  // Vetëm targete reale: pa kategori s'futet target bosh ('' match-on gjithçka).
+  const targets = [offering.title, offering.catName, offering.catSlug]
+    .filter((x): x is string => !!x)
+    .map(norm)
+    .filter((t) => t.length >= 3)
+  return targets.some((t) => {
+    if (t.includes(s)) return true
+    const firstWord = t.split(' ')[0] ?? ''
+    return firstWord.length >= 3 && s.includes(firstWord)
+  })
 }
 
 type CandidateCompany = {

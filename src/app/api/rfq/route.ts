@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { logAudit } from '@/lib/audit'
+import { sectorBySlug } from '@/lib/sectors'
 
 export const dynamic = 'force-dynamic'
 
@@ -149,6 +150,13 @@ export async function POST(req: Request) {
     if (!category) return NextResponse.json({ error: 'Kategoria s\'ekziston.' }, { status: 400 })
   }
 
+  // Sektori kanonik (§5): kategoria fiton gjithmonë; sectorSlug i klientit
+  // pranohet vetëm nëse ekziston në listën kanonike të sektorëve.
+  const requestSectorSlug = category?.sectorSlug ?? (d.sectorSlug && sectorBySlug(d.sectorSlug) ? d.sectorSlug : null)
+  if (!category && !requestSectorSlug) {
+    return NextResponse.json({ error: 'Sektori i dhënë s\'ekziston.' }, { status: 400 })
+  }
+
   const request = await prisma.offerRequest.create({
     data: {
       requesterUserId: si.userId,
@@ -156,7 +164,7 @@ export async function POST(req: Request) {
       title: d.title,
       description: d.description,
       categoryId: category?.id ?? null,
-      sectorSlug: d.sectorSlug ?? category?.sectorSlug ?? null,
+      sectorSlug: requestSectorSlug,
       quantity: d.quantity ?? null,
       destinationCountry: d.destinationCountry ?? null,
       deadline: d.deadline ? new Date(d.deadline) : null,
@@ -190,12 +198,13 @@ export async function POST(req: Request) {
 
   // Niveli 2 (fallback): sektori — vetëm nëse s'ka mjaft përputhje të sakta
   const exactIds = new Set(exactMatches.map((c) => c.id))
-  const sectorSlug = d.sectorSlug ?? category?.sectorSlug ?? null
+  const sectorSlug = requestSectorSlug
   const sectorMatches =
     exactMatches.length < 3 && sectorSlug
       ? (await prisma.company.findMany({
           where: { ...baseWhere, sectors: { has: sectorSlug } },
           select: { id: true, ownerUserId: true, name: true },
+          take: 100,
         })).filter((c) => !exactIds.has(c.id))
       : []
 
