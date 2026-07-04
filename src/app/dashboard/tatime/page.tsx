@@ -447,7 +447,7 @@ export default async function TatimeGuidePage() {
           <div className="rounded-lg bg-[#1B4F72] p-2">
             <Receipt className="h-5 w-5 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Udhëzuesi Tatimor (ATK)</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Udhëzuesit ATK</h1>
         </div>
         <p className="text-gray-500 mt-2 max-w-3xl leading-relaxed">
           Administrata Tatimore e Kosovës (ATK) është institucioni ku kalojnë të gjitha detyrimet tatimore

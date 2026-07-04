@@ -97,7 +97,7 @@ export default function TransportiPage() {
           <p className="text-sm text-gray-700">{SHPEDITERS_TIP}</p>
           <div className="mt-4 flex flex-wrap gap-3">
             <Link href="/dashboard/dogana" className="inline-flex items-center gap-1.5 text-sm text-[#2E86C1] hover:underline font-medium">
-              Shiko Udhëzuesin Doganor <ArrowRight className="h-3.5 w-3.5" />
+              Shiko Udhëzuesin Dogana <ArrowRight className="h-3.5 w-3.5" />
             </Link>
             <Link href="/dashboard/terma/incoterms" className="inline-flex items-center gap-1.5 text-sm text-[#2E86C1] hover:underline font-medium">
               Incoterms Glossary <ArrowRight className="h-3.5 w-3.5" />

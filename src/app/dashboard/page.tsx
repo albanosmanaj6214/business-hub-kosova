@@ -349,8 +349,8 @@ async function KosovoBusinessDashboard({ firstName, company, unreadNotifs, isAdm
           <QuickAction href="/dashboard/directory" icon={Users} title="Kompani Kosovare" subtitle="Gjej partnerë dhe furnizues" />
           <QuickAction href="/dashboard/eksporti" icon={BookOpen} title="Eksporti" subtitle="Udhëzues sipas tregut + HS Code" />
           <QuickAction href="/dashboard/arbk" icon={Landmark} title="Udhëzuesi ARBK" subtitle="Regjistrim dhe ndryshime biznesi" />
-          <QuickAction href="/dashboard/tatime" icon={Receipt} title="Udhëzuesi Tatimor" subtitle="EDI, TVSH, paga, afatet" />
-          <QuickAction href="/dashboard/dogana" icon={Truck} title="Udhëzuesi Doganor" subtitle="Import, eksport, EUR.1" />
+          <QuickAction href="/dashboard/tatime" icon={Receipt} title="Udhëzuesit ATK" subtitle="EDI, TVSH, paga, afatet" />
+          <QuickAction href="/dashboard/dogana" icon={Truck} title="Udhëzuesi Dogana" subtitle="Import, eksport, EUR.1" />
           <QuickAction href="/dashboard/bookings" icon={GraduationCap} title="Konsultime" subtitle="Bisedo me ekspert për rastin tënd" />
         </div>
       </section>
@@ -490,7 +490,7 @@ async function StartupDashboard({ firstName, company, unreadNotifs }: {
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Veglat e themelimit</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <QuickAction href="/dashboard/arbk" icon={Landmark} title="Udhëzuesi ARBK" subtitle="Regjistrimi hap pas hapi" />
-          <QuickAction href="/dashboard/tatime" icon={Receipt} title="Udhëzuesi Tatimor" subtitle="EDI, kontabilisti, afatet" />
+          <QuickAction href="/dashboard/tatime" icon={Receipt} title="Udhëzuesit ATK" subtitle="EDI, kontabilisti, afatet" />
           <QuickAction href="/dashboard/directory" icon={Users} title="Kompani Kosovare" subtitle="Gjej partnerë dhe mentorë" />
         </div>
       </section>

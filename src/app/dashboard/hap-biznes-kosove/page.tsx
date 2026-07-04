@@ -229,8 +229,8 @@ export default function HapBiznesKosovePage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {[
             { title: 'Udhëzuesi ARBK', desc: 'Të gjitha procedurat e regjistrimit dhe ndryshimet', href: '/dashboard/arbk' },
-            { title: 'Udhëzuesi Tatimor', desc: 'EDI, TVSH, tatim në fitim, paga', href: '/dashboard/tatime' },
-            { title: 'Udhëzuesi Doganor', desc: 'Për import/eksport pas hapjes së biznesit', href: '/dashboard/dogana' },
+            { title: 'Udhëzuesit ATK', desc: 'EDI, TVSH, tatim në fitim, paga', href: '/dashboard/tatime' },
+            { title: 'Udhëzuesi Dogana', desc: 'Për import/eksport pas hapjes së biznesit', href: '/dashboard/dogana' },
             { title: 'Investo në Kosovë', desc: 'Parqe industriale, zona ekonomike, sektorë me potencial', href: '/dashboard/investime' },
             { title: 'Kompani Kosovare', desc: 'Directory për të gjetur partnerë ose furnizues', href: '/dashboard/directory' },
             { title: 'Konsultime', desc: 'Bisedë me eksperte për rastin tënd', href: '/dashboard/bookings' },

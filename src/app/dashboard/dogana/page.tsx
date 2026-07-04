@@ -377,7 +377,7 @@ export default async function DoganaGuidePage() {
           <div className="rounded-lg bg-[#1B4F72] p-2">
             <Truck className="h-5 w-5 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Udhëzuesi Doganor</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Udhëzuesi Dogana</h1>
         </div>
         <p className="text-gray-500 mt-2 max-w-3xl leading-relaxed">
           Dogana e Republikës së Kosovës është nën Ministrinë e Financave. Këtu do të gjesh të gjitha
