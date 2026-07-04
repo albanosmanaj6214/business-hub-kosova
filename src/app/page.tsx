@@ -69,7 +69,7 @@ export default async function HomePage() {
 
   // ---- Hero ----
   const hero = {
-    title1: { sq: 'Grantet, panairet dhe udhëzuesit e eksportit', en: 'Grants, trade fairs, and export guides', de: 'Förderaufrufe, Messen und Export-Leitfäden' },
+    title1: { sq: 'Burime financimi, panairet dhe udhëzuesit e eksportit', en: 'Funding sources, trade fairs, and export guides', de: 'Finanzierungsquellen, Messen und Export-Leitfäden' },
     title2: { sq: 'në një platformë të vetme.', en: 'in one single platform.', de: 'auf einer einzigen Plattform.' },
     sub: {
       sq: 'Kosova Business Hub i ndihmon bizneset kosovare të gjejnë më shpejt mundësi financimi, panaire ndërkombëtare, rregulla eksporti dhe informata praktike për rritje në tregjet vendore dhe të jashtme.',
