@@ -7,20 +7,24 @@ import { useSession, signOut } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { KonsulentiWidget, openKonsulenti } from '@/components/konsulenti/KonsulentiWidget'
-import { navigationForRole } from '@/lib/role-navigation'
+import { navigationForRole, flattenNav } from '@/lib/role-navigation'
 import {
-  LayoutDashboard, Search, Calendar, BookOpen,
-  Bell, Settings, CreditCard, MessageSquare, MessagesSquare, Menu, X, GraduationCap,
-  LogOut, Shield, ChevronRight, ShieldCheck, ClipboardCheck, Newspaper} from 'lucide-react'
-
-
+  MessagesSquare, Menu, X,
+  LogOut, Shield, ChevronRight, ChevronDown,
+} from 'lucide-react'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { data: session } = useSession()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const role = (session?.user as { role?: string })?.role
-  const navigation = navigationForRole(role)
+  const sections = navigationForRole(role)
+  const activeName = flattenNav(sections).find((n) => n.href === pathname)?.name
+
+  function toggleSection(label: string) {
+    setCollapsed((c) => ({ ...c, [label]: !c[label] }))
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -41,46 +45,67 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </button>
         </div>
 
-        <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
-          {navigation.map((item) => {
-            const isActive = pathname === item.href
+        <nav className="px-3 py-4 space-y-4 flex-1 overflow-y-auto">
+          {sections.map((section) => {
+            const isCollapsed = collapsed[section.label]
             return (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={cn(
-                  'flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-[#1B4F72] text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
+              <div key={section.label}>
+                <button
+                  type="button"
+                  onClick={() => toggleSection(section.label)}
+                  className="w-full flex items-center justify-between px-3 mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <span>{section.label}</span>
+                  <ChevronDown className={cn('h-3.5 w-3.5 transition-transform duration-200', isCollapsed && '-rotate-90')} />
+                </button>
+                {!isCollapsed && (
+                  <div className="space-y-0.5">
+                    {section.items.map((item) => {
+                      const isActive = pathname === item.href
+                      return (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          onClick={() => setSidebarOpen(false)}
+                          className={cn(
+                            'flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                            isActive
+                              ? 'bg-[#1B4F72] text-white'
+                              : 'text-gray-600 hover:bg-gray-100'
+                          )}
+                        >
+                          <item.icon className="h-[18px] w-[18px] mr-3 shrink-0" />
+                          <span className="truncate">{item.name}</span>
+                        </Link>
+                      )
+                    })}
+                  </div>
                 )}
-              >
-                <item.icon className="h-5 w-5 mr-3" />
-                {item.name}
-              </Link>
+              </div>
             )
           })}
 
-          <button
-            type="button"
-            onClick={() => { setSidebarOpen(false); openKonsulenti() }}
-            className="w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium bg-gradient-to-r from-[#1B4F72] to-[#2E86C1] text-white shadow-sm hover:shadow-md hover:from-[#143a55] hover:to-[#1B6FA5] transition-all"
-          >
-            <MessagesSquare className="h-5 w-5 mr-3" />
-            Asistenti KBH
-            <span className="ml-auto text-[10px] font-bold tracking-wider bg-amber-400 text-[#1B4F72] px-2 py-0.5 rounded-full shadow-sm animate-pulse">E RE</span>
-          </button>
-
-          {(session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN') && (
-            <Link
-              href="/admin"
-              className="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-orange-600 hover:bg-orange-50"
+          <div className="pt-2 space-y-1">
+            <button
+              type="button"
+              onClick={() => { setSidebarOpen(false); openKonsulenti() }}
+              className="w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium bg-gradient-to-r from-[#1B4F72] to-[#2E86C1] text-white shadow-sm hover:shadow-md hover:from-[#143a55] hover:to-[#1B6FA5] transition-all"
             >
-              <Shield className="h-5 w-5 mr-3" />
-              Admin Panel
-            </Link>
-          )}
+              <MessagesSquare className="h-5 w-5 mr-3" />
+              Asistenti KBH
+              <span className="ml-auto text-[10px] font-bold tracking-wider bg-amber-400 text-[#1B4F72] px-2 py-0.5 rounded-full shadow-sm animate-pulse">E RE</span>
+            </button>
+
+            {(session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN') && (
+              <Link
+                href="/admin"
+                className="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-orange-600 hover:bg-orange-50"
+              >
+                <Shield className="h-5 w-5 mr-3" />
+                Admin Panel
+              </Link>
+            )}
+          </div>
         </nav>
 
         <div className="mt-auto p-4 border-t border-gray-100 bg-white shrink-0">
@@ -111,7 +136,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <>
                 <ChevronRight className="h-4 w-4 mx-1" />
                 <span className="text-gray-900 font-medium">
-                  {navigation.find((n) => n.href === pathname)?.name || 'Page'}
+                  {activeName || 'Page'}
                 </span>
               </>
             )}
