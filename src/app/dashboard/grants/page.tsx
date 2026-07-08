@@ -387,7 +387,7 @@ function GrantCard({ grant, today }: { grant: GrantRow; today: Date }) {
   const titleYear = extractYearFromTitle(`${grant.title} ${grant.titleSq ?? ''}`)
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card id={`grant-${grant.id}`} className="hover:shadow-md transition-shadow scroll-mt-24">
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-3 mb-3">
           <h3 className="font-semibold text-gray-900 leading-snug">{title}</h3>

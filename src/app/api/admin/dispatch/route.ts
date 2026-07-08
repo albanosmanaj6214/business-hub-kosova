@@ -98,7 +98,7 @@ export async function POST(req: Request) {
 
   let title: string
   let summary: string | null = null
-  const link = NOTIF[type].link
+  const link = type === 'grant' ? `/dashboard/grants#grant-${id}` : NOTIF[type].link
   if (type === 'grant') {
     const g = await prisma.grant.update({ where: { id }, data })
     title = g.titleSq || g.title

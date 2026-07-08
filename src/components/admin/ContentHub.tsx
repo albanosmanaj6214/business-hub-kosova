@@ -196,9 +196,9 @@ export function ContentHub({ rows, isSuper }: { rows: ContentRow[]; isSuper: boo
                 const meta = TYPE_META[r.type]
                 return (
                   <tr key={r.type + r.id} className={`hover:bg-gray-50/60 ${r.status === 'ARCHIVED' ? 'opacity-50' : ''}`}>
-                    <td className="px-4 py-3 max-w-md">
-                      <p className="font-medium text-gray-900 truncate">{r.title}</p>
-                      <p className="text-xs text-gray-500 truncate">{r.source}</p>
+                    <td className="px-4 py-3 max-w-xl">
+                      <p className="font-medium text-gray-900 leading-snug" title={r.title}>{r.title}</p>
+                      <p className="text-xs text-gray-500 truncate mt-0.5">{r.source}</p>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${meta.color}`}>
