@@ -430,19 +430,6 @@ export default async function DoganaGuidePage() {
         </Link>
       </div>
 
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
-        <AlertTriangle className="h-5 w-5 text-amber-700 shrink-0 mt-0.5" />
-        <div className="text-sm text-amber-900">
-          <p className="font-semibold mb-1">Verifiko procedurat aktuale</p>
-          <p className="leading-relaxed">
-            Të dhënat janë verifikuar me faqet zyrtare deri më <strong>{LAST_VERIFIED}</strong>. Tarifat doganore,
-            kërkesat për certifikata dhe procedurat mund të ndryshojnë. Verifikoji te{' '}
-            <a href={OFFICIAL_URL} target="_blank" rel="noreferrer" className="underline font-medium">dogana.rks-gov.net</a>{' '}
-            ose me shpediterin tënd.
-          </p>
-        </div>
-      </div>
-
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold text-gray-900">Procedurat kryesore</h2>
@@ -491,6 +478,19 @@ export default async function DoganaGuidePage() {
           </Card>
         </div>
       </section>
+
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+        <AlertTriangle className="h-5 w-5 text-amber-700 shrink-0 mt-0.5" />
+        <div className="text-sm text-amber-900">
+          <p className="font-semibold mb-1">Verifiko procedurat aktuale</p>
+          <p className="leading-relaxed">
+            Të dhënat janë verifikuar me faqet zyrtare deri më <strong>{LAST_VERIFIED}</strong>. Tarifat doganore,
+            kërkesat për certifikata dhe procedurat mund të ndryshojnë. Verifikoji te{' '}
+            <a href={OFFICIAL_URL} target="_blank" rel="noreferrer" className="underline font-medium">dogana.rks-gov.net</a>{' '}
+            ose me shpediterin tënd.
+          </p>
+        </div>
+      </div>
 
       <p className="text-xs text-gray-400 max-w-3xl leading-relaxed">
         Ky udhëzues është për orientim. Për transportet e para, punëso shpediter të licencuar. Baza ligjore: Kodi

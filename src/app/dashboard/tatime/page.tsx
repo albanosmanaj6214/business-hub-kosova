@@ -512,44 +512,7 @@ export default async function TatimeGuidePage() {
             </CardContent>
           </Card>
         </div>
-
-        <Card className="mt-3">
-          <CardContent className="p-5">
-            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <Phone className="h-4 w-4 text-[#1B4F72]" />
-              Zyrat rajonale të ATK
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-              {OFFICES.map((o) => (
-                <div key={o.region} className="rounded-lg border border-gray-200 p-3">
-                  <p className="text-sm font-semibold text-gray-900">{o.region}</p>
-                  <p className="text-xs text-gray-600 mt-0.5">{o.address}</p>
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-gray-500 mt-3">
-              Numrat e kontaktit dhe oraret e punës verifikoji te{' '}
-              <a href={OFFICIAL_URL} target="_blank" rel="noreferrer" className="text-[#2E86C1] hover:underline">
-                atk-ks.org
-              </a>{' '}para se të shkosh.
-            </p>
-          </CardContent>
-        </Card>
       </section>
-
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
-        <AlertTriangle className="h-5 w-5 text-amber-700 shrink-0 mt-0.5" />
-        <div className="text-sm text-amber-900">
-          <p className="font-semibold mb-1">Verifiko normat dhe afatet aktuale</p>
-          <p className="leading-relaxed">
-            Të gjitha të dhënat në këtë udhëzues janë verifikuar deri më <strong>{LAST_VERIFIED}</strong>{' '}
-            me faqet zyrtare (atk-ks.org, gzk.rks-gov.net) dhe ligjet aktualë. Normat mund të ndryshohen
-            nga Kuvendi — verifikoji te{' '}
-            <a href={OFFICIAL_URL} target="_blank" rel="noreferrer" className="underline font-medium">atk-ks.org</a>{' '}
-            para vendimeve të mëdha.
-          </p>
-        </div>
-      </div>
 
       <section>
         <div className="flex items-center justify-between mb-3">
@@ -590,6 +553,45 @@ export default async function TatimeGuidePage() {
               rregull. Kontabilisti të ndihmon të përgatitesh. Nëse inspektori kërkon dokument që s\'e ke pranë,
               mund të kërkosh 3-5 ditë afat për ta sjellë — por vetëm nëse s\'është nën detyrimin e mbajtjes në selië.
             </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+        <AlertTriangle className="h-5 w-5 text-amber-700 shrink-0 mt-0.5" />
+        <div className="text-sm text-amber-900">
+          <p className="font-semibold mb-1">Verifiko normat dhe afatet aktuale</p>
+          <p className="leading-relaxed">
+            Të gjitha të dhënat në këtë udhëzues janë verifikuar deri më <strong>{LAST_VERIFIED}</strong>{' '}
+            me faqet zyrtare (atk-ks.org, gzk.rks-gov.net) dhe ligjet aktualë. Normat mund të ndryshohen
+            nga Kuvendi — verifikoji te{' '}
+            <a href={OFFICIAL_URL} target="_blank" rel="noreferrer" className="underline font-medium">atk-ks.org</a>{' '}
+            para vendimeve të mëdha.
+          </p>
+        </div>
+      </div>
+
+      <section>
+        <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <Phone className="h-4 w-4 text-[#1B4F72]" />
+          Zyrat rajonale të ATK
+        </h2>
+        <Card>
+          <CardContent className="p-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {OFFICES.map((o) => (
+                <div key={o.region} className="rounded-lg border border-gray-200 p-3">
+                  <p className="text-sm font-semibold text-gray-900">{o.region}</p>
+                  <p className="text-xs text-gray-600 mt-0.5">{o.address}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-3">
+              Numrat e kontaktit dhe oraret e punës verifikoji te{' '}
+              <a href={OFFICIAL_URL} target="_blank" rel="noreferrer" className="text-[#2E86C1] hover:underline">
+                atk-ks.org
+              </a>{' '}para se të shkosh.
+            </p>
           </CardContent>
         </Card>
       </section>
