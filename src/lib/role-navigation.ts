@@ -100,6 +100,11 @@ const DIASPORA: NavSection[] = [
     { name: 'Investo në Kosovë', href: '/dashboard/investime', icon: Building2 },
     { name: 'Burime Financimi', href: '/dashboard/burime-financimi', icon: Search },
   ]},
+  { label: 'Regjistrim & Procedura', items: [
+    { name: 'Udhëzuesi ARBK', href: '/dashboard/arbk', icon: Landmark },
+    { name: 'Udhëzuesit ATK', href: '/dashboard/tatime', icon: Receipt },
+    { name: 'Udhëzuesi Dogana', href: '/dashboard/dogana', icon: Truck },
+  ]},
   { label: 'Rrjeti i Biznesit', items: [
     { name: 'Kompani Kosovare', href: '/dashboard/directory', icon: Users },
     { name: 'Kërko Ofertë', href: '/dashboard/kerko-oferte', icon: Handshake },
