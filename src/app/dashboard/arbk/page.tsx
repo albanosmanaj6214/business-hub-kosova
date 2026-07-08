@@ -591,19 +591,29 @@ export default async function ARBKGuidePage() {
   const availableTemplates = new Set(uploaded.map((t) => t.key))
   return (
     <div className="space-y-6">
-      <div>
+      <div className="space-y-4">
         <div className="flex items-center gap-2">
           <div className="rounded-lg bg-[#1B4F72] p-2">
             <Landmark className="h-5 w-5 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Udhëzuesi ARBK</h1>
         </div>
-        <p className="text-gray-500 mt-2 max-w-3xl leading-relaxed">
-          ARBK është Agjencia për Regjistrimin e Bizneseve në Kosovë. Kur don të hapësh biznes, të bësh
-          ndryshime në të, ose ta çregjistrosh, kjo është institucioni ku kalojnë të gjitha procedurat.
-          Këtu do të gjesh të gjitha procedurat kryesore me shpjegime hap-pas-hapi, dokumentet që të duhen,
-          dhe kohën/koston që të presin.
-        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 rounded-xl border border-gray-200 bg-white p-5">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">Çka është ARBK</h2>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Agjencia për Regjistrimin e Bizneseve në Kosovë. Këtu kalojnë të gjitha procedurat kur hap
+              biznes, bën ndryshime në të, ose e mbyll.
+            </p>
+          </div>
+          <div className="md:border-l md:border-gray-100 md:pl-8">
+            <h2 className="text-sm font-semibold text-gray-900 mb-1">Si ta përdorësh këtë faqe</h2>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Fillo nga forma ligjore që të përshtatet, hape dhe lexo hapat. Çdo procedurë ka dokumentet që
+              të duhen, template për shkarkim, dhe sa zgjat.
+            </p>
+          </div>
+        </div>
       </div>
 
       <section>
@@ -683,48 +693,7 @@ export default async function ARBKGuidePage() {
             </CardContent>
           </Card>
         </div>
-
-        <Card className="mt-3">
-          <CardContent className="p-5">
-            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <Phone className="h-4 w-4 text-[#1B4F72]" />
-              Zyrat rajonale të ARBK
-            </h3>
-            <p className="text-sm text-gray-700 mb-3">
-              Nëse zgjedh mënyrën fizike, zyra qendrore është në Prishtinë, por ke edhe këto zyra rajonale.
-              Numrat mund të ndryshojnë — verifikoji te{' '}
-              <a href={OFFICIAL_URL} target="_blank" rel="noreferrer" className="text-[#2E86C1] hover:underline">portali zyrtar</a>{' '}
-              para se të shkosh.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-              {OFFICES.map((o) => (
-                <div key={o.region} className="rounded-lg border border-gray-200 p-3">
-                  <p className="text-sm font-semibold text-gray-900">{o.region}</p>
-                  <p className="text-xs text-gray-600 mt-0.5">{o.address}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{o.phone}</p>
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-gray-500 mt-3">
-              Në disa komuna ka edhe Pika të Ofrimit të Shërbimeve (POU) ku mund të kryhen disa shërbime të ARBK-së
-              më afër teje. Pyet te bashkia e komunës tënde.
-            </p>
-          </CardContent>
-        </Card>
       </section>
-
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
-        <AlertTriangle className="h-5 w-5 text-amber-700 shrink-0 mt-0.5" />
-        <div className="text-sm text-amber-900">
-          <p className="font-semibold mb-1">Verifikoji tarifat dhe procedurat aktuale</p>
-          <p className="leading-relaxed">
-            Ky udhëzues bazohet në gjendjen e procedurave deri më <strong>{LAST_VERIFIED}</strong>. Tarifat, formularët
-            dhe procedurat mund të ndryshojnë. Për një procedurë specifike, verifikoje te{' '}
-            <a href={OFFICIAL_URL} target="_blank" rel="noreferrer" className="underline font-medium">portali zyrtar ARBK</a>{' '}
-            para se ta fillon.
-          </p>
-        </div>
-      </div>
 
       <section>
         <h2 className="text-lg font-semibold text-gray-900 mb-2">Kontrolli i emrit të biznesit</h2>
@@ -858,6 +827,49 @@ export default async function ARBKGuidePage() {
                 </div>
               ))}
             </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+        <AlertTriangle className="h-5 w-5 text-amber-700 shrink-0 mt-0.5" />
+        <div className="text-sm text-amber-900">
+          <p className="font-semibold mb-1">Verifikoji tarifat dhe procedurat aktuale</p>
+          <p className="leading-relaxed">
+            Ky udhëzues bazohet në gjendjen e procedurave deri më <strong>{LAST_VERIFIED}</strong>. Tarifat, formularët
+            dhe procedurat mund të ndryshojnë. Për një procedurë specifike, verifikoje te{' '}
+            <a href={OFFICIAL_URL} target="_blank" rel="noreferrer" className="underline font-medium">portali zyrtar ARBK</a>{' '}
+            para se ta fillon.
+          </p>
+        </div>
+      </div>
+
+      <section>
+        <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <Phone className="h-4 w-4 text-[#1B4F72]" />
+          Zyrat rajonale të ARBK
+        </h2>
+        <Card>
+          <CardContent className="p-5">
+            <p className="text-sm text-gray-700 mb-3">
+              Nëse zgjedh mënyrën fizike, zyra qendrore është në Prishtinë, por ke edhe këto zyra rajonale.
+              Numrat mund të ndryshojnë — verifikoji te{' '}
+              <a href={OFFICIAL_URL} target="_blank" rel="noreferrer" className="text-[#2E86C1] hover:underline">portali zyrtar</a>{' '}
+              para se të shkosh.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {OFFICES.map((o) => (
+                <div key={o.region} className="rounded-lg border border-gray-200 p-3">
+                  <p className="text-sm font-semibold text-gray-900">{o.region}</p>
+                  <p className="text-xs text-gray-600 mt-0.5">{o.address}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{o.phone}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-3">
+              Në disa komuna ka edhe Pika të Ofrimit të Shërbimeve (POU) ku mund të kryhen disa shërbime të ARBK-së
+              më afër teje. Pyet te bashkia e komunës tënde.
+            </p>
           </CardContent>
         </Card>
       </section>
