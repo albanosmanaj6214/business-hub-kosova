@@ -882,3 +882,16 @@ model ContactRequest {
 
   @@unique([fromUserId, toCompanyId])
 }
+
+// Template-t e dokumenteve per Udhezuesin ARBK (statut, akt themelimi, etj.).
+// Skedaret ruhen ne DB (bytea) qe te mbijetojne rindertimet e .next dhe te hyjne ne dump.
+model ArbkTemplate {
+  key          String   @id
+  title        String
+  fileName     String
+  mimeType     String
+  data         Bytes
+  size         Int
+  uploadedAt   DateTime @default(now())
+  uploadedById String?
+}

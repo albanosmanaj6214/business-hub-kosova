@@ -5,8 +5,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import {
   Landmark, FileText, Building2, MapPin, Briefcase, Users, UserCog, Wallet,
   Ban, GitBranch, Copy, XCircle, Globe, ExternalLink, AlertTriangle,
-  ChevronRight, CheckCircle2, Monitor, Building, Phone, Info,
+  ChevronRight, CheckCircle2, Monitor, Building, Phone, Info, Download, ScrollText,
 } from 'lucide-react'
+import { prisma } from '@/lib/prisma'
+import { arbkTemplateLabel } from '@/lib/arbk-templates'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,6 +38,8 @@ interface Procedure {
   timeframe: string
   goodToKnow?: string[]
   officialLawRef?: string
+  templateKeys?: string[]
+  showStatuteExplainer?: boolean
 }
 
 const OFFICES = [
@@ -111,6 +115,8 @@ const REGISTRIME: Procedure[] = [
       'Nëse harron një element në statut, mund të bësh amendament më vonë me vendim të Kuvendit.',
     ],
     officialLawRef: 'Ligji Nr. 06/L-016 për Shoqëritë Tregtare, nenet 76-140',
+    templateKeys: ['statut', 'marreveshje', 'akt-themelimi', 'vendim-drejtori', 'pelqim-drejtori'],
+    showStatuteExplainer: true,
   },
   {
     icon: Building2,
@@ -139,6 +145,8 @@ const REGISTRIME: Procedure[] = [
       'Rregullat për menaxhimin (Kuvend + KD + Këshill Mbikëqyrës) janë të komplikuara krahasuar me SH.P.K.',
     ],
     officialLawRef: 'Ligji Nr. 06/L-016 për Shoqëritë Tregtare, nenet 141-249',
+    templateKeys: ['statut', 'akt-themelimi', 'vendim-drejtori', 'pelqim-drejtori'],
+    showStatuteExplainer: true,
   },
   {
     icon: Users,
@@ -163,6 +171,7 @@ const REGISTRIME: Procedure[] = [
       'Nëse s\'e ke besimin absolut te bashkëpartneri/të, shqyrto SH.P.K. në vend të O.P.',
     ],
     officialLawRef: 'Ligji Nr. 06/L-016 për Shoqëritë Tregtare, nenet 24-42',
+    templateKeys: ['marreveshje'],
   },
   {
     icon: Users,
@@ -182,6 +191,7 @@ const REGISTRIME: Procedure[] = [
     fee: 'Ngjashme me O.P.',
     timeframe: '3-7 ditë pune',
     officialLawRef: 'Ligji Nr. 06/L-016 për Shoqëritë Tregtare, nenet 43-75',
+    templateKeys: ['marreveshje'],
   },
   {
     icon: Globe,
@@ -435,7 +445,7 @@ const NDRYSHIMET: Procedure[] = [
   },
 ]
 
-function ProcedureCard({ p }: { p: Procedure }) {
+function ProcedureCard({ p, available }: { p: Procedure; available: Set<string> }) {
   const Icon = p.icon
   return (
     <details className="rounded-xl border border-gray-200 bg-white group">
@@ -490,14 +500,59 @@ function ProcedureCard({ p }: { p: Procedure }) {
           </ol>
         </div>
 
+        {p.showStatuteExplainer && (
+          <div className="rounded-lg bg-indigo-50 border border-indigo-200 p-3">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <ScrollText className="h-4 w-4 text-indigo-700" />
+              <h4 className="text-xs font-semibold text-indigo-900 uppercase tracking-wider">Çka është statuti dhe ku e merr</h4>
+            </div>
+            <p className="text-sm text-indigo-900 leading-relaxed">
+              Statuti është &laquo;kushtetuta&raquo; e brendshme e shoqërisë tënde: dokumenti që përcakton kush janë
+              pronarët e me sa përqindje, kush e drejton, si ndahet fitimi, si merren vendimet dhe çka ndodh
+              kur një pronar del. Për një pronar të vetëm mjafton një statut i thjeshtë; kur ka disa pronarë,
+              ai është mbrojtja jote kur lindin mosmarrëveshje.
+            </p>
+            <ul className="mt-2 space-y-1 text-sm text-indigo-900">
+              <li className="flex items-start gap-1.5"><span className="text-indigo-700 mt-0.5">•</span><span><strong>Template i gatshëm:</strong> shkarko modelin më poshtë dhe plotëso të dhënat e tua — mjafton për rastet e thjeshta.</span></li>
+              <li className="flex items-start gap-1.5"><span className="text-indigo-700 mt-0.5">•</span><span><strong>Noter ose avokat:</strong> rekomandohet kur ka disa pronarë ose kapital të konsiderueshëm (zakonisht 30-80 EUR).</span></li>
+              <li className="flex items-start gap-1.5"><span className="text-indigo-700 mt-0.5">•</span><span><strong>Vetë:</strong> ligji lejon ta hartosh vetë me shkrim dhe ta nënshkruash; noterizimi s&apos;është gjithmonë i detyrueshëm, por jep siguri.</span></li>
+            </ul>
+          </div>
+        )}
+
+        {p.templateKeys && p.templateKeys.length > 0 && (
+          <div>
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Dokumentet model për shkarkim</h4>
+            <div className="flex flex-wrap gap-2">
+              {p.templateKeys.map((k) => available.has(k) ? (
+                <a
+                  key={k}
+                  href={`/api/arbk-templates/${k}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#1B4F72]/30 bg-[#1B4F72]/5 text-sm font-medium text-[#1B4F72] hover:bg-[#1B4F72]/10 transition-colors"
+                >
+                  <Download className="h-4 w-4" /> {arbkTemplateLabel(k)}
+                </a>
+              ) : (
+                <span
+                  key={k}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-dashed border-gray-200 text-sm text-gray-400"
+                  title="Do të ngarkohet së shpejti"
+                >
+                  <FileText className="h-4 w-4" /> {arbkTemplateLabel(k)} <span className="text-xs">(së shpejti)</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="rounded-lg border border-gray-200 p-3">
-            <div className="text-xs text-gray-500 mb-0.5">Kosto</div>
-            <div className="text-sm text-gray-900 font-medium">{p.fee}</div>
-          </div>
-          <div className="rounded-lg border border-gray-200 p-3">
-            <div className="text-xs text-gray-500 mb-0.5">Koha</div>
+            <div className="text-xs text-gray-500 mb-0.5">Sa zgjat</div>
             <div className="text-sm text-gray-900 font-medium">{p.timeframe}</div>
+          </div>
+          <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+            <div className="text-xs text-green-700 mb-0.5">Regjistrimi në ARBK</div>
+            <div className="text-sm text-green-900 font-semibold">Pa pagesë</div>
           </div>
         </div>
 
@@ -532,6 +587,8 @@ function ProcedureCard({ p }: { p: Procedure }) {
 
 export default async function ARBKGuidePage() {
   const fullAccess = await fullAccessForSession()
+  const uploaded = await prisma.arbkTemplate.findMany({ select: { key: true } })
+  const availableTemplates = new Set(uploaded.map((t) => t.key))
   return (
     <div className="space-y-6">
       <div>
@@ -710,7 +767,7 @@ export default async function ARBKGuidePage() {
           Ja gjashtë format kryesore, të renditura nga më e thjeshta te më e komplikuara.
         </p>
         <div className="space-y-2">
-          {REGISTRIME.map((p, i) => fullAccess || i < 2 ? <ProcedureCard key={p.title} p={p} /> : <LockedCard key={p.title} title={p.title} summary={p.intro} />)}
+          {REGISTRIME.map((p, i) => fullAccess || i < 2 ? <ProcedureCard key={p.title} p={p} available={availableTemplates} /> : <LockedCard key={p.title} title={p.title} summary={p.intro} />)}
         </div>
       </section>
 
@@ -725,7 +782,7 @@ export default async function ARBKGuidePage() {
           ARBK-ja duhet të lajmërohet.
         </p>
         <div className="space-y-2">
-          {NDRYSHIMET.map((p, i) => fullAccess || i < 2 ? <ProcedureCard key={p.title} p={p} /> : <LockedCard key={p.title} title={p.title} summary={p.intro} />)}
+          {NDRYSHIMET.map((p, i) => fullAccess || i < 2 ? <ProcedureCard key={p.title} p={p} available={availableTemplates} /> : <LockedCard key={p.title} title={p.title} summary={p.intro} />)}
         </div>
       </section>
 
