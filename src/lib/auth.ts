@@ -89,14 +89,16 @@ export const authOptions: NextAuthOptions = {
       // (rol, pako, çaktivizim) të kapen pa pritur ri-login 30-ditor.
       const refreshedAt = (token as any).refreshedAt as number | undefined
       const STALE_MS = 5 * 60 * 1000
-      if (token.id && (!refreshedAt || Date.now() - refreshedAt > STALE_MS)) {
+      if (token.id && (!refreshedAt || Date.now() - refreshedAt > STALE_MS || (token as any).employeeCount === undefined)) {
         const fresh = await prisma.user.findUnique({
           where: { id: token.id as string },
           select: {
             role: true,
             language: true,
             companyName: true,
+            employeeCount: true,
             subscription: { select: { tier: true } },
+            company: { select: { employeeCount: true, activityType: true } },
           },
         })
         if (fresh) {
@@ -104,6 +106,8 @@ export const authOptions: NextAuthOptions = {
           token.language = fresh.language
           token.companyName = fresh.companyName
           token.tier = fresh.subscription?.tier || 'FREE'
+          ;(token as any).employeeCount = fresh.company?.employeeCount ?? fresh.employeeCount ?? null
+          ;(token as any).activityType = fresh.company?.activityType ?? null
         }
         ;(token as any).refreshedAt = Date.now()
       }
@@ -116,6 +120,8 @@ export const authOptions: NextAuthOptions = {
         ;(session.user as any).language = token.language
         ;(session.user as any).companyName = token.companyName
         ;(session.user as any).tier = token.tier
+        ;(session.user as any).employeeCount = (token as any).employeeCount ?? null
+        ;(session.user as any).activityType = (token as any).activityType ?? null
       }
       return session
     },

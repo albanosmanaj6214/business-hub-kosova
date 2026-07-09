@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Search, Calendar, BookOpen, Bell, Settings, CreditCard,
   MessageSquare, ShieldCheck, Newspaper, Building2, Users, Handshake,
-  Landmark, Receipt, Truck, User as UserIcon, Compass, Rocket,
+  Landmark, Receipt, Truck, User as UserIcon, Compass, Rocket, Zap,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -11,6 +11,8 @@ export interface NavItem {
   name: string
   href: string
   icon: LucideIcon
+  // Shfaqet vetëm për bizneset e kualifikuara për modulin e energjisë (50+ punëtorë).
+  energyOnly?: boolean
 }
 
 // §13.1 e master promptit: sidebar role-based, i grupuar në seksione.
@@ -34,6 +36,7 @@ const KOSOVO_BUSINESS: NavSection[] = [
     { name: 'Eksporti', href: '/dashboard/eksporti', icon: BookOpen },
     { name: 'Panaire dhe Ngjarje', href: '/dashboard/panaire-evente', icon: Calendar },
     { name: 'Certifikime', href: '/dashboard/certifikime', icon: ShieldCheck },
+    { name: 'Tregu i Energjisë', href: '/dashboard/energji', icon: Zap, energyOnly: true },
   ]},
   { label: 'Regjistrim & Procedura', items: [
     { name: 'Udhëzuesi ARBK', href: '/dashboard/arbk', icon: Landmark },

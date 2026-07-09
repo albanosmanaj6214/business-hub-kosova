@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { KonsulentiWidget, openKonsulenti } from '@/components/konsulenti/KonsulentiWidget'
 import { navigationForRole, flattenNav } from '@/lib/role-navigation'
+import { isEnergyEligible } from '@/lib/energy'
 import {
   MessagesSquare, Menu, X,
   LogOut, Shield, ChevronRight, ChevronDown,
@@ -19,7 +20,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const role = (session?.user as { role?: string })?.role
+  const employeeCount = (session?.user as { employeeCount?: string | null })?.employeeCount
+  const energyOk = isEnergyEligible(employeeCount)
   const sections = navigationForRole(role)
+    .map((s) => ({ ...s, items: s.items.filter((it) => !it.energyOnly || energyOk) }))
+    .filter((s) => s.items.length > 0)
   const activeName = flattenNav(sections).find((n) => n.href === pathname)?.name
 
   function toggleSection(label: string) {

@@ -895,3 +895,22 @@ model ArbkTemplate {
   uploadedAt   DateTime @default(now())
   uploadedById String?
 }
+
+
+// Njoftimet e Tregut te Energjise (KOSTT/KESCO/KEK/ZRRE). Shfaqen te modulit
+// per bizneset 50+ punetore; ofertat mund te targetohen te prodhuesit.
+model EnergyNotice {
+  id           String    @id @default(cuid())
+  source       String
+  kind         String    @default("NEWS")
+  title        String
+  body         String    @db.Text
+  url          String?
+  forProducers Boolean   @default(false)
+  publishedAt  DateTime  @default(now())
+  dispatchedAt DateTime?
+  createdById  String?
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
