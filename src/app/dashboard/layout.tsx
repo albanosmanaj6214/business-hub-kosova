@@ -21,10 +21,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const role = (session?.user as { role?: string })?.role
   const employeeCount = (session?.user as { employeeCount?: string | null })?.employeeCount
+  const userSectors = (session?.user as { sectors?: string[] })?.sectors ?? []
   const isAdminRole = role === 'ADMIN' || role === 'SUPER_ADMIN'
   const energyOk = isEnergyEligible(employeeCount) || isAdminRole
+  const sectorOk = (it: { forSectors?: string[] }) =>
+    !it.forSectors || isAdminRole || it.forSectors.some((s) => userSectors.includes(s))
   const sections = navigationForRole(role)
-    .map((s) => ({ ...s, items: s.items.filter((it) => !it.energyOnly || energyOk) }))
+    .map((s) => ({ ...s, items: s.items.filter((it) => (!it.energyOnly || energyOk) && sectorOk(it)) }))
     .filter((s) => s.items.length > 0)
   const activeName = flattenNav(sections).find((n) => n.href === pathname)?.name
 

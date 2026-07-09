@@ -13,6 +13,8 @@ export interface NavItem {
   icon: LucideIcon
   // Shfaqet vetëm për bizneset e kualifikuara për modulin e energjisë (50+ punëtorë).
   energyOnly?: boolean
+  // Shfaqet vetëm për bizneset që kanë të paktën një nga këta sektorë (p.sh. AUV → ushqim/bujqësi).
+  forSectors?: string[]
 }
 
 // §13.1 e master promptit: sidebar role-based, i grupuar në seksione.
@@ -42,7 +44,7 @@ const KOSOVO_BUSINESS: NavSection[] = [
     { name: 'Udhëzuesi ARBK', href: '/dashboard/arbk', icon: Landmark },
     { name: 'Udhëzuesit ATK', href: '/dashboard/tatime', icon: Receipt },
     { name: 'Udhëzuesi Dogana', href: '/dashboard/dogana', icon: Truck },
-    { name: 'Udhëzuesi AUV', href: '/dashboard/auv', icon: ShieldCheck },
+    { name: 'Udhëzuesi AUV', href: '/dashboard/auv', icon: ShieldCheck, forSectors: ['ushqim-dhe-pije', 'bujqesi-blegtori'] },
   ]},
   { label: 'Rrjeti i Biznesit', items: [
     { name: 'Kompani Kosovare', href: '/dashboard/directory', icon: Users },
@@ -81,7 +83,7 @@ const STARTUP: NavSection[] = [
     { name: 'Udhëzuesi ARBK', href: '/dashboard/arbk', icon: Landmark },
     { name: 'Udhëzuesit ATK', href: '/dashboard/tatime', icon: Receipt },
     { name: 'Udhëzuesi Dogana', href: '/dashboard/dogana', icon: Truck },
-    { name: 'Udhëzuesi AUV', href: '/dashboard/auv', icon: ShieldCheck },
+    { name: 'Udhëzuesi AUV', href: '/dashboard/auv', icon: ShieldCheck, forSectors: ['ushqim-dhe-pije', 'bujqesi-blegtori'] },
   ]},
   { label: 'Info & Ndihmë', items: [
     { name: 'Njoftime', href: '/dashboard/notifications', icon: Bell },
@@ -109,7 +111,7 @@ const DIASPORA: NavSection[] = [
     { name: 'Udhëzuesi ARBK', href: '/dashboard/arbk', icon: Landmark },
     { name: 'Udhëzuesit ATK', href: '/dashboard/tatime', icon: Receipt },
     { name: 'Udhëzuesi Dogana', href: '/dashboard/dogana', icon: Truck },
-    { name: 'Udhëzuesi AUV', href: '/dashboard/auv', icon: ShieldCheck },
+    { name: 'Udhëzuesi AUV', href: '/dashboard/auv', icon: ShieldCheck, forSectors: ['ushqim-dhe-pije', 'bujqesi-blegtori'] },
   ]},
   { label: 'Rrjeti i Biznesit', items: [
     { name: 'Kompani Kosovare', href: '/dashboard/directory', icon: Users },
@@ -142,7 +144,7 @@ const INDIVIDUAL: NavSection[] = [
     { name: 'Udhëzuesi ARBK', href: '/dashboard/arbk', icon: Landmark },
     { name: 'Udhëzuesit ATK', href: '/dashboard/tatime', icon: Receipt },
     { name: 'Udhëzuesi Dogana', href: '/dashboard/dogana', icon: Truck },
-    { name: 'Udhëzuesi AUV', href: '/dashboard/auv', icon: ShieldCheck },
+    { name: 'Udhëzuesi AUV', href: '/dashboard/auv', icon: ShieldCheck, forSectors: ['ushqim-dhe-pije', 'bujqesi-blegtori'] },
   ]},
   { label: 'Info & Ndihmë', items: [
     { name: 'Lajme dhe Informata', href: '/dashboard/lajme', icon: Newspaper },
