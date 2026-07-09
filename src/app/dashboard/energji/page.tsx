@@ -3,9 +3,10 @@ import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
-import { isEnergyEligible, isProducerActivity, energySourceLabel, energyKindLabel, ENERGY_SOURCES } from '@/lib/energy'
+import { isEnergyEligible, isProducerActivity, energySourceLabel, energyKindLabel, ENERGY_SOURCES, ENERGY_EXCHANGES } from '@/lib/energy'
 import {
   Zap, AlertTriangle, ExternalLink, Info, CheckCircle2, Clock, Building2, Tag,
+  TrendingUp, TrendingDown, Minus, Euro,
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -56,14 +57,26 @@ export default async function EnergyMarketPage() {
   }
 
   const isProducer = isProducerActivity(u.activityType)
-  const notices = await prisma.energyNotice.findMany({
-    where: {
-      deletedAt: null,
-      ...(isProducer ? {} : { forProducers: false }),
-    },
-    orderBy: { publishedAt: 'desc' },
-    take: 50,
-  })
+  const [notices, kosovoPrices, supplierOffers] = await Promise.all([
+    prisma.energyNotice.findMany({
+      where: { deletedAt: null, ...(isProducer ? {} : { forProducers: false }) },
+      orderBy: { publishedAt: 'desc' },
+      take: 50,
+    }),
+    prisma.energyPrice.findMany({
+      where: { market: 'ALPEX_KOSOVO', deletedAt: null },
+      orderBy: { refDate: 'desc' },
+      take: 2,
+    }),
+    prisma.energyPrice.findMany({
+      where: { market: 'SUPPLIER_OFFER', deletedAt: null },
+      orderBy: { refDate: 'desc' },
+      take: 3,
+    }),
+  ])
+  const latestKosovo = kosovoPrices[0] ?? null
+  const prevKosovo = kosovoPrices[1] ?? null
+  const trend = latestKosovo && prevKosovo ? latestKosovo.price - prevKosovo.price : null
 
   return (
     <div className="space-y-6">
@@ -89,6 +102,82 @@ export default async function EnergyMarketPage() {
           </div>
         </div>
       </div>
+
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold text-gray-900">Çmimi i tregut</h2>
+          <a href="https://alpex.al/day-ahead-market-2/" target="_blank" rel="noreferrer" className="text-sm text-[#2E86C1] hover:underline inline-flex items-center gap-1">
+            Çmimet live te ALPEX <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <Card className="border-[#1B4F72]/25">
+            <CardContent className="p-5">
+              <p className="text-xs text-gray-500 mb-1">ALPEX — Kosovë (Day-Ahead)</p>
+              {latestKosovo ? (
+                <>
+                  <div className="flex items-end gap-2">
+                    <span className="text-3xl font-bold text-gray-900 tabular-nums">{latestKosovo.price}</span>
+                    <span className="text-sm text-gray-500 mb-1">{latestKosovo.unit}</span>
+                    {trend !== null && (
+                      <span className={`mb-1 inline-flex items-center gap-0.5 text-xs font-semibold rounded-full px-1.5 py-0.5 ${trend > 0 ? 'text-red-700 bg-red-50' : trend < 0 ? 'text-green-700 bg-green-50' : 'text-gray-500 bg-gray-100'}`}>
+                        {trend > 0 ? <TrendingUp className="h-3 w-3" /> : trend < 0 ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+                        {(trend > 0 ? '+' : '') + trend.toFixed(1)}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">Për {new Date(latestKosovo.refDate).toLocaleDateString('sq-AL')} · burimi ALPEX</p>
+                  {latestKosovo.note && <p className="text-xs text-gray-500 mt-1">{latestKosovo.note}</p>}
+                </>
+              ) : (
+                <div className="flex items-start gap-2 mt-1">
+                  <Euro className="h-5 w-5 text-gray-300 shrink-0 mt-0.5" />
+                  <p className="text-sm text-gray-500">Çmimi i fundit s\'është vendosur ende. Shikoje live te ALPEX me lidhjen lart.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="md:col-span-2">
+            <CardContent className="p-5">
+              <p className="text-xs text-gray-500 mb-2">Oferta çmimi nga furnizuesit</p>
+              {supplierOffers.length === 0 ? (
+                <p className="text-sm text-gray-500">Ende s\'ka oferta nga furnizuesit. Kur KESCO/KEK të dërgojnë ofertë, do të shfaqet këtu dhe do të njoftohesh.</p>
+              ) : (
+                <div className="space-y-2">
+                  {supplierOffers.map((o) => (
+                    <div key={o.id} className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 p-2.5">
+                      <div>
+                        <span className="text-xs font-semibold text-[#1B4F72] bg-[#1B4F72]/10 rounded-full px-2 py-0.5">{o.supplier || 'Furnizues'}</span>
+                        {o.note && <span className="text-xs text-gray-500 ml-2">{o.note}</span>}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="font-semibold text-gray-900 tabular-nums">{o.price}</span>
+                        <span className="text-xs text-gray-500 ml-1">{o.unit}</span>
+                        <p className="text-[11px] text-gray-400">{new Date(o.refDate).toLocaleDateString('sq-AL')}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
+          {ENERGY_EXCHANGES.map((ex) => (
+            <a key={ex.url} href={ex.url} target="_blank" rel="noreferrer" className="rounded-lg border border-gray-200 bg-white p-3 hover:border-[#2E86C1]/40 transition-colors">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-gray-900">{ex.label}</p>
+                <ExternalLink className="h-3.5 w-3.5 text-gray-400" />
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5 leading-snug">{ex.desc}</p>
+            </a>
+          ))}
+        </div>
+        <p className="text-xs text-gray-400 mt-2">
+          Çmimet e mësipërme janë referencë e verifikuar nga administrata. Për vlerën e saktë në kohë reale, hape lidhjen e ALPEX.
+        </p>
+      </section>
 
       <section>
         <h2 className="text-lg font-semibold text-gray-900 mb-3">Çka duhet të bësh</h2>

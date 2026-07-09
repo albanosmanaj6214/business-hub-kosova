@@ -914,3 +914,21 @@ model EnergyNotice {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }
+
+
+// Çmimet e tregut te energjise (ALPEX/HUPX + oferta furnizuesish). I fut admini,
+// i verifikuar; shfaqen te moduli me trend + lidhje live te bursa.
+model EnergyPrice {
+  id           String    @id @default(cuid())
+  market       String
+  supplier     String?
+  price        Float
+  unit         String    @default("EUR/MWh")
+  refDate      DateTime
+  note         String?
+  url          String?
+  dispatchedAt DateTime?
+  createdById  String?
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+}
