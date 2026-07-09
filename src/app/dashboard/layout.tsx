@@ -21,7 +21,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const role = (session?.user as { role?: string })?.role
   const employeeCount = (session?.user as { employeeCount?: string | null })?.employeeCount
-  const energyOk = isEnergyEligible(employeeCount)
+  const isAdminRole = role === 'ADMIN' || role === 'SUPER_ADMIN'
+  const energyOk = isEnergyEligible(employeeCount) || isAdminRole
   const sections = navigationForRole(role)
     .map((s) => ({ ...s, items: s.items.filter((it) => !it.energyOnly || energyOk) }))
     .filter((s) => s.items.length > 0)
