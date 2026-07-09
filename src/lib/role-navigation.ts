@@ -39,6 +39,7 @@ const KOSOVO_BUSINESS: NavSection[] = [
     { name: 'Udhëzuesi ARBK', href: '/dashboard/arbk', icon: Landmark },
     { name: 'Udhëzuesit ATK', href: '/dashboard/tatime', icon: Receipt },
     { name: 'Udhëzuesi Dogana', href: '/dashboard/dogana', icon: Truck },
+    { name: 'Udhëzuesi AUV', href: '/dashboard/auv', icon: ShieldCheck },
   ]},
   { label: 'Rrjeti i Biznesit', items: [
     { name: 'Kompani Kosovare', href: '/dashboard/directory', icon: Users },
@@ -77,6 +78,7 @@ const STARTUP: NavSection[] = [
     { name: 'Udhëzuesi ARBK', href: '/dashboard/arbk', icon: Landmark },
     { name: 'Udhëzuesit ATK', href: '/dashboard/tatime', icon: Receipt },
     { name: 'Udhëzuesi Dogana', href: '/dashboard/dogana', icon: Truck },
+    { name: 'Udhëzuesi AUV', href: '/dashboard/auv', icon: ShieldCheck },
   ]},
   { label: 'Info & Ndihmë', items: [
     { name: 'Njoftime', href: '/dashboard/notifications', icon: Bell },
@@ -104,6 +106,7 @@ const DIASPORA: NavSection[] = [
     { name: 'Udhëzuesi ARBK', href: '/dashboard/arbk', icon: Landmark },
     { name: 'Udhëzuesit ATK', href: '/dashboard/tatime', icon: Receipt },
     { name: 'Udhëzuesi Dogana', href: '/dashboard/dogana', icon: Truck },
+    { name: 'Udhëzuesi AUV', href: '/dashboard/auv', icon: ShieldCheck },
   ]},
   { label: 'Rrjeti i Biznesit', items: [
     { name: 'Kompani Kosovare', href: '/dashboard/directory', icon: Users },
@@ -136,6 +139,7 @@ const INDIVIDUAL: NavSection[] = [
     { name: 'Udhëzuesi ARBK', href: '/dashboard/arbk', icon: Landmark },
     { name: 'Udhëzuesit ATK', href: '/dashboard/tatime', icon: Receipt },
     { name: 'Udhëzuesi Dogana', href: '/dashboard/dogana', icon: Truck },
+    { name: 'Udhëzuesi AUV', href: '/dashboard/auv', icon: ShieldCheck },
   ]},
   { label: 'Info & Ndihmë', items: [
     { name: 'Lajme dhe Informata', href: '/dashboard/lajme', icon: Newspaper },
