@@ -81,8 +81,10 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'Ky rol s\'ka profil biznesi (Individual/Admin).' }, { status: 400 })
   }
 
+  // Politika: nje sektor i vetedeklaruar. Sektore shtese jepen vetem nga admini/shitja
+  // (entitledSectors) me faturim, prandaj e kapim ne 1 si te /api/user/profile.
   const normalisedSectors = d.sectors
-    ? Array.from(new Set(d.sectors.filter((s) => !!sectorBySlug(s))))
+    ? Array.from(new Set(d.sectors.filter((s) => !!sectorBySlug(s)))).slice(0, 1)
     : undefined
 
   const nextProfileStatus = d.submitForReview

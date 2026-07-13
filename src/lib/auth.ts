@@ -89,7 +89,7 @@ export const authOptions: NextAuthOptions = {
       // (rol, pako, çaktivizim) të kapen pa pritur ri-login 30-ditor.
       const refreshedAt = (token as any).refreshedAt as number | undefined
       const STALE_MS = 5 * 60 * 1000
-      if (token.id && (!refreshedAt || Date.now() - refreshedAt > STALE_MS || (token as any).employeeCount === undefined || (token as any).sectors === undefined)) {
+      if (token.id && (!refreshedAt || Date.now() - refreshedAt > STALE_MS || (token as any).employeeCount === undefined || (token as any).sectors === undefined || (token as any).entitledSectors === undefined)) {
         const fresh = await prisma.user.findUnique({
           where: { id: token.id as string },
           select: {
@@ -97,6 +97,7 @@ export const authOptions: NextAuthOptions = {
             language: true,
             companyName: true,
             employeeCount: true,
+            entitledSectors: true,
             subscription: { select: { tier: true } },
             company: { select: { employeeCount: true, activityType: true, sectors: true } },
           },
@@ -109,6 +110,7 @@ export const authOptions: NextAuthOptions = {
           ;(token as any).employeeCount = fresh.company?.employeeCount ?? fresh.employeeCount ?? null
           ;(token as any).activityType = fresh.company?.activityType ?? null
           ;(token as any).sectors = fresh.company?.sectors ?? []
+          ;(token as any).entitledSectors = fresh.entitledSectors ?? []
         }
         ;(token as any).refreshedAt = Date.now()
       }
@@ -124,6 +126,7 @@ export const authOptions: NextAuthOptions = {
         ;(session.user as any).employeeCount = (token as any).employeeCount ?? null
         ;(session.user as any).activityType = (token as any).activityType ?? null
         ;(session.user as any).sectors = (token as any).sectors ?? []
+        ;(session.user as any).entitledSectors = (token as any).entitledSectors ?? []
       }
       return session
     },

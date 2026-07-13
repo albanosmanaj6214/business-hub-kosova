@@ -21,7 +21,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const role = (session?.user as { role?: string })?.role
   const employeeCount = (session?.user as { employeeCount?: string | null })?.employeeCount
-  const userSectors = (session?.user as { sectors?: string[] })?.sectors ?? []
+  // Gating i sektorit ndjek entitledSectors (qasja e dhene nga admini/faturimi), jo vetedeklarimin.
+  const userSectors = (session?.user as { entitledSectors?: string[] })?.entitledSectors ?? []
   const isAdminRole = role === 'ADMIN' || role === 'SUPER_ADMIN'
   const energyOk = isEnergyEligible(employeeCount) || isAdminRole
   const sectorOk = (it: { forSectors?: string[] }) =>

@@ -249,7 +249,8 @@ export function CompanyProfileEditor({ initial }: Props) {
 
         {!isDiaspora && (form.activityType === 'prodhues-perpunues' || form.activityType === 'sherbime') && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Sektori(ët)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Sektori kryesor</label>
+            <p className="text-xs text-gray-500 mb-2">Zgjidh një sektor. Nëse vepron në më shumë se një, na kontakto për qasje shtesë.</p>
             <div className="flex flex-wrap gap-1.5">
               {SECTORS
                 .filter((s) => form.activityType === 'prodhues-perpunues' ? s.group === 'production' : s.group === 'services')
@@ -263,10 +264,11 @@ export function CompanyProfileEditor({ initial }: Props) {
                     }`}
                   >
                     <input
-                      type="checkbox"
+                      type="radio"
+                      name="sector"
                       className="sr-only"
                       checked={(form.sectors || []).includes(s.slug)}
-                      onChange={() => toggleInArray('sectors', s.slug)}
+                      onChange={() => setForm({ ...form, sectors: [s.slug] })}
                     />
                     {s.sq}
                   </label>
