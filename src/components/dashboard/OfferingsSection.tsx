@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Package, Plus, Trash2, Loader2, Clock, Info } from 'lucide-react'
+import { Package, Plus, Trash2, Loader2, Clock, Info, Image as ImageIcon } from 'lucide-react'
 import { sectorBySlug } from '@/lib/sectors'
 
 // Seksioni "Produktet / Shërbimet" i Profilit të Kompanisë (§3 V5).
@@ -37,6 +37,7 @@ export function OfferingsSection() {
   const [showCustom, setShowCustom] = useState(false)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [imageData, setImageData] = useState<string | null>(null)
   const [showAllSectors, setShowAllSectors] = useState(false)
 
   async function load() {
@@ -65,14 +66,14 @@ export function OfferingsSection() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(
           showCustom
-            ? { customCategoryName: customName, title, description: description || null }
-            : { categoryId, title, description: description || null },
+            ? { customCategoryName: customName, title, description: description || null, imageBase64: imageData }
+            : { categoryId, title, description: description || null, imageBase64: imageData },
         ),
       })
       const data = await res.json()
       if (!res.ok) { setErr(data.error || 'Shtimi dështoi'); return }
       if (data.message) setMsg(data.message)
-      setTitle(''); setDescription(''); setCategoryId(''); setCustomName(''); setShowCustom(false); setAdding(false)
+      setTitle(''); setDescription(''); setCategoryId(''); setCustomName(''); setShowCustom(false); setAdding(false); setImageData(null)
       await load()
     } finally {
       setBusy(false)
@@ -126,6 +127,8 @@ export function OfferingsSection() {
         <div className="space-y-2">
           {offerings.map((o) => (
             <div key={o.id} className="flex items-start gap-3 rounded-lg border border-gray-200 p-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/api/media/offering-image/${o.id}`} alt="" className="w-12 h-12 rounded-md object-cover border border-gray-100 shrink-0" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-sm font-medium text-gray-900">{o.title}</p>
@@ -211,6 +214,34 @@ export function OfferingsSection() {
                 placeholder="Kapaciteti, materialet, sasia minimale e porosisë..."
                 className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Fotografia (opsionale)</label>
+              <div className="flex items-center gap-3">
+                {imageData && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={imageData} alt="Foto" className="w-14 h-14 rounded-lg object-cover border border-gray-200" />
+                )}
+                <label className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer">
+                  <ImageIcon className="h-4 w-4" /> {imageData ? 'Ndrysho foton' : 'Ngarko foto (JPG/PNG)'}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0]
+                      if (!f) return
+                      if (f.size > 3_000_000) { setErr('Fotoja duhet të jetë nën 3MB.'); return }
+                      const reader = new FileReader()
+                      reader.onload = () => setImageData(String(reader.result))
+                      reader.readAsDataURL(f)
+                    }}
+                  />
+                </label>
+                {imageData && (
+                  <button type="button" onClick={() => setImageData(null)} className="text-xs text-gray-500 hover:text-gray-700">Hiq</button>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <button

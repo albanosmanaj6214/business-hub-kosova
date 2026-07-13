@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sectorBySlug } from '@/lib/sectors'
+import { parseDataUrlImage, LOGO_MAX_BYTES } from '@/lib/image-upload'
 
 // GET: kthen profilin e kompanisë të përdoruesit aktual (Company + StartupProfile/DiasporaProfile)
 export async function GET() {
@@ -35,6 +36,8 @@ const BaseBody = z.object({
   website: z.string().max(300).optional().nullable(),
   contactPerson: z.string().max(200).optional().nullable(),
   logoUrl: z.string().max(500).optional().nullable(),
+  logoBase64: z.string().max(6_000_000).optional().nullable(),
+  removeLogo: z.boolean().optional(),
   coverImageUrl: z.string().max(500).optional().nullable(),
   shortDescription: z.string().max(500).optional().nullable(),
   longDescription: z.string().max(5000).optional().nullable(),
@@ -115,6 +118,22 @@ export async function PATCH(req: Request) {
   }
 
   await prisma.company.update({ where: { id: existing.id }, data: companyData })
+
+  // Logo: ngarkim i drejtperdrejt. Ruhet ne MediaAsset (jashte tabeles Company).
+  if (d.removeLogo) {
+    await prisma.mediaAsset.deleteMany({ where: { kind: 'COMPANY_LOGO', refId: existing.id } })
+  } else if (d.logoBase64) {
+    try {
+      const img = parseDataUrlImage(d.logoBase64, LOGO_MAX_BYTES)
+      await prisma.mediaAsset.upsert({
+        where: { kind_refId: { kind: 'COMPANY_LOGO', refId: existing.id } },
+        create: { kind: 'COMPANY_LOGO', refId: existing.id, mime: img.mime, data: img.buffer, size: img.size },
+        update: { mime: img.mime, data: img.buffer, size: img.size },
+      })
+    } catch (e) {
+      return NextResponse.json({ error: (e as Error).message }, { status: 400 })
+    }
+  }
 
   // Sinkronizim me User: Company eshte burimi i vertetes per te dhenat e biznesit.
   // User-fushat mbahen si pasqyre per kodin ekzistues. entitledSectors ndjek

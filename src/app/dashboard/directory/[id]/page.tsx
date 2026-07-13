@@ -50,6 +50,15 @@ export default async function CompanyDetailPage({ params, searchParams }: { para
 
   const RoleIcon = company.roleType === 'STARTUP' ? Rocket : company.roleType === 'DIASPORA' ? Compass : Building2
 
+  const logoAsset = await prisma.mediaAsset.findUnique({ where: { kind_refId: { kind: 'COMPANY_LOGO', refId: company.id } }, select: { id: true } })
+  const logoSrc = logoAsset ? `/api/media/company-logo/${company.id}` : (company.logoUrl || null)
+  const offeringImageIds = new Set(
+    (await prisma.mediaAsset.findMany({
+      where: { kind: 'OFFERING_IMAGE', refId: { in: company.offerings.map((o: any) => o.id) } },
+      select: { refId: true },
+    })).map((a) => a.refId),
+  )
+
   return (
     <div className="space-y-6">
       <Link
@@ -63,9 +72,9 @@ export default async function CompanyDetailPage({ params, searchParams }: { para
       <Card>
         <CardContent className="p-5">
           <div className="flex items-start gap-4">
-            {company.logoUrl ? (
+            {logoSrc ? (
               /* eslint-disable-next-line @next/next/no-img-element */
-              <img src={company.logoUrl} alt={company.name} className="w-20 h-20 rounded-lg object-cover shrink-0" />
+              <img src={logoSrc} alt={company.name} className="w-20 h-20 rounded-lg object-cover shrink-0 border border-gray-100" />
             ) : (
               <div className="w-20 h-20 rounded-lg bg-[#1B4F72]/10 flex items-center justify-center shrink-0">
                 <RoleIcon className="h-8 w-8 text-[#1B4F72]" />
@@ -119,10 +128,16 @@ export default async function CompanyDetailPage({ params, searchParams }: { para
                 <h2 className="text-sm font-semibold text-gray-900 mb-3">Produktet dhe shërbimet</h2>
                 <div className="space-y-2.5">
                   {company.offerings.map((o: any) => (
-                    <div key={o.id} className="rounded-lg border border-gray-100 bg-gray-50/50 p-3">
-                      <p className="text-sm font-medium text-gray-900">{o.title}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{o.category?.nameSq ?? ''}</p>
-                      {o.description && <p className="text-xs text-gray-600 mt-1">{o.description}</p>}
+                    <div key={o.id} className="flex gap-3 rounded-lg border border-gray-100 bg-gray-50/50 p-3">
+                      {offeringImageIds.has(o.id) && (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={`/api/media/offering-image/${o.id}`} alt={o.title} className="w-16 h-16 rounded-md object-cover shrink-0 border border-gray-100" />
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900">{o.title}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{o.category?.nameSq ?? ''}</p>
+                        {o.description && <p className="text-xs text-gray-600 mt-1">{o.description}</p>}
+                      </div>
                     </div>
                   ))}
                 </div>

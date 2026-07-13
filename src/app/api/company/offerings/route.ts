@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { parseDataUrlImage, OFFERING_IMAGE_MAX_BYTES } from '@/lib/image-upload'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,6 +46,7 @@ const AddBody = z.object({
   customCategorySector: z.string().min(2).max(60).optional(),
   title: z.string().min(3).max(200),
   description: z.string().max(2000).optional().nullable(),
+  imageBase64: z.string().max(9_000_000).optional().nullable(),
 })
 
 export async function POST(req: Request) {
@@ -56,6 +58,12 @@ export async function POST(req: Request) {
   const parsed = AddBody.safeParse(raw)
   if (!parsed.success) return NextResponse.json({ error: 'invalid payload' }, { status: 400 })
   const d = parsed.data
+
+  let img: { mime: string; buffer: Buffer; size: number } | null = null
+  if (d.imageBase64) {
+    try { img = parseDataUrlImage(d.imageBase64, OFFERING_IMAGE_MAX_BYTES) }
+    catch (e) { return NextResponse.json({ error: (e as Error).message }, { status: 400 }) }
+  }
 
   // Kufi i thjeshtë kundër spam-it: max 30 oferta për biznes.
   const count = await prisma.offering.count({ where: { companyId: company.id } })
@@ -73,6 +81,7 @@ export async function POST(req: Request) {
         status: 'APPROVED',
       },
     })
+    if (img) await prisma.mediaAsset.create({ data: { kind: 'OFFERING_IMAGE', refId: off.id, mime: img.mime, data: img.buffer, size: img.size } })
     return NextResponse.json({ ok: true, id: off.id, status: 'APPROVED' })
   }
 
@@ -107,6 +116,7 @@ export async function POST(req: Request) {
       status: 'PENDING',
     },
   })
+  if (img) await prisma.mediaAsset.create({ data: { kind: 'OFFERING_IMAGE', refId: off.id, mime: img.mime, data: img.buffer, size: img.size } })
   return NextResponse.json({
     ok: true,
     id: off.id,

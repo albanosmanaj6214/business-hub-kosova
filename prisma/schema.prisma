@@ -896,6 +896,21 @@ model ArbkTemplate {
   uploadedById String?
 }
 
+// Imazhet e ngarkuara (logo kompanish, foto produktesh). Blob-et rrine ketu,
+// jashte tabelave Company/Offering, qe query-t te mos i terheqin kurre bytes-at.
+model MediaAsset {
+  id        String   @id @default(cuid())
+  kind      String   // 'COMPANY_LOGO' | 'OFFERING_IMAGE'
+  refId     String
+  mime      String
+  data      Bytes
+  size      Int
+  createdAt DateTime @default(now())
+
+  @@unique([kind, refId])
+  @@index([refId])
+}
+
 
 // Njoftimet e Tregut te Energjise (KOSTT/KESCO/KEK/ZRRE). Shfaqen te modulit
 // per bizneset 50+ punetore; ofertat mund te targetohen te prodhuesit.

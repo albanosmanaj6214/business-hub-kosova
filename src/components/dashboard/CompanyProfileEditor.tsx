@@ -359,7 +359,38 @@ export function CompanyProfileEditor({ initial }: Props) {
 
       {/* Prezantimi */}
       <Section icon={Camera} title="Prezantimi publik">
-        <Input id="logoUrl" label="URL i logos (opsionale)" value={form.logoUrl || ''} onChange={(e) => setForm({ ...form, logoUrl: e.target.value })} placeholder="https://... (upload i drejtpërdrejtë vjen më vonë)" />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Logoja</label>
+          <div className="flex items-center gap-3">
+            {form.logoBase64 ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={form.logoBase64} alt="Logo" className="w-16 h-16 rounded-lg object-cover border border-gray-200 bg-gray-50" />
+            ) : (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={`/api/media/company-logo/${initial.id}`} alt="Logo" className="w-16 h-16 rounded-lg object-cover border border-gray-200 bg-gray-50" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+            )}
+            <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer">
+              <Camera className="h-4 w-4" /> Ngarko logo (JPG/PNG)
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (!f) return
+                  if (f.size > 1_500_000) { setErr('Logoja duhet të jetë nën 1.5MB.'); return }
+                  const reader = new FileReader()
+                  reader.onload = () => setForm({ ...form, logoBase64: String(reader.result) })
+                  reader.readAsDataURL(f)
+                }}
+              />
+            </label>
+            {form.logoBase64 && (
+              <button type="button" onClick={() => setForm({ ...form, logoBase64: undefined })} className="text-xs text-gray-500 hover:text-gray-700">Anulo</button>
+            )}
+          </div>
+          <p className="text-xs text-gray-400 mt-1">Deri 1.5MB. Zëvendëson logon aktuale në profilin publik.</p>
+        </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Përshkrim i shkurtër (max 500 karaktere)</label>
           <textarea
