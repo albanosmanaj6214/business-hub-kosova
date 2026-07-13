@@ -5,6 +5,40 @@ import { prisma } from './prisma'
 import { compare } from 'bcryptjs'
 import { verifyTurnstile } from './turnstile'
 
+// Auditimi i autentikimit. Shkruhet drejtpërdrejt te AuditLog (jo përmes logAudit),
+// që të shmanget varësia rrethore audit.ts -> auth.ts. Fire-and-forget: një dështim
+// i logimit nuk e bllokon kurrë hyrjen.
+async function auditLogin(p: {
+  ok: boolean
+  email: string
+  userId?: string | null
+  ip?: string
+  userAgent?: string
+  reason?: string
+}): Promise<void> {
+  try {
+    if (p.ok && p.userId) {
+      await prisma.user.update({
+        where: { id: p.userId },
+        data: { lastLoginAt: new Date(), lastLoginIp: p.ip ?? null },
+      })
+    }
+    await prisma.auditLog.create({
+      data: {
+        actorId: p.userId ?? null,
+        actorEmail: p.email.slice(0, 200),
+        action: p.ok ? 'LOGIN' : 'LOGIN_FAILED',
+        entityType: 'USER',
+        entityId: p.userId ?? null,
+        summary: p.ok ? 'Hyrje e suksesshme' : `Hyrje e dështuar: ${p.reason ?? 'e panjohur'}`,
+        meta: { ip: p.ip ?? null, userAgent: p.userAgent ?? null },
+      },
+    })
+  } catch (err) {
+    console.error('[auth] auditimi i hyrjes dështoi:', (err as Error).message)
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
@@ -37,6 +71,7 @@ export const authOptions: NextAuthOptions = {
           (req?.headers?.['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
           (req?.headers?.['x-real-ip'] as string | undefined) ||
           undefined
+        const userAgent = (req?.headers?.['user-agent'] as string | undefined)?.slice(0, 300)
         const captcha = await verifyTurnstile(credentials.turnstileToken, ip)
         if (!captcha.success) {
           throw new Error(captcha.error || 'Verifikimi i sigurisë dështoi.')
@@ -48,23 +83,29 @@ export const authOptions: NextAuthOptions = {
         })
 
         if (!user) {
+          await auditLogin({ ok: false, email: credentials.email, ip, userAgent, reason: 'përdoruesi nuk u gjet' })
           throw new Error('Përdoruesi nuk u gjet')
         }
 
         if (!user.isActive) {
+          await auditLogin({ ok: false, email: user.email, userId: user.id, ip, userAgent, reason: 'llogari e çaktivizuar' })
           throw new Error('Kjo llogari është çaktivizuar.')
         }
 
         const isPasswordValid = await compare(credentials.password, user.password)
 
         if (!isPasswordValid) {
+          await auditLogin({ ok: false, email: user.email, userId: user.id, ip, userAgent, reason: 'fjalëkalim i gabuar' })
           throw new Error('Fjalëkalimi nuk është i saktë')
         }
 
         if (!user.emailVerified) {
+          await auditLogin({ ok: false, email: user.email, userId: user.id, ip, userAgent, reason: 'email i paverifikuar' })
           // Surface a specific code so the login UI can show the "send again" button.
           throw new Error('Email-i nuk është verifikuar. Kontrollo kutinë postare.')
         }
+
+        await auditLogin({ ok: true, email: user.email, userId: user.id, ip, userAgent })
 
         return {
           id: user.id,

@@ -7,6 +7,8 @@ import { ScrollText } from 'lucide-react'
 export const dynamic = 'force-dynamic'
 
 const ACTION_LABEL: Record<string, string> = {
+  LOGIN: 'Hyrje',
+  LOGIN_FAILED: 'Hyrje e dështuar',
   CREATE: 'Krijoi',
   EDIT: 'Editoi',
   ARCHIVE: 'Arkivoi',
@@ -26,6 +28,8 @@ const ACTION_LABEL: Record<string, string> = {
 }
 
 const ACTION_COLOR: Record<string, string> = {
+  LOGIN: 'bg-green-100 text-green-700',
+  LOGIN_FAILED: 'bg-red-100 text-red-700',
   CREATE: 'bg-green-100 text-green-700',
   EDIT: 'bg-blue-100 text-blue-700',
   ARCHIVE: 'bg-red-100 text-red-700',

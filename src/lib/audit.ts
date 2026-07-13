@@ -12,6 +12,7 @@ export type AuditAction =
   | 'SOURCE_CREATE' | 'SOURCE_TOGGLE'
   | 'TIER_CHANGE' | 'ACCESS_CHANGE'
   | 'TEST_USERS_RESET'
+  | 'LOGIN' | 'LOGIN_FAILED'
 
 export async function logAudit(params: {
   action: AuditAction

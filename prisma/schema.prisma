@@ -108,6 +108,9 @@ model User {
   // Çaktivizim nga admini. false => login bllokohet DHE sesioni ekzistues bie
   // brenda 5 min (shih jwt callback te auth.ts).
   isActive        Boolean   @default(true)
+  // Hyrja e fundit. Auditimi i plotë i hyrjeve rri te AuditLog (LOGIN / LOGIN_FAILED).
+  lastLoginAt     DateTime?
+  lastLoginIp     String?
   name            String?
   companyName     String?
   sector          String?
