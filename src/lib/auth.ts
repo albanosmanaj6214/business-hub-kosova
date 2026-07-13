@@ -51,6 +51,10 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Përdoruesi nuk u gjet')
         }
 
+        if (!user.isActive) {
+          throw new Error('Kjo llogari është çaktivizuar.')
+        }
+
         const isPasswordValid = await compare(credentials.password, user.password)
 
         if (!isPasswordValid) {
@@ -98,20 +102,23 @@ export const authOptions: NextAuthOptions = {
             companyName: true,
             employeeCount: true,
             entitledSectors: true,
+            isActive: true,
             subscription: { select: { tier: true } },
             company: { select: { employeeCount: true, activityType: true, sectors: true } },
           },
         })
-        if (fresh) {
-          token.role = fresh.role
-          token.language = fresh.language
-          token.companyName = fresh.companyName
-          token.tier = fresh.subscription?.tier || 'FREE'
-          ;(token as any).employeeCount = fresh.company?.employeeCount ?? fresh.employeeCount ?? null
-          ;(token as any).activityType = fresh.company?.activityType ?? null
-          ;(token as any).sectors = fresh.company?.sectors ?? []
-          ;(token as any).entitledSectors = fresh.entitledSectors ?? []
-        }
+        // Revokim i sesionit: nese perdoruesi s'ekziston me ose eshte caktivizuar,
+        // e zbrazim token-in. Middleware kerkon token.id, prandaj qasja bie.
+        if (!fresh || !fresh.isActive) return {} as typeof token
+
+        token.role = fresh.role
+        token.language = fresh.language
+        token.companyName = fresh.companyName
+        token.tier = fresh.subscription?.tier || 'FREE'
+        ;(token as any).employeeCount = fresh.company?.employeeCount ?? fresh.employeeCount ?? null
+        ;(token as any).activityType = fresh.company?.activityType ?? null
+        ;(token as any).sectors = fresh.company?.sectors ?? []
+        ;(token as any).entitledSectors = fresh.entitledSectors ?? []
         ;(token as any).refreshedAt = Date.now()
       }
       return token

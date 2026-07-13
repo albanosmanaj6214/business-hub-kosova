@@ -45,7 +45,8 @@ export default withAuth(
   },
   {
     callbacks: {
-      authorized: ({ token }) => !!token,
+      // Token i zbrazur (perdorues i caktivizuar/fshire) s'ka id => qasja refuzohet.
+      authorized: ({ token }) => !!token?.id,
     },
   }
 )
