@@ -448,7 +448,7 @@ const NDRYSHIMET: Procedure[] = [
 function ProcedureCard({ p, available }: { p: Procedure; available: Set<string> }) {
   const Icon = p.icon
   return (
-    <details className="rounded-xl border border-gray-200 bg-white group">
+    <details className="rounded-xl border border-gray-200 border-l-4 border-l-[#1B4F72] bg-white group">
       <summary className="cursor-pointer p-4 flex items-start gap-3 hover:bg-gray-50 rounded-xl">
         <div className="rounded-lg bg-[#1B4F72]/10 p-2 shrink-0">
           <Icon className="h-5 w-5 text-[#1B4F72]" />
@@ -456,6 +456,12 @@ function ProcedureCard({ p, available }: { p: Procedure; available: Set<string> 
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-gray-900">{p.title}</h3>
           <p className="text-sm text-gray-600 mt-0.5 line-clamp-2">{p.intro}</p>
+          {(p.fee || p.timeframe) && (
+            <div className="flex flex-wrap items-center gap-1.5 mt-1.5 group-open:hidden">
+              {p.fee && <span className="text-[11px] text-gray-600 bg-gray-100 rounded-full px-2 py-0.5">{p.fee}</span>}
+              {p.timeframe && <span className="text-[11px] text-[#1B4F72] bg-[#1B4F72]/8 rounded-full px-2 py-0.5">{p.timeframe}</span>}
+            </div>
+          )}
         </div>
         <ChevronRight className="h-4 w-4 text-gray-400 group-open:rotate-90 transition-transform shrink-0 mt-1" />
       </summary>
@@ -885,7 +891,7 @@ export default async function ARBKGuidePage() {
 
 function LockedCard({ title, summary }: { title: string; summary: string }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4 flex items-start gap-3">
+    <div className="rounded-xl border border-gray-200 border-l-4 border-l-gray-300 bg-gray-50/60 p-4 flex items-start gap-3">
       <div className="rounded-lg bg-gray-200 p-2 shrink-0">
         <LockIcon className="h-5 w-5 text-gray-400" />
       </div>

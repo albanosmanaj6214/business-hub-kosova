@@ -306,7 +306,7 @@ const PROCEDURES: Procedure[] = [
 function ProcedureCard({ p }: { p: Procedure }) {
   const Icon = p.icon
   return (
-    <details className="rounded-xl border border-gray-200 bg-white group">
+    <details className="rounded-xl border border-gray-200 border-l-4 border-l-[#1B4F72] bg-white group">
       <summary className="cursor-pointer p-4 flex items-start gap-3 hover:bg-gray-50 rounded-xl">
         <div className="rounded-lg bg-[#1B4F72]/10 p-2 shrink-0">
           <Icon className="h-5 w-5 text-[#1B4F72]" />
@@ -502,7 +502,7 @@ export default async function DoganaGuidePage() {
 
 function LockedCard({ title, summary }: { title: string; summary: string }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4 flex items-start gap-3">
+    <div className="rounded-xl border border-gray-200 border-l-4 border-l-gray-300 bg-gray-50/60 p-4 flex items-start gap-3">
       <div className="rounded-lg bg-gray-200 p-2 shrink-0">
         <LockIcon className="h-5 w-5 text-gray-400" />
       </div>
