@@ -118,7 +118,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
     title: 'Siguria e Ushqimit',
     icon: 'Utensils',
     description: 'Sektori kryesor i eksportit të Kosovës. Pa këto certifikime, ushqimi nuk shitet ligjërisht në BE dhe asnjë zinxhir i madh nuk do ta blejë.',
-    targetSectors: ['ushqim-dhe-pije'],
+    targetSectors: ['ushqim-dhe-pije', 'bujqesi-blegtori'],
     certifications: [
       {
         slug: 'haccp',
@@ -190,6 +190,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
       },
       {
         slug: 'globalgap',
+        targetSectors: ['bujqesi-blegtori', 'ushqim-dhe-pije'],
         name: 'GlobalG.A.P',
         fullName: 'Good Agricultural Practices',
         fullNameSq: 'Praktikat e Mira Bujqësore',
@@ -207,6 +208,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
       },
       {
         slug: 'fssc-22000',
+        targetSectors: ['ushqim-dhe-pije', 'bujqesi-blegtori', 'leter-paketim'],
         name: 'FSSC 22000',
         fullName: 'Food Safety System Certification 22000',
         fullNameSq: 'Çertifikimi i Sistemit të Sigurisë Ushqimore',
@@ -230,7 +232,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
     certifications: [
       {
         slug: 'ce-marking',
-        targetSectors: ['druri-mobilje', 'metale-makineri', 'pajisje-elektrike', 'ndertim-materiale', 'plastika-goma', 'farmaceutike-mjekesore', 'tekstil-konfeksion', 'konstruksion-inxhinieri'],
+        targetSectors: ['druri-mobilje', 'metale-makineri', 'pajisje-elektrike', 'ndertim-materiale', 'plastika-goma', 'farmaceutike-mjekesore', 'tekstil-konfeksion', 'konstruksion-inxhinieri', 'lekure-kepuce'],
         name: 'CE Marking',
         fullName: 'Conformité Européenne',
         fullNameSq: 'Konformiteti Europian',
@@ -263,7 +265,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
       },
       {
         slug: 'emc',
-        targetSectors: ['pajisje-elektrike', 'tik'],
+        targetSectors: ['pajisje-elektrike'],
         name: 'EMC',
         fullName: 'Electromagnetic Compatibility (2014/30/EU)',
         fullNameSq: 'Përputhshmëria Elektromagnetike',
@@ -293,7 +295,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
       },
       {
         slug: 'reach',
-        targetSectors: ['kimi-kozmetike', 'plastika-goma', 'tekstil-konfeksion', 'lekure-kepuce'],
+        targetSectors: ['kimi-kozmetike', 'plastika-goma', 'tekstil-konfeksion', 'lekure-kepuce', 'druri-mobilje', 'ndertim-materiale'],
         name: 'REACH',
         fullName: 'Registration, Evaluation, Authorisation and Restriction of Chemicals',
         fullNameSq: 'Regjistrimi, Vlerësimi dhe Autorizimi i Kimikateve',
@@ -328,7 +330,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
   {
     id: 'organike',
     title: 'BIO & Organike',
-    targetSectors: ['ushqim-dhe-pije'],
+    targetSectors: ['ushqim-dhe-pije', 'bujqesi-blegtori'],
     icon: 'Leaf',
     description: 'Tregu organik është rritja më e shpejtë në BE. Konsumatorët gjermanë, austriakë, dhe nordikë paguajnë 30–80% më shumë për produkte BIO të certifikuara.',
     certifications: [
@@ -368,7 +370,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
   {
     id: 'religjioze',
     title: 'Certifikime Religjioze',
-    targetSectors: ['ushqim-dhe-pije', 'kimi-kozmetike'],
+    targetSectors: ['ushqim-dhe-pije', 'bujqesi-blegtori', 'kimi-kozmetike', 'farmaceutike-mjekesore'],
     icon: 'Heart',
     description: 'Hapin tregje që ndryshe janë të mbyllura — Lindjen e Mesme (1.8 miliardë konsumatorë myslimanë) dhe komunitetet hebreje në SHBA/Europë.',
     certifications: [
@@ -391,6 +393,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
       },
       {
         slug: 'kosher',
+        targetSectors: ['ushqim-dhe-pije', 'bujqesi-blegtori'],
         name: 'Kosher',
         fullName: 'Kosher Certification',
         whatIs: 'Vërteton se produkti është prodhuar sipas ligjit hebre dietar (Kashrut): ndarja e mishit dhe qumështit, mënyra e therjes (Shechita), pa përbërës të ndaluar.',
@@ -447,7 +450,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
   {
     id: 'druri',
     title: 'Druri & Letra',
-    targetSectors: ['druri-mobilje'],
+    targetSectors: ['druri-mobilje', 'leter-paketim', 'ndertim-materiale'],
     icon: 'Trees',
     description: 'BE ka rregulla strikte për origjinën e drurit (EUTR / EUDR i ri). Pa certifikim, druri ilegal nuk hyn në BE.',
     certifications: [
@@ -537,6 +540,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
       },
       {
         slug: 'fair-trade',
+        targetSectors: ['bujqesi-blegtori', 'ushqim-dhe-pije'],
         name: 'Fair Trade',
         fullName: 'Fairtrade International (FLO-CERT)',
         whatIs: 'Garanti që prodhuesit (zakonisht fermerë në vende në zhvillim) marrin çmim minimal të garantuar plus një premium social për investim në komunitet.',
@@ -559,6 +563,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
     certifications: [
       {
         slug: 'eu-ecolabel',
+        targetSectors: ['kimi-kozmetike', 'leter-paketim', 'druri-mobilje', 'tekstil-konfeksion', 'lekure-kepuce', 'turizem-mikpritje'],
         name: 'EU Ecolabel',
         fullName: 'EU Ecolabel (Lulja)',
         fullNameSq: 'Etiketa Ekologjike e BE-së',
@@ -574,7 +579,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
       },
       {
         slug: 'energy-star',
-        targetSectors: ['pajisje-elektrike', 'tik'],
+        targetSectors: ['pajisje-elektrike'],
         name: 'Energy Star',
         fullName: 'Energy Star',
         whatIs: 'Programi i SHBA për produkte me efikasitet të lartë energjetik (frigoriferë, kompjuterë, ndriçim, etj.). E pranuar globalisht.',
