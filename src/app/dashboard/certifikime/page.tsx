@@ -51,7 +51,7 @@ export default async function CertificationsPage({
   const filteredCount = filtered.reduce((a, c) => a + c.certifications.length, 0)
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-12">
+    <div className="w-full space-y-8 pb-12">
       {/* Hero */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Certifikime për Eksport</h1>
