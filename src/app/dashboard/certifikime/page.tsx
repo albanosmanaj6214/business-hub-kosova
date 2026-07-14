@@ -100,35 +100,31 @@ export default async function CertificationsPage({
         </Link>
       </div>
 
-      {/* Categories */}
-      {filtered.map((cat, idx) => {
-        const Icon = ICONS[cat.icon] ?? ShieldCheck
-        return (
-          <details key={cat.id} open={idx === 0} className="bg-white border border-gray-200 rounded-lg group overflow-hidden">
-            <summary className="cursor-pointer px-6 py-4 list-none flex items-center justify-between hover:bg-gray-50 transition-colors">
-              <div className="flex items-center gap-3 min-w-0">
+      {/* Categories: titull i qete seksioni + rreshta certifikatash te palosshem (uniforme) */}
+      <div className="space-y-8">
+        {filtered.map((cat) => {
+          const Icon = ICONS[cat.icon] ?? ShieldCheck
+          return (
+            <section key={cat.id}>
+              <div className="flex items-center gap-2.5 mb-1">
                 <Icon className="h-5 w-5 text-[#1B4F72] shrink-0" />
-                <div className="min-w-0">
-                  <h2 className="text-base font-semibold text-gray-900">{cat.title}</h2>
-                  {cat.description && (
-                    <p className="text-xs text-gray-500 mt-0.5 hidden sm:block">{cat.description}</p>
-                  )}
-                </div>
-                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full shrink-0 ml-2">
+                <h2 className="text-base font-semibold text-gray-900">{cat.title}</h2>
+                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full shrink-0">
                   {cat.certifications.length}
                 </span>
               </div>
-              <ChevronDown className="h-5 w-5 text-gray-400 group-open:rotate-180 transition-transform shrink-0" />
-            </summary>
-
-            <div className="px-6 pb-6 pt-2 border-t border-gray-100 space-y-5">
-              {cat.certifications.map((c) => (
-                <CertificationCard key={c.slug} cert={c} showIndustries={!isPersonalized} />
-              ))}
-            </div>
-          </details>
-        )
-      })}
+              {cat.description && (
+                <p className="text-xs text-gray-500 mb-3">{cat.description}</p>
+              )}
+              <div className="space-y-2 mt-3">
+                {cat.certifications.map((c) => (
+                  <CertRow key={c.slug} cert={c} showIndustries={!isPersonalized} />
+                ))}
+              </div>
+            </section>
+          )
+        })}
+      </div>
 
       <div id="expert-contact">
         <ExpertContactCard variant="CERTIFICATION" source="dashboard-certifikime" />
@@ -137,83 +133,98 @@ export default async function CertificationsPage({
   )
 }
 
-function CertificationCard({ cert, showIndustries = true }: { cert: Certification; showIndustries?: boolean }) {
+function CertRow({ cert, showIndustries = true }: { cert: Certification; showIndustries?: boolean }) {
   const m = mandatoryLabel(cert.mandatory)
   const dur = cert.durationMonths
+  // Buza majtas kodon sa i detyrueshem eshte certifikimi (informacion, jo dekor).
+  const edge =
+    cert.mandatory === 'eu_mandatory'
+      ? 'border-l-red-400'
+      : cert.mandatory === 'sector_required'
+        ? 'border-l-amber-400'
+        : 'border-l-gray-300'
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-5">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">{cert.name}</h3>
+    <details className={`group rounded-lg border border-gray-200 border-l-4 ${edge} bg-white overflow-hidden`}>
+      <summary className="cursor-pointer list-none px-4 py-3 flex items-start justify-between gap-3 hover:bg-gray-50 transition-colors">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-sm font-semibold text-gray-900">{cert.name}</h3>
+            <Badge variant={m.tone}>{m.label}</Badge>
+          </div>
           {(cert.fullNameSq || cert.fullName) && (
             <p className="text-xs text-gray-500 mt-0.5">{cert.fullNameSq ?? cert.fullName}</p>
           )}
+          {/* Nje rresht kontekst kur eshte i mbyllur; fshihet kur hapet qe te mos perseritet */}
+          <p className="text-xs text-gray-600 mt-1 line-clamp-1 group-open:hidden">{cert.whatIs}</p>
         </div>
-        <Badge variant={m.tone}>{m.label}</Badge>
-      </div>
-
-      {/* What is */}
-      <p className="text-sm text-gray-700 leading-relaxed">{cert.whatIs}</p>
-
-      {/* Industries: vetem ne pamjen e plote; ne pamjen e personalizuar s'permenden industrite e tjera */}
-      {showIndustries && cert.industries.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-3">
-          {cert.industries.map((ind) => (
-            <span
-              key={ind}
-              className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full"
-            >
-              {ind}
+        <div className="flex items-center gap-2 shrink-0 pt-0.5">
+          {dur && (
+            <span className="text-[11px] text-gray-500 hidden sm:inline whitespace-nowrap">
+              {dur.min}–{dur.max} muaj
             </span>
-          ))}
+          )}
+          <ChevronDown className="h-4 w-4 text-gray-400 group-open:rotate-180 transition-transform" />
         </div>
-      )}
+      </summary>
 
-      {/* Mandatory note */}
-      {cert.mandatoryNote && (
-        <div className="mt-3 p-3 rounded-md bg-amber-50 border border-amber-100 text-sm text-amber-900">
-          <strong>Vërejtje:</strong> {cert.mandatoryNote}
-        </div>
-      )}
+      <div className="px-4 pb-4 pt-1 border-t border-gray-100 space-y-3">
+        {/* What is */}
+        <p className="text-sm text-gray-700 leading-relaxed">{cert.whatIs}</p>
 
-      {/* Why matters */}
-      <div className="mt-3">
-        <div className="text-xs font-semibold uppercase tracking-wide text-[#1B4F72] mb-1">
-          Pse të intereson
+        {/* Industries: vetem ne pamjen e plote */}
+        {showIndustries && cert.industries.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {cert.industries.map((ind) => (
+              <span key={ind} className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded-full">
+                {ind}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Mandatory note */}
+        {cert.mandatoryNote && (
+          <div className="p-3 rounded-md bg-amber-50 border border-amber-100 text-sm text-amber-900">
+            <strong>Vërejtje:</strong> {cert.mandatoryNote}
+          </div>
+        )}
+
+        {/* Why matters */}
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-[#1B4F72] mb-1">
+            Pse të intereson
+          </div>
+          <p className="text-sm text-gray-700 leading-relaxed">{cert.whyMatters}</p>
         </div>
-        <p className="text-sm text-gray-700 leading-relaxed">{cert.whyMatters}</p>
+
+        {/* Stats strip. "Kush e jep" / "Në Kosovë" / "Kosto" jane placeholder ("--"),
+            slote sponsori qe nje kompani mund t'i paguaje. "Kohezgjatja" mbetet reale. */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-gray-100">
+          <Stat icon={<Building2 className="h-4 w-4" />} label="Kush e jep" value="--" />
+          <Stat icon={<MapPin className="h-4 w-4" />} label="Në Kosovë" value="--" />
+          <Stat icon={<Wallet className="h-4 w-4" />} label="Kosto" value="--" />
+          <Stat
+            icon={<Clock className="h-4 w-4" />}
+            label="Kohëzgjatja"
+            value={dur ? `${dur.min}–${dur.max} muaj` : '--'}
+            note={dur?.note}
+          />
+        </div>
+
+        {/* Markets */}
+        {cert.marketAccess && cert.marketAccess.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-xs text-gray-400">Hap tregjet:</span>
+            {cert.marketAccess.map((mkt) => (
+              <span key={mkt} className="text-xs px-2 py-0.5 bg-[#1B4F72]/8 text-[#1B4F72] rounded-full font-medium">
+                {mkt}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
-
-      {/* Stats strip */}
-      {/* Stats strip. "Kush e jep" / "Në Kosovë" / "Kosto" are placeholders ("--")
-          reserved as editable sponsor slots (a company can pay to appear here).
-          "Kohëzgjatja" stays real. */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-gray-100">
-        <Stat icon={<Building2 className="h-4 w-4" />} label="Kush e jep" value="--" />
-        <Stat icon={<MapPin className="h-4 w-4" />} label="Në Kosovë" value="--" />
-        <Stat icon={<Wallet className="h-4 w-4" />} label="Kosto" value="--" />
-        <Stat
-          icon={<Clock className="h-4 w-4" />}
-          label="Kohëzgjatja"
-          value={dur ? `${dur.min}–${dur.max} muaj` : '--'}
-          note={dur?.note}
-        />
-      </div>
-
-      {/* Markets */}
-      {cert.marketAccess && cert.marketAccess.length > 0 && (
-        <div className="mt-3 flex flex-wrap items-center gap-1.5">
-          <span className="text-xs text-gray-400">Hap tregjet:</span>
-          {cert.marketAccess.map((mkt) => (
-            <span key={mkt} className="text-xs px-2 py-0.5 bg-[#1B4F72]/8 text-[#1B4F72] rounded-full font-medium">
-              {mkt}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
+    </details>
   )
 }
 
