@@ -776,12 +776,12 @@ export default async function ARBKGuidePage() {
                 Nuk ka nevojë t\'i mësosh përmendësh. Ne të japim dokumentin zyrtar për shkarkim dhe ti kërkon aty për aktivitetin tënd:
               </p>
               <div className="space-y-2 mt-3">
-                <a href="https://ask.rks-gov.net/media/2222/nace-kodet.pdf" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm text-[#2E86C1] hover:underline">
-                  Dokumenti NACE në shqip (ASK - Agjencia e Statistikave) <ExternalLink className="h-3 w-3" />
+                <a href="https://arbk.rks-gov.net/desk/inc/media/FA0E6C9D-2422-481E-8047-A2AFB4B9124C.pdf" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm text-[#2E86C1] hover:underline">
+                  Lista e kodeve NACE Rev. 2 me përshkrime shqip (ARBK, PDF) <ExternalLink className="h-3 w-3" />
                 </a>
                 <br />
-                <a href="https://ec.europa.eu/eurostat/ramon/nomenclatures/index.cfm?TargetUrl=LST_NOM_DTL&StrNom=NACE_REV2" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm text-[#2E86C1] hover:underline">
-                  Baza zyrtare NACE Rev. 2 (Eurostat) <ExternalLink className="h-3 w-3" />
+                <a href="https://arbk.rks-gov.net/desk/inc/media/4E4C1941-A8CA-4A67-AF02-BFCCAA891E42.pdf" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm text-[#2E86C1] hover:underline">
+                  Klasifikimi i plotë i veprimtarive ekonomike, NACE Rev. 2 (ARBK, PDF) <ExternalLink className="h-3 w-3" />
                 </a>
               </div>
               <p className="text-xs text-gray-500 mt-3">
