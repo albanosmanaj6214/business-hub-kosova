@@ -68,6 +68,12 @@ export default async function CompanyDetailPage({ params, searchParams }: { para
         <ArrowLeft className="h-4 w-4" /> Kompani Kosovare
       </Link>
 
+      {/* Kopertina — mblidhej ne profil por s'shfaqej askund */}
+      {company.coverImageUrl && (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img src={company.coverImageUrl} alt="" className="w-full h-40 object-cover rounded-xl border border-gray-100" />
+      )}
+
       {/* Header */}
       <Card>
         <CardContent className="p-5">
@@ -160,6 +166,19 @@ export default async function CompanyDetailPage({ params, searchParams }: { para
             </Card>
           )}
 
+          {company.productsSought && company.productsSought.length > 0 && (
+            <Card>
+              <CardContent className="p-5">
+                <h2 className="text-sm font-semibold text-gray-900 mb-3">Kërkon të blejë</h2>
+                <div className="flex flex-wrap gap-1.5">
+                  {company.productsSought.map((p: string) => (
+                    <span key={p} className="inline-flex px-2 py-1 rounded-full text-xs bg-amber-50 text-amber-800 border border-amber-100">{p}</span>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {company.interests && company.interests.length > 0 && (
             <Card>
               <CardContent className="p-5">
@@ -188,6 +207,15 @@ export default async function CompanyDetailPage({ params, searchParams }: { para
                   {company.diasporaProfile.productsSought.length > 0 && (
                     <p><span className="text-gray-500">Kërkon nga Kosova:</span> {company.diasporaProfile.productsSought.join(', ')}</p>
                   )}
+                  {company.diasporaProfile.productsOffered.length > 0 && (
+                    <p><span className="text-gray-500">Ofron nga jashtë:</span> {company.diasporaProfile.productsOffered.join(', ')}</p>
+                  )}
+                  {company.diasporaProfile.countriesActive.length > 0 && (
+                    <p><span className="text-gray-500">Aktiv në:</span> {company.diasporaProfile.countriesActive.join(', ')}</p>
+                  )}
+                  {company.diasporaProfile.investmentBudget && (
+                    <p><span className="text-gray-500">Buxheti i investimit:</span> {company.diasporaProfile.investmentBudget}</p>
+                  )}
                   {company.diasporaProfile.purposeSummary && (
                     <p className="mt-3 whitespace-pre-line">{company.diasporaProfile.purposeSummary}</p>
                   )}
@@ -207,6 +235,17 @@ export default async function CompanyDetailPage({ params, searchParams }: { para
                   )}
                   {company.startupProfile.needs.length > 0 && (
                     <p><span className="text-gray-500">Nevoja:</span> {company.startupProfile.needs.join(', ')}</p>
+                  )}
+                  {company.startupProfile.hasProduct && (
+                    <p><span className="text-gray-500">Produkti:</span> Ka produkt/prototip funksional</p>
+                  )}
+                  {company.startupProfile.prototypeUrl && (
+                    <p>
+                      <span className="text-gray-500">Demo:</span>{' '}
+                      <a href={company.startupProfile.prototypeUrl} target="_blank" rel="noreferrer" className="text-[#2E86C1] hover:underline break-all">
+                        {company.startupProfile.prototypeUrl}
+                      </a>
+                    </p>
                   )}
                 </div>
               </CardContent>
