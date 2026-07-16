@@ -92,6 +92,7 @@ export function CompanyProfileEditor({ initial }: Props) {
     subRoles: initial.diasporaProfile?.subRoles ?? [],
     sectorsOfInterest: initial.diasporaProfile?.sectorsOfInterest ?? [],
     productsSought: initial.diasporaProfile?.productsSought ?? [],
+    companyProductsSought: initial.productsSought ?? [],
     productsOffered: initial.diasporaProfile?.productsOffered ?? [],
     purposeSummary: initial.diasporaProfile?.purposeSummary ?? '',
     investmentBudget: initial.diasporaProfile?.investmentBudget ?? '',
@@ -438,6 +439,12 @@ export function CompanyProfileEditor({ initial }: Props) {
               </label>
             ))}
           </div>
+          <ChipInput
+            label="Produktet ose lëndët që kërkon të blesh (opsionale)"
+            values={form.companyProductsSought || []}
+            onChange={(v) => setForm({ ...form, companyProductsSought: v })}
+            placeholder="p.sh. dërrasa ahu, ambalazh kartoni, vaj luledielli..."
+          />
         </Section>
       )}
 

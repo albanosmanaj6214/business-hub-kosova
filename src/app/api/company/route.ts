@@ -59,6 +59,8 @@ const BaseBody = z.object({
   subRoles: z.array(z.enum(['BUYER', 'INVESTOR', 'DISTRIBUTOR', 'IMPORTER', 'PARTNER', 'SERVICE_PROVIDER'])).optional(),
   sectorsOfInterest: z.array(z.string().max(60)).optional(),
   productsSought: z.array(z.string().max(200)).optional(),
+  // Produktet qe biznesi vendor kerkon te bleje (Company.productsSought).
+  companyProductsSought: z.array(z.string().max(200)).optional(),
   productsOffered: z.array(z.string().max(200)).optional(),
   purposeSummary: z.string().max(2000).optional().nullable(),
   investmentBudget: z.string().max(100).optional().nullable(),
@@ -114,6 +116,7 @@ export async function PATCH(req: Request) {
     longDescription: d.longDescription === undefined ? undefined : d.longDescription,
     visibilityLevel: d.visibilityLevel,
     interests: d.interests,
+    productsSought: d.companyProductsSought,
     profileStatus: nextProfileStatus,
   }
 
@@ -190,6 +193,13 @@ export async function PATCH(req: Request) {
       marketShare: d.marketShare === undefined ? undefined : d.marketShare,
     }
     await prisma.diasporaProfile.update({ where: { companyId: existing.id }, data: dpData })
+
+    // Pasqyro sektoret e interesit te Company.sectors: diaspora s'ka vetedeklarim
+    // sektori dhe pa kete mbetej e padukshme te filtri i sektorit ne regjister.
+    if (d.sectorsOfInterest !== undefined) {
+      const mirror = Array.from(new Set(d.sectorsOfInterest.filter((s) => !!sectorBySlug(s))))
+      await prisma.company.update({ where: { id: existing.id }, data: { sectors: mirror } })
+    }
   }
 
   const updated = await prisma.company.findUnique({

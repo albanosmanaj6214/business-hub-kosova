@@ -703,6 +703,9 @@ model Company {
   // Prezantimi publik
   logoUrl          String?
   coverImageUrl    String?
+  // Produktet/lendet qe biznesi kerkon te bleje (tekst i lire). Ushqen matcher-in
+  // vendor (4a/4c) dhe ofertat e diaspores; bosh = pa sinjal blerjeje.
+  productsSought   String[]  @default([])
   shortDescription String? @db.Text
   longDescription  String? @db.Text
 

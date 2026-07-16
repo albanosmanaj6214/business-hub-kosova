@@ -56,11 +56,16 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     }
     const myCompany = await prisma.company.findUnique({
       where: { ownerUserId: si.userId },
-      select: { id: true, name: true, profileStatus: true },
+      select: { id: true, name: true, profileStatus: true, roleType: true },
     })
     if (!myCompany) return NextResponse.json({ error: 'Të duhet profil biznesi për t\'u përgjigjur.' }, { status: 400 })
     if (myCompany.profileStatus !== 'APPROVED') {
       return NextResponse.json({ error: 'Profili yt duhet të jetë i aprovuar para se të dërgosh oferta. Dorëzoje për shqyrtim te Profili i Kompanisë.' }, { status: 400 })
+    }
+    // Vetem rolet qe jane marres te RFQ-ve mund te pergjigjen; nje diaspore
+    // nuk njoftohet kurre, prandaj s'duhet te pergjigjet as me URL direkte.
+    if (!['KOSOVO_BUSINESS', 'STARTUP'].includes(myCompany.roleType)) {
+      return NextResponse.json({ error: 'Vetëm bizneset kosovare dhe startup-et përgjigjen me ofertë.' }, { status: 403 })
     }
 
     const existing = await prisma.offerResponse.findUnique({

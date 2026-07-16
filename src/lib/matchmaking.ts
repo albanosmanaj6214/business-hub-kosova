@@ -58,6 +58,7 @@ type CandidateCompany = {
   roleType: string
   sectors: string[]
   interests: string[]
+  productsSought: string[]
   municipality: string | null
   country: string | null
   logoUrl: string | null
@@ -69,6 +70,7 @@ type CandidateCompany = {
     subRoles: string[]
     sectorsOfInterest: string[]
     productsSought: string[]
+    productsOffered: string[]
   } | null
   startupProfile: { stage: string; needs: string[] } | null
 }
@@ -125,7 +127,17 @@ export async function matchesForCompany(companyId: string, limit = 25): Promise<
   const mySubRoles = me.diasporaProfile?.subRoles ?? []
   const mySought = me.diasporaProfile?.productsSought ?? []
   const mySectorsOfInterest = me.diasporaProfile?.sectorsOfInterest ?? []
-  const myInterests = me.interests ?? []
+  // Ura e nevojave te startup-it: zgjedhjet 'Buyer'/'Distributor'/'Investitor'
+  // te needs sillen si interesa looking_for_*; ndryshe s'kishin asnje efekt.
+  const NEED_INTEREST: Record<string, string> = {
+    buyer: 'looking_for_buyer',
+    distributor: 'looking_for_distributor',
+    investitor: 'looking_for_investor',
+  }
+  const bridgeNeeds = (needs: readonly string[]): string[] =>
+    needs.map((n) => NEED_INTEREST[norm(n)]).filter((x): x is string => !!x)
+  const myInterests = Array.from(new Set([...(me.interests ?? []), ...bridgeNeeds(me.startupProfile?.needs ?? [])]))
+  const myProductsSought = (me as { productsSought?: string[] }).productsSought ?? []
   const iSeekInvestor = myInterests.includes('looking_for_investor') ||
     (me.startupProfile?.needs ?? []).some((n) => norm(n).includes('investitor'))
 
@@ -138,6 +150,8 @@ export async function matchesForCompany(companyId: string, limit = 25): Promise<
       catName: o.category?.nameSq ?? null,
       catSlug: o.category?.slug ?? null,
     }))
+    const cInterests = Array.from(new Set([...(c.interests ?? []), ...bridgeNeeds(c.startupProfile?.needs ?? [])]))
+    const cProductsSought = c.productsSought ?? []
 
     // =========================================================
     // DREJTIMI 1: Unë DIASPORA (buyer/importer/distributor) → prodhues kosovarë
@@ -157,14 +171,14 @@ export async function matchesForCompany(companyId: string, limit = 25): Promise<
         score += 50
         reasons.push(`Sektori i interesit tënd: ${sectorHits.map((s) => sectorBySlug(s as any)?.sq ?? s).join(', ')}`)
       }
-      const wantsBuyer = c.interests.includes('looking_for_buyer') &&
+      const wantsBuyer = cInterests.includes('looking_for_buyer') &&
         (mySubRoles.includes('BUYER') || mySubRoles.includes('IMPORTER'))
-      const wantsDistributor = c.interests.includes('looking_for_distributor') && mySubRoles.includes('DISTRIBUTOR')
+      const wantsDistributor = cInterests.includes('looking_for_distributor') && mySubRoles.includes('DISTRIBUTOR')
       if (wantsBuyer || wantsDistributor) {
         score += 25
         reasons.push(wantsDistributor ? 'Kërkon distributor si ti' : 'Kërkon blerës si ti')
       }
-      if (c.interests.includes('export_ready')) {
+      if (cInterests.includes('export_ready')) {
         score += 10
         reasons.push('I gatshëm për eksport')
       }
@@ -177,12 +191,42 @@ export async function matchesForCompany(companyId: string, limit = 25): Promise<
     }
 
     // =========================================================
+    // DREJTIMI 1b: Unë DIASPORA (partner / ofrues shërbimesh) → biznese vendore
+    //              Pa këtë, një diasporë vetëm-PARTNER ose SERVICE_PROVIDER
+    //              nuk shihte asnjë match si shikues.
+    // =========================================================
+    if (iAmDiaspora && !cIsDiaspora &&
+        (mySubRoles.includes('PARTNER') || mySubRoles.includes('SERVICE_PROVIDER'))) {
+      let score = 0
+      const reasons: string[] = []
+      const sectorHits = c.sectors.filter((s) => mySectorsOfInterest.includes(s))
+      if (sectorHits.length > 0) {
+        score += 50
+        reasons.push(`Sektori i interesit tënd: ${sectorHits.map((s) => sectorBySlug(s as any)?.sq ?? s).join(', ')}`)
+      }
+      if (mySubRoles.includes('PARTNER') && cInterests.includes('looking_for_partner')) {
+        score += 25
+        reasons.push('Kërkon partner strategjik si ti')
+      }
+      if (mySubRoles.includes('SERVICE_PROVIDER') &&
+          (cInterests.includes('looking_for_supplier') || cInterests.includes('looking_for_partner'))) {
+        score += 25
+        reasons.push('Kërkon furnizues/partner — ti ofron shërbime')
+      }
+      if (cVerified) { score += VERIFIED_BONUS; reasons.push('Profil i verifikuar') }
+      if (score >= MIN_SCORE) {
+        results.push({ company: toResultCompany(c), score, matchType: 'PARTNER', reasons })
+        continue
+      }
+    }
+
+    // =========================================================
     // DREJTIMI 2: Unë DIASPORA INVESTOR → biznese/startup që kërkojnë investim
     // =========================================================
     if (iAmDiaspora && !cIsDiaspora && mySubRoles.includes('INVESTOR')) {
       let score = 0
       const reasons: string[] = []
-      const seeksInvestor = c.interests.includes('looking_for_investor') ||
+      const seeksInvestor = cInterests.includes('looking_for_investor') ||
         (c.startupProfile?.needs ?? []).some((n) => norm(n).includes('investitor'))
       if (seeksInvestor) { score += 25; reasons.push('Kërkon investitor') }
       const sectorHits = c.sectors.filter((s) => mySectorsOfInterest.includes(s))
@@ -276,6 +320,40 @@ export async function matchesForCompany(companyId: string, limit = 25): Promise<
           continue
         }
       }
+
+      // 3e. Ofrues shërbimesh nga diaspora — kur ti kërkon furnizues ose partner
+      if (cSubRoles.includes('SERVICE_PROVIDER') &&
+          (myInterests.includes('looking_for_supplier') || myInterests.includes('looking_for_partner'))) {
+        let score = 25
+        const reasons: string[] = ['Ofron shërbime nga diaspora — ti kërkon furnizues/partner']
+        const cOffered = c.diasporaProfile?.productsOffered ?? []
+        const offeredHits = cOffered.filter((o) => myProductsSought.some((s) => norm(o).includes(norm(s)) || norm(s).includes(norm(o))))
+        if (offeredHits.length > 0) { score += 50; reasons.push(`Ofron: ${offeredHits.slice(0, 2).join(', ')}`) }
+        const sectorHits = me.sectors.filter((s) => cSectorsOfInterest.includes(s))
+        if (sectorHits.length > 0) { score += 50; reasons.push('Aktiv në sektorin tënd') }
+        if (cVerified) { score += VERIFIED_BONUS; reasons.push('Profil i verifikuar') }
+        if (score >= MIN_SCORE) {
+          results.push({ company: toResultCompany(c), score, matchType: 'SUPPLIER', reasons })
+          continue
+        }
+      }
+
+      // 3f. Ti interesohesh për import — diaspora distributor ose me produkte të ofruara
+      if (myInterests.includes('import_interested') &&
+          (cSubRoles.includes('DISTRIBUTOR') || (c.diasporaProfile?.productsOffered ?? []).length > 0)) {
+        let score = 25
+        const reasons: string[] = ['Ti interesohesh për import — ky shpërndan/ofron produkte nga jashtë']
+        const cOffered = c.diasporaProfile?.productsOffered ?? []
+        const offeredHits = cOffered.filter((o) => myProductsSought.some((s) => norm(o).includes(norm(s)) || norm(s).includes(norm(o))))
+        if (offeredHits.length > 0) { score += 50; reasons.push(`Ofron: ${offeredHits.slice(0, 2).join(', ')}`) }
+        const sectorHits = me.sectors.filter((s) => cSectorsOfInterest.includes(s))
+        if (sectorHits.length > 0) { score += 50; reasons.push('Në sektorin tënd') }
+        if (cVerified) { score += VERIFIED_BONUS; reasons.push('Profil i verifikuar') }
+        if (score >= MIN_SCORE) {
+          results.push({ company: toResultCompany(c), score, matchType: 'SUPPLIER', reasons })
+          continue
+        }
+      }
     }
 
     // =========================================================
@@ -286,6 +364,8 @@ export async function matchesForCompany(companyId: string, limit = 25): Promise<
       if (myInterests.includes('looking_for_supplier') && cOfferings.length > 0) {
         let score = 0
         const reasons: string[] = []
+        const productHits = myProductsSought.filter((s) => cOfferings.some((o) => textMatches(s, o)))
+        if (productHits.length > 0) { score += 100; reasons.push(`Ka të listuar atë që kërkon të blesh: ${productHits.slice(0, 2).join(', ')}`) }
         const sectorHits = c.sectors.filter((s) => me.sectors.includes(s))
         if (sectorHits.length > 0) { score += 50; reasons.push('Prodhon në sektorin tënd') }
         score += 25
@@ -297,7 +377,7 @@ export async function matchesForCompany(companyId: string, limit = 25): Promise<
         }
       }
       // 4b. Partneritet lokal — të dy e kërkojnë
-      if (myInterests.includes('looking_for_partner') && c.interests.includes('looking_for_partner')) {
+      if (myInterests.includes('looking_for_partner') && cInterests.includes('looking_for_partner')) {
         let score = 25
         const reasons: string[] = ['Të dy kërkoni partneritet']
         const sectorHits = c.sectors.filter((s) => me.sectors.includes(s))
@@ -305,6 +385,22 @@ export async function matchesForCompany(companyId: string, limit = 25): Promise<
         if (cVerified) { score += VERIFIED_BONUS; reasons.push('Profil i verifikuar') }
         if (score >= MIN_SCORE) {
           results.push({ company: toResultCompany(c), score, matchType: 'PARTNER', reasons })
+          continue
+        }
+      }
+
+      // 4c. Kërkoj blerës → biznese vendore që kërkojnë furnizues (ana e kundërt e 4a).
+      // Pa këtë, prodhuesi me 'looking_for_buyer' s'merrte asnjë lead vendor.
+      if (myInterests.includes('looking_for_buyer') && myOfferings.length > 0 && cInterests.includes('looking_for_supplier')) {
+        let score = 50
+        const reasons: string[] = ['Kërkon furnizues — ti i ke produktet e listuara']
+        const productHits = cProductsSought.filter((s) => myOfferings.some((o) => textMatches(s, o)))
+        if (productHits.length > 0) { score += 100; reasons.push(`Kërkon të blejë atë që ti ofron: ${productHits.slice(0, 2).join(', ')}`) }
+        const sectorHits = c.sectors.filter((s) => me.sectors.includes(s))
+        if (sectorHits.length > 0) { score += 25; reasons.push('Sektor i përbashkët') }
+        if (cVerified) { score += VERIFIED_BONUS; reasons.push('Profil i verifikuar') }
+        if (score >= MIN_SCORE) {
+          results.push({ company: toResultCompany(c), score, matchType: 'BUYER', reasons })
         }
       }
     }
