@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { matchesAudience } from '@/lib/audience'
+import { currentBusinessProfile } from '@/lib/audience-server'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ExternalLink, Newspaper } from 'lucide-react'
@@ -23,11 +24,11 @@ export default async function LajmePage() {
   const userId = (session?.user as { id?: string })?.id
   if (!userId) redirect('/login')
 
-  const [me, allNews] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: { activityType: true, entitledSectors: true, femaleOwnership: true },
-    }),
+  // Profili vjen nga currentBusinessProfile: i njejti burim si dispecimi
+  // (aktiviteti = company.activityType ?? user.activityType). Nese perdorej vetem
+  // User.activityType, lajmet e targetuara sipas aktivitetit njoftonin por s'shfaqeshin.
+  const [profileRaw, allNews] = await Promise.all([
+    currentBusinessProfile(),
     prisma.newsItem.findMany({
       where: { isActive: true, deletedAt: null, dispatchStatus: 'DISPATCHED' },
       orderBy: [{ publishedAt: 'desc' }, { scrapedAt: 'desc' }],
@@ -35,11 +36,7 @@ export default async function LajmePage() {
     }),
   ])
 
-  const profile = {
-    activityType: me?.activityType ?? null,
-    entitledSectors: me?.entitledSectors ?? [],
-    femaleOwnership: me?.femaleOwnership ?? null,
-  }
+  const profile = profileRaw ?? { activityType: null, entitledSectors: [], femaleOwnership: null }
 
   // Çdo biznes sheh vetem lajmet qe i takojne profilit te tij. Lajmet e pergjithshme
   // (isGeneral=true) i sheh kushdo, perfshire tregtine.

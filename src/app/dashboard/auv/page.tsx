@@ -19,6 +19,22 @@ async function fullAccessForSession(): Promise<boolean> {
   return ['PROFESSIONAL', 'ENTERPRISE'].includes(tier) || ['ADMIN', 'SUPER_ADMIN'].includes(role)
 }
 
+// Sektoret qe e kane kete udhezues (i njejti rregull si forSectors ne sidebar).
+const AUV_SECTORS = ['ushqim-dhe-pije', 'bujqesi-blegtori']
+
+// Roja server-side e sektorit: sidebar-i e fsheh, por pa kete cdo perdorues e hapte me URL.
+async function auvSectorAllowed(): Promise<boolean> {
+  const { getServerSession } = await import('next-auth')
+  const { authOptions } = await import('@/lib/auth')
+  const session = await getServerSession(authOptions)
+  const role = String((session?.user as { role?: string })?.role ?? '')
+  if (['ADMIN', 'SUPER_ADMIN'].includes(role)) return true
+  const { currentBusinessProfile } = await import('@/lib/audience-server')
+  const profile = await currentBusinessProfile()
+  const entitled = profile?.entitledSectors ?? []
+  return AUV_SECTORS.some((s) => entitled.includes(s))
+}
+
 const LAST_VERIFIED = '2026-07-08'
 const OFFICIAL_URL = 'https://auvk.rks-gov.net'
 
@@ -287,6 +303,28 @@ function ProcedureCard({ p }: { p: Procedure }) {
 }
 
 export default async function AUVGuidePage() {
+  const sectorOk = await auvSectorAllowed()
+  if (!sectorOk) {
+    return (
+      <div className="max-w-2xl mx-auto py-12">
+        <Card>
+          <CardContent className="p-8 text-center space-y-3">
+            <ShieldCheck className="h-12 w-12 text-gray-300 mx-auto" />
+            <h1 className="text-xl font-bold text-gray-900">Udhëzuesi AUV</h1>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              Ky udhëzues vlen për bizneset e sektorit të ushqimit dhe të bujqësisë/blegtorisë,
+              sepse mbulon certifikatat ushqimore dhe veterinare të AUV-së. Profili yt nuk e ka
+              asnjërin nga këta sektorë të aktivizuar, prandaj përmbajtja nuk të shfaqet.
+            </p>
+            <p className="text-sm text-gray-600">
+              Nëse biznesi yt punon me ushqim ose bujqësi, përditëso sektorin te{' '}
+              <NextLink href="/dashboard/profili-kompanise" className="text-[#2E86C1] hover:underline font-medium">Profili i Kompanisë</NextLink>.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
   const fullAccess = await fullAccessForSession()
   return (
     <div className="space-y-6">

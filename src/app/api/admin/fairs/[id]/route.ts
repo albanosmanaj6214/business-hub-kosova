@@ -39,10 +39,18 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     },
   })
 
+  // Njoftim vetem per panaire te publikuara, sipas entitledSectors + forFemaleOwned.
   let notified = 0
-  if (body.notifySector === true && targetSectors.length > 0) {
+  let notifySkipped: string | null = null
+  if (body.notifySector === true && targetSectors.length > 0 && fair.dispatchStatus !== 'DISPATCHED') {
+    notifySkipped = 'Panairi nuk eshte i publikuar (dispatch PENDING) — njoftimi u anulua.'
+  }
+  if (body.notifySector === true && targetSectors.length > 0 && fair.dispatchStatus === 'DISPATCHED') {
     const users = await prisma.user.findMany({
-      where: { sectors: { hasSome: targetSectors } },
+      where: {
+        entitledSectors: { hasSome: targetSectors },
+        ...(fair.forFemaleOwned ? { femaleOwnership: true } : {}),
+      },
       select: { id: true },
     })
     if (users.length) {
@@ -64,5 +72,5 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
   }
 
-  return NextResponse.json({ ok: true, id: fair.id, targetSectors, notified })
+  return NextResponse.json({ ok: true, id: fair.id, targetSectors, notified, notifySkipped })
 }

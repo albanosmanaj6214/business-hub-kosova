@@ -20,6 +20,7 @@ const BUSINESS_ONLY_PREFIXES = [
   '/dashboard/investime',
   '/dashboard/hap-biznes-kosove',
   '/dashboard/subscription',
+  '/dashboard/auv',
 ]
 
 export default withAuth(

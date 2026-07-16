@@ -616,12 +616,18 @@ async function DiasporaDashboard({ firstName, company, unreadNotifs }: {
 async function IndividualDashboard({ firstName, unreadNotifs, restricted }: {
   firstName: string; unreadNotifs: number; restricted: boolean
 }) {
-  const news = await prisma.newsItem.findMany({
+  // Individi s'ka profil biznesi: sheh vetem lajmet e pergjithshme/universale,
+  // njesoj si te /dashboard/lajme. Pa kete filter, lajmet sektoriale rridhnin ketu.
+  const allNews = await prisma.newsItem.findMany({
     where: { isActive: true, deletedAt: null, dispatchStatus: 'DISPATCHED' },
     orderBy: { publishedAt: 'desc' },
-    take: 5,
-    select: { id: true, title: true, titleSq: true, sourceName: true, publishedAt: true },
+    take: 30,
+    select: {
+      id: true, title: true, titleSq: true, sourceName: true, publishedAt: true,
+      isGeneral: true, targetSectors: true, targetActivityTypes: true, forFemaleOwned: true,
+    },
   })
+  const news = feedFor({ activityType: null, entitledSectors: [], femaleOwnership: null }, allNews).slice(0, 5)
 
   return (
     <div className="space-y-6">

@@ -80,11 +80,20 @@ export async function POST(req: Request) {
     result = await prisma.grant.create({ data })
   }
 
-  // Notify users whose sectors intersect targetSectors[] when the admin opted in.
+  // Njoftim manual: VETEM per grante te publikuara (DISPATCHED), sipas qasjes reale
+  // (entitledSectors, jo vetedeklarimit) dhe duke respektuar forFemaleOwned.
+  // Fan-out kanonik mbetet /api/admin/dispatch; kjo eshte rruga dytesore e adminit.
   let notified = 0
-  if (d.notifySector && targetSectors.length > 0) {
+  let notifySkipped: string | null = null
+  if (d.notifySector && targetSectors.length > 0 && result.dispatchStatus !== 'DISPATCHED') {
+    notifySkipped = 'Granti nuk eshte i publikuar (dispatch PENDING) — njoftimi u anulua qe perdoruesit te mos njoftohen per permbajtje qe s\'e shohin. Publikoje permes Dispecimit.'
+  }
+  if (d.notifySector && targetSectors.length > 0 && result.dispatchStatus === 'DISPATCHED') {
     const users = await prisma.user.findMany({
-      where: { sectors: { hasSome: targetSectors } },
+      where: {
+        entitledSectors: { hasSome: targetSectors },
+        ...(result.forFemaleOwned ? { femaleOwnership: true } : {}),
+      },
       select: { id: true, language: true },
     })
     if (users.length) {
@@ -106,7 +115,7 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, id: result.id, mode: existing ? 'updated' : 'created', notified })
+  return NextResponse.json({ ok: true, id: result.id, mode: existing ? 'updated' : 'created', notified, notifySkipped })
 }
 
 // Helper: GET list of distinct existing providers for autocomplete
