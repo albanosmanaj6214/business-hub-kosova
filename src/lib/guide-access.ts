@@ -24,13 +24,16 @@ export async function fullAccessForSession(): Promise<boolean> {
   return isAdmin(role) || entitlementsFor(tier).guides === 'full'
 }
 
-// Udhezuesit e eksportit: 'limited' = vetem udhezuesit e sektorit tend
-// (+ ata universale me targetSectors bosh); 'full' = te gjithe.
-export async function exportGuideAccess(): Promise<{ limited: boolean; entitled: string[] }> {
+// Udhezuesit e eksportit: 'none' = i mbyllur (upsell), 'limited' = vetem sektori
+// i vet + universalet, 'full' = te gjithe. Adminet gjithmone 'full'.
+export async function exportGuideAccess(): Promise<{ mode: 'none' | 'limited' | 'full'; entitled: string[] }> {
   const { tier, role } = await sessionTierRole()
-  if (isAdmin(role) || entitlementsFor(tier).guides === 'full') return { limited: false, entitled: [] }
+  if (isAdmin(role)) return { mode: 'full', entitled: [] }
+  const g = entitlementsFor(tier).guides
+  if (g === 'full') return { mode: 'full', entitled: [] }
+  if (g === 'none') return { mode: 'none', entitled: [] }
   const profile = await currentBusinessProfile()
-  return { limited: true, entitled: profile?.entitledSectors ?? [] }
+  return { mode: 'limited', entitled: profile?.entitledSectors ?? [] }
 }
 
 // Checklistat e eksportit: vetem pakot qe e kane te aktivizuar.

@@ -110,14 +110,14 @@ export default async function GuidePage({ params }: { params: { id: string } }) 
 
   // Zbatimi i pakos: me 'limited', udhezuesit jashte sektorit tend hapen me upgrade.
   const access = await exportGuideAccess()
-  if (access.limited && guide.targetSectors.length > 0 && !guide.targetSectors.some((s) => access.entitled.includes(s))) {
+  if (access.mode === 'none' || (access.mode === 'limited' && guide.targetSectors.length > 0 && !guide.targetSectors.some((s) => access.entitled.includes(s)))) {
     return (
       <div className="max-w-2xl mx-auto py-12">
         <div className="rounded-xl border border-gray-200 bg-white p-8 text-center space-y-3">
           <h1 className="text-xl font-bold text-gray-900">{pickTitle(guide, locale)}</h1>
           <p className="text-sm text-gray-600 leading-relaxed">
-            Ky udhëzues është jashtë sektorit tënd dhe hapet me pakon Professional,
-            bashkë me të gjithë udhëzuesit e eksportit për çdo treg.
+            Udhëzuesit e eksportit sipas tregjeve, me dokumentet, certifikatat dhe
+            kontaktet kyçe për çdo shtet, hapen me pakon Professional.
           </p>
           <div className="flex items-center justify-center gap-3">
             <Link href="/dashboard/subscription" className="inline-flex items-center rounded-lg bg-[#1B4F72] hover:bg-[#2E86C1] text-white text-sm font-semibold px-4 py-2">

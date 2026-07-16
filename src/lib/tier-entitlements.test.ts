@@ -26,8 +26,8 @@ describe('tier-entitlements', () => {
     expect(hasEntitlement('FREE', 'newsletter')).toBe(true)
   })
 
-  it('marks guides limited for Starter, full for Pro/Ent', () => {
-    expect(entitlementsFor('STARTER').guides).toBe('limited')
+  it('marks guides paid-only for Starter, full for Pro/Ent', () => {
+    expect(entitlementsFor('STARTER').guides).toBe('none')
     expect(entitlementsFor('PROFESSIONAL').guides).toBe('full')
     expect(entitlementsFor('ENTERPRISE').consultationsPerMonth).toBe(-1)
   })

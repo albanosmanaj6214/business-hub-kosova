@@ -53,8 +53,24 @@ export default async function GuidesPage() {
   // Zbatimi i pakos (guides 'limited'): FREE sheh vetem udhezuesit e sektorit
   // te vet + universalet. Deri tani ky kufi ishte i reklamuar por i pazbatuar.
   const access = await exportGuideAccess()
+  if (access.mode === 'none') {
+    return (
+      <div className="max-w-2xl mx-auto py-12">
+        <div className="rounded-xl border border-gray-200 bg-white p-8 text-center space-y-3">
+          <h1 className="text-xl font-bold text-gray-900">Udhëzues Eksporti</h1>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            Udhëzuesit e eksportit sipas tregjeve, me dokumentet, certifikatat, etiketimin
+            dhe kontaktet kyçe për çdo shtet, hapen me pakon Professional.
+          </p>
+          <Link href="/dashboard/subscription" className="inline-flex items-center rounded-lg bg-[#1B4F72] hover:bg-[#2E86C1] text-white text-sm font-semibold px-4 py-2">
+            Shiko pakot
+          </Link>
+        </div>
+      </div>
+    )
+  }
   const guideOk = (g: { targetSectors: string[] }) =>
-    !access.limited || g.targetSectors.length === 0 || g.targetSectors.some((s) => access.entitled.includes(s))
+    access.mode !== 'limited' || g.targetSectors.length === 0 || g.targetSectors.some((s) => access.entitled.includes(s))
   const guides = guidesRaw.filter(guideOk)
   const lockedCount = guidesRaw.length - guides.length
 
@@ -79,7 +95,7 @@ export default async function GuidesPage() {
           )}
         </p>
       </div>
-      {access.limited && lockedCount > 0 && (
+      {access.mode === 'limited' && lockedCount > 0 && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           Me pakon <strong>Falas</strong> sheh udhëzuesit e sektorit tënd ({guides.length} nga {guidesRaw.length}).{' '}
           <Link href="/dashboard/subscription" className="font-semibold text-[#1B4F72] hover:underline">Kalo në Professional</Link>{' '}

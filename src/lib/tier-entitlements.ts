@@ -13,8 +13,9 @@ export interface TierEntitlements {
   emailAlerts: boolean
   // Newsletter periodik.
   newsletter: boolean
-  // Udhezues eksporti: te kufizuar (sektori + vendet kryesore) ose te plote.
-  guides: 'limited' | 'full'
+  // Udhezues eksporti: 'none' = vetem me pagese (vendim 2026-07-16), 'limited' =
+  // vetem sektori i vet (opsion i ardhshem), 'full' = te gjithe.
+  guides: 'none' | 'limited' | 'full'
   // Checklista eksporti.
   checklists: boolean
   // Template per panaire.
@@ -26,11 +27,11 @@ export interface TierEntitlements {
 export const TIER_ENTITLEMENTS: Record<TierKey, TierEntitlements> = {
   FREE: {
     maxSectors: 1, notifications: true, emailAlerts: false, newsletter: true,
-    guides: 'limited', checklists: false, fairTemplates: false, consultationsPerMonth: 0,
+    guides: 'none', checklists: false, fairTemplates: false, consultationsPerMonth: 0,
   },
   STARTER: {
     maxSectors: 1, notifications: true, emailAlerts: false, newsletter: true,
-    guides: 'limited', checklists: false, fairTemplates: false, consultationsPerMonth: 0,
+    guides: 'none', checklists: false, fairTemplates: false, consultationsPerMonth: 0,
   },
   PROFESSIONAL: {
     maxSectors: 3, notifications: true, emailAlerts: true, newsletter: true,
