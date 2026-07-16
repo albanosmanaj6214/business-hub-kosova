@@ -144,7 +144,11 @@ export default async function GrantsPage({
       kind: 'GRANT',
       deletedAt: null,
       dispatchStatus: 'DISPATCHED',
-      NOT: [{ audience: 'civil_society' }, { tags: { has: 'legacy_synthetic' } }],
+      // Null-safe: NOT mbi audience=NULL e fshihte grantin nga te gjithe (SQL UNKNOWN).
+      AND: [
+        { OR: [{ audience: null }, { NOT: { audience: 'civil_society' } }] },
+        { NOT: { tags: { has: 'legacy_synthetic' } } },
+      ],
     },
     orderBy: [{ deadline: 'asc' }, { createdAt: 'desc' }],
   })) as (GrantRow & { isGeneral: boolean; targetActivityTypes: string[] })[]

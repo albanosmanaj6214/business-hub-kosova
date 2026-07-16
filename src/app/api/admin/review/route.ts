@@ -99,6 +99,7 @@ export async function POST(req: Request) {
         eligibility: opp.eligibility ?? null,
         url: opp.sourceUrl,
         country: 'Kosovo',
+        audience: 'business',
         sectors: cleanSectors,
         targetSectors,
         tags: [...(supportTypes ?? []), opp.source.code.toLowerCase()].filter(Boolean),

@@ -125,7 +125,11 @@ async function searchGrants(args: Record<string, unknown>, ctx: UserContext) {
       isActive: true,
       deletedAt: null,
       dispatchStatus: 'DISPATCHED',
-      NOT: [{ audience: 'civil_society' }, { tags: { has: 'legacy_synthetic' } }],
+      // Null-safe: NOT mbi audience=NULL e fshihte grantin nga te gjithe (SQL UNKNOWN).
+      AND: [
+        { OR: [{ audience: null }, { NOT: { audience: 'civil_society' } }] },
+        { NOT: { tags: { has: 'legacy_synthetic' } } },
+      ],
       ...(keywords ? {
         OR: [
           { titleSq: { contains: keywords, mode: 'insensitive' } },

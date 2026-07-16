@@ -26,7 +26,11 @@ export async function countActiveGrants(): Promise<number> {
       kind: "GRANT",
       isActive: true,
       deletedAt: null,
-      NOT: [{ audience: "civil_society" }, { tags: { has: "legacy_synthetic" } }],
+      // Null-safe: NOT mbi audience=NULL e fshihte grantin nga te gjithe (SQL UNKNOWN).
+      AND: [
+        { OR: [{ audience: null }, { NOT: { audience: "civil_society" } }] },
+        { NOT: { tags: { has: "legacy_synthetic" } } },
+      ],
     },
     select: { title: true, titleSq: true, deadline: true, isOngoing: true },
   })
