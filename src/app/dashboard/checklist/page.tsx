@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { checklistAllowed } from '@/lib/guide-access'
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -53,6 +54,23 @@ export default async function ChecklistPage({
 }: {
   searchParams?: { country?: string }
 }) {
+  // Zbatimi i pakos: checklistat jane te aktivizuara vetem per pakot qe i kane.
+  if (!(await checklistAllowed())) {
+    return (
+      <div className="max-w-2xl mx-auto py-12">
+        <div className="rounded-xl border border-gray-200 bg-white p-8 text-center space-y-3">
+          <h1 className="text-xl font-bold text-gray-900">Checklistat e eksportit</h1>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            Checklistat hap pas hapi për çdo treg eksporti hapen me pakon Professional.
+          </p>
+          <Link href="/dashboard/subscription" className="inline-flex items-center rounded-lg bg-[#1B4F72] hover:bg-[#2E86C1] text-white text-sm font-semibold px-4 py-2">
+            Shiko pakot
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   const code = (searchParams?.country || '').toUpperCase()
 
   // Detail view

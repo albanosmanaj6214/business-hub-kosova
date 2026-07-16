@@ -9,15 +9,7 @@ import {
 
 export const dynamic = 'force-dynamic'
 
-// Gating i pakos (§11): FREE sheh 2 procedurat e para; pjesa tjeter kerkon Professional.
-async function fullAccessForSession(): Promise<boolean> {
-  const { getServerSession } = await import('next-auth')
-  const { authOptions } = await import('@/lib/auth')
-  const session = await getServerSession(authOptions)
-  const tier = String((session?.user as { tier?: string })?.tier ?? 'FREE')
-  const role = String((session?.user as { role?: string })?.role ?? '')
-  return ['PROFESSIONAL', 'ENTERPRISE'].includes(tier) || ['ADMIN', 'SUPER_ADMIN'].includes(role)
-}
+import { fullAccessForSession } from '@/lib/guide-access'
 
 // Sektoret qe e kane kete udhezues (i njejti rregull si forSectors ne sidebar).
 const AUV_SECTORS = ['ushqim-dhe-pije', 'bujqesi-blegtori']

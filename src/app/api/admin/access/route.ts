@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sectorBySlug } from '@/lib/sectors'
+import { maxSectorsFor } from '@/lib/tier-entitlements'
 import { logAudit } from '@/lib/audit'
 
 export const runtime = 'nodejs'
@@ -51,6 +52,21 @@ export async function POST(req: Request) {
   const entitled = Array.isArray(body.entitledSectors)
     ? Array.from(new Set(body.entitledSectors.filter((s): s is string => typeof s === 'string' && !!sectorBySlug(s))))
     : []
+
+  // Kufiri i sektoreve sipas pakos. Me pare ishte vetem paralajmerim ne UI,
+  // pra admini mund ta tejkalonte pa dashje kufirin e faturuar.
+  const targetUser = await prisma.user.findUnique({
+    where: { id: body.userId },
+    select: { subscription: { select: { tier: true } } },
+  })
+  if (!targetUser) return NextResponse.json({ error: 'Useri s\'u gjet' }, { status: 404 })
+  const cap = maxSectorsFor(targetUser.subscription?.tier)
+  if (entitled.length > cap) {
+    return NextResponse.json(
+      { error: `Pakoja ${targetUser.subscription?.tier ?? 'FREE'} lejon maksimum ${cap} sektorë të aktivizuar. Ndrysho pakon më parë.` },
+      { status: 400 },
+    )
+  }
 
   await prisma.user.update({
     where: { id: body.userId },

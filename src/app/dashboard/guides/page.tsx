@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
 import { prisma } from '@/lib/prisma'
 import { currentBusinessProfile } from '@/lib/audience-server'
+import { exportGuideAccess } from '@/lib/guide-access'
 import { SECTORS, sectorAppliesToAny } from '@/lib/sectors'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -49,7 +50,13 @@ export default async function GuidesPage() {
     .filter((x): x is NonNullable<typeof x> => !!x)
   const userCanonicalSectors = new Set(userSectorDefs.map((sd) => sd.sq))
 
-  const guides = guidesRaw
+  // Zbatimi i pakos (guides 'limited'): FREE sheh vetem udhezuesit e sektorit
+  // te vet + universalet. Deri tani ky kufi ishte i reklamuar por i pazbatuar.
+  const access = await exportGuideAccess()
+  const guideOk = (g: { targetSectors: string[] }) =>
+    !access.limited || g.targetSectors.length === 0 || g.targetSectors.some((s) => access.entitled.includes(s))
+  const guides = guidesRaw.filter(guideOk)
+  const lockedCount = guidesRaw.length - guides.length
 
   const t = (sq: string, en: string) => locale === 'sq' ? sq : en
 
@@ -72,6 +79,13 @@ export default async function GuidesPage() {
           )}
         </p>
       </div>
+      {access.limited && lockedCount > 0 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          Me pakon <strong>Falas</strong> sheh udhëzuesit e sektorit tënd ({guides.length} nga {guidesRaw.length}).{' '}
+          <Link href="/dashboard/subscription" className="font-semibold text-[#1B4F72] hover:underline">Kalo në Professional</Link>{' '}
+          për të gjitha tregjet dhe sektorët.
+        </div>
+      )}
           <Link
             href="/dashboard/checklist"
             className="hidden sm:inline-flex items-center gap-2 rounded-lg border border-[#1B4F72]/30 bg-[#1B4F72]/5 hover:bg-[#1B4F72]/10 text-[#1B4F72] text-sm font-medium px-3 py-2 transition-colors"

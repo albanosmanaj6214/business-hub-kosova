@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { exportGuideAccess } from '@/lib/guide-access'
 import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
@@ -106,6 +107,30 @@ export default async function GuidePage({ params }: { params: { id: string } }) 
   const locale: Locale = getServerLocale()
   const guide = await prisma.exportGuide.findFirst({ where: { id: params.id, deletedAt: null } })
   if (!guide) notFound()
+
+  // Zbatimi i pakos: me 'limited', udhezuesit jashte sektorit tend hapen me upgrade.
+  const access = await exportGuideAccess()
+  if (access.limited && guide.targetSectors.length > 0 && !guide.targetSectors.some((s) => access.entitled.includes(s))) {
+    return (
+      <div className="max-w-2xl mx-auto py-12">
+        <div className="rounded-xl border border-gray-200 bg-white p-8 text-center space-y-3">
+          <h1 className="text-xl font-bold text-gray-900">{pickTitle(guide, locale)}</h1>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            Ky udhëzues është jashtë sektorit tënd dhe hapet me pakon Professional,
+            bashkë me të gjithë udhëzuesit e eksportit për çdo treg.
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <Link href="/dashboard/subscription" className="inline-flex items-center rounded-lg bg-[#1B4F72] hover:bg-[#2E86C1] text-white text-sm font-semibold px-4 py-2">
+              Shiko pakot
+            </Link>
+            <Link href="/dashboard/guides" className="text-sm text-gray-500 hover:text-gray-700">
+              Kthehu te udhëzuesit
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
   if (!guide.isPublished) {
     // fall back to legacy markdown view if no structured fields and not published
     if (!guide.marketOverview) notFound()
