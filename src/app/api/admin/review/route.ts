@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { inferSectorSlugs, sectorBySlug } from '@/lib/sectors'
 
 export const dynamic = 'force-dynamic'
 
@@ -59,6 +60,16 @@ export async function POST(req: Request) {
     const dl = deadline ? new Date(deadline) : opp.deadline
     const cleanSectors = (sectors ?? []).map((s) => s.trim()).filter(Boolean)
 
+    // Personalizimi (targetSectors): ose eksplicit nga UI, ose i inferuar nga
+    // tekstet e lira te sektoreve permes varianteve kanonike. Pa kete, cdo grant
+    // e panair i skrejpuar mbetej universal pavaresisht etiketave te sektorit.
+    const rawTargets = Array.isArray((body as { targetSectors?: unknown }).targetSectors)
+      ? ((body as { targetSectors?: unknown[] }).targetSectors as unknown[]).filter(
+          (t): t is string => typeof t === 'string' && !!sectorBySlug(t),
+        )
+      : []
+    const targetSectors = rawTargets.length > 0 ? Array.from(new Set(rawTargets)) : inferSectorSlugs(cleanSectors)
+
     if (opp.type === 'FAIR') {
       const existing = await prisma.tradeFair.findFirst({ where: { website: opp.sourceUrl } })
       const start = dl ?? existing?.startDate ?? new Date()
@@ -71,6 +82,7 @@ export async function POST(req: Request) {
         endDate: existing?.endDate ?? start,
         website: opp.sourceUrl,
         sectors: cleanSectors,
+        targetSectors,
         organizer: opp.source.name,
       }
       if (existing) await prisma.tradeFair.update({ where: { id: existing.id }, data })
@@ -88,6 +100,7 @@ export async function POST(req: Request) {
         url: opp.sourceUrl,
         country: 'Kosovo',
         sectors: cleanSectors,
+        targetSectors,
         tags: [...(supportTypes ?? []), opp.source.code.toLowerCase()].filter(Boolean),
         isActive: true,
       }
@@ -99,7 +112,7 @@ export async function POST(req: Request) {
       where: { id },
       data: { status: 'PUBLISHED', verificationStatus: 'published', publishedAt: new Date(), deadline: dl, supportTypes: supportTypes ?? opp.supportTypes },
     })
-    return NextResponse.json({ ok: true, status: 'published' })
+    return NextResponse.json({ ok: true, status: 'published', targetSectors })
   }
 
   return NextResponse.json({ error: `Unknown action ${action}` }, { status: 400 })
