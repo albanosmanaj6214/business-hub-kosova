@@ -211,7 +211,7 @@ export const CERTIFICATION_CATEGORIES: CertificationCategory[] = [
         targetSectors: ['ushqim-dhe-pije', 'bujqesi-blegtori', 'leter-paketim'],
         name: 'FSSC 22000',
         fullName: 'Food Safety System Certification 22000',
-        fullNameSq: 'Çertifikimi i Sistemit të Sigurisë Ushqimore',
+        fullNameSq: 'Certifikimi i Sistemit të Sigurisë Ushqimore',
         whatIs: 'Versioni i njohur globalisht i ISO 22000, i njohur nga GFSI (Global Food Safety Initiative). Plotëson kërkesat e shumicës absolute të blerësve global.',
         industries: ['Ushqim & Pije', 'Paketim ushqimor', 'Ushqim kafshësh'],
         mandatory: 'sector_required',
