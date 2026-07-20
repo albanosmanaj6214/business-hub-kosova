@@ -61,13 +61,19 @@ export function OfferingsSection() {
     setErr(null)
     setMsg(null)
     try {
+      const t = title.trim()
+      if (t.length < 3) { setErr('Shkruaj emrin e produktit (min 3 karaktere).'); return }
+      if (offerings.some((o) => o.title.trim().toLowerCase() === t.toLowerCase())) {
+        setErr('E ke të listuar tashmë këtë produkt. Ndrysho emrin ose fshije të vjetrin më parë.')
+        return
+      }
       const res = await fetch('/api/company/offerings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(
           showCustom
-            ? { customCategoryName: customName, title, description: description || null, imageBase64: imageData }
-            : { categoryId, title, description: description || null, imageBase64: imageData },
+            ? { customCategoryName: customName.trim(), title: t, description: description || null, imageBase64: imageData }
+            : { categoryId, title: t, description: description || null, imageBase64: imageData },
         ),
       })
       const data = await res.json()
@@ -111,7 +117,8 @@ export function OfferingsSection() {
           <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
           <span>
             Këto janë themeli i lidhjeve: kur një blerës kërkon &quot;karriga&quot;, sistemi gjen saktësisht
-            bizneset që i kanë karriget këtu. Sa më konkret, aq më shumë kërkesa merr.
+            bizneset që i kanë karriget këtu. Shkruaj emrin e saktë të produktit, pa shkurtesa,
+            dhe zgjidh kategorinë e duhur, që përputhja të mos gabojë. Sa më konkret, aq më shumë kërkesa merr.
           </span>
         </div>
 

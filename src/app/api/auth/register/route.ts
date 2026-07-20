@@ -39,6 +39,8 @@ export async function POST(req: Request) {
       companyName,
       sector,
       sectors,
+      municipality,
+      address,
       activityType,
       employeeCount,
       interests,
@@ -97,6 +99,9 @@ export async function POST(req: Request) {
           { error: 'Zgjidh madhësinë e ndërmarrjes' },
           { status: 400 }
         )
+      }
+      if (typeof municipality !== 'string' || !municipality.trim()) {
+        return NextResponse.json({ error: 'Zgjidh komunën e biznesit' }, { status: 400 })
       }
     }
 
@@ -181,6 +186,8 @@ export async function POST(req: Request) {
           activityType: roleValue === 'DIASPORA' ? null : activityType,
           sectors: roleValue === 'DIASPORA' ? [] : normalisedSectors,
           employeeCount: roleValue === 'DIASPORA' ? null : employeeCount,
+          municipality: roleValue === 'DIASPORA' ? null : (typeof municipality === 'string' && municipality.trim() ? municipality.trim() : null),
+          address: roleValue === 'DIASPORA' ? null : (typeof address === 'string' && address.trim() ? address.trim() : null),
           femaleOwnership: typeof femaleOwnership === 'boolean' ? femaleOwnership : null,
           country: roleValue === 'DIASPORA' ? countryOfOperation : 'Kosovë',
           email: email,

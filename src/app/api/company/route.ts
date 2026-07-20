@@ -20,18 +20,22 @@ export async function GET() {
   return NextResponse.json({ company })
 }
 
+// Format e React-ut dergojne '' per fusha te pazgjedhura; '' s'eshte enum/email
+// i vlefshem dhe e rrezonte ruajtjen me "invalid payload". Ketu '' behet undefined.
+const emptyToUndef = (v: unknown) => (v === '' ? undefined : v)
+
 // PATCH: përditëson Company + profilin specifik të rolit
 const BaseBody = z.object({
   name: z.string().min(2).max(200).optional(),
   legalName: z.string().max(200).optional().nullable(),
-  activityType: z.string().max(60).optional().nullable(),
+  activityType: z.preprocess(emptyToUndef, z.string().max(60).optional().nullable()),
   sectors: z.array(z.string().max(60)).optional(),
-  employeeCount: z.string().max(40).optional().nullable(),
+  employeeCount: z.preprocess(emptyToUndef, z.string().max(40).optional().nullable()),
   femaleOwnership: z.boolean().nullable().optional(),
   municipality: z.string().max(100).optional().nullable(),
   country: z.string().max(100).optional().nullable(),
   address: z.string().max(300).optional().nullable(),
-  email: z.string().email().max(200).optional().nullable(),
+  email: z.preprocess(emptyToUndef, z.string().email().max(200).optional().nullable()),
   phone: z.string().max(60).optional().nullable(),
   website: z.string().max(300).optional().nullable(),
   contactPerson: z.string().max(200).optional().nullable(),
@@ -42,13 +46,13 @@ const BaseBody = z.object({
   shortDescription: z.string().max(500).optional().nullable(),
   longDescription: z.string().max(5000).optional().nullable(),
   // VERIFIED dhe FEATURED caktohen vetem nga admini; useri zgjedh deri te PUBLIC.
-  visibilityLevel: z.enum(['PRIVATE', 'MEMBERS', 'PUBLIC']).optional(),
+  visibilityLevel: z.preprocess(emptyToUndef, z.enum(['PRIVATE', 'MEMBERS', 'PUBLIC']).optional()),
   interests: z.array(z.string().max(60)).optional(),
   // Kur useri klikon "Dorëzo për shqyrtim", statusi kalon nga DRAFT në PENDING.
   submitForReview: z.boolean().optional(),
   // Nga StartupProfile:
-  startupStage: z.enum(['IDEA', 'IN_REGISTRATION', 'REGISTERED_NO_REVENUE', 'EARLY_REVENUE', 'GROWING']).optional(),
-  intendedLegalForm: z.enum(['BIZNES_INDIVIDUAL', 'SHPK', 'SHA', 'ORTAKERI_E_PERGJITHSHME', 'ORTAKERI_E_KUFIZUAR', 'DEGE_E_HUAJ']).optional().nullable(),
+  startupStage: z.preprocess(emptyToUndef, z.enum(['IDEA', 'IN_REGISTRATION', 'REGISTERED_NO_REVENUE', 'EARLY_REVENUE', 'GROWING']).optional()),
+  intendedLegalForm: z.preprocess(emptyToUndef, z.enum(['BIZNES_INDIVIDUAL', 'SHPK', 'SHA', 'ORTAKERI_E_PERGJITHSHME', 'ORTAKERI_E_KUFIZUAR', 'DEGE_E_HUAJ']).optional().nullable()),
   startupNeeds: z.array(z.string().max(60)).optional(),
   hasProduct: z.boolean().optional(),
   prototypeUrl: z.string().max(500).optional().nullable(),
@@ -91,6 +95,20 @@ export async function PATCH(req: Request) {
   const normalisedSectors = d.sectors
     ? Array.from(new Set(d.sectors.filter((s) => !!sectorBySlug(s)))).slice(0, 1)
     : undefined
+
+  // Sektori KYCET pas caktimit te pare: ndryshohet vetem nga administrata
+  // (kerkese + qasje shtese me faturim). Vetedeklarimi vlen vetem sa eshte bosh.
+  if (
+    normalisedSectors !== undefined &&
+    existing.sectors.length > 0 &&
+    !(normalisedSectors.length === existing.sectors.length &&
+      normalisedSectors.every((s) => existing.sectors.includes(s)))
+  ) {
+    return NextResponse.json(
+      { error: 'Sektori ndryshohet vetëm nga administrata. Na kontakto për ndryshim ose qasje në sektor shtesë.' },
+      { status: 400 },
+    )
+  }
 
   const nextProfileStatus = d.submitForReview
     ? 'PENDING'

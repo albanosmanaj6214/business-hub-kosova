@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { SECTORS } from '@/lib/sectors'
 import { OfferingsSection } from '@/components/dashboard/OfferingsSection'
+import { openKonsulenti } from '@/components/konsulenti/KonsulentiWidget'
 import { EMPLOYEE_COUNT_BUCKETS, EMPLOYEE_COUNT_LABEL } from '@/lib/employee-count'
 
 const ACTIVITY_OPTIONS = [
@@ -156,7 +157,13 @@ export function CompanyProfileEditor({ initial }: Props) {
       const res = await fetch('/api/company', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, submitForReview }),
+        body: JSON.stringify({
+          ...form,
+          sectors: initial.sectors?.length > 0 ? undefined : form.sectors,
+          startupProfile: undefined,
+          diasporaProfile: undefined,
+          submitForReview,
+        }),
       })
       const data = await res.json()
       if (!res.ok) { setErr(data.error || 'Ruajtja dështoi'); return }
@@ -238,7 +245,7 @@ export function CompanyProfileEditor({ initial }: Props) {
             <label className="block text-sm font-medium text-gray-700 mb-1">Aktiviteti *</label>
             <select
               value={form.activityType || ''}
-              onChange={(e) => setForm({ ...form, activityType: e.target.value, sectors: [] })}
+              onChange={(e) => setForm({ ...form, activityType: e.target.value, sectors: (initial.sectors?.length > 0 ? form.sectors : []) })}
               required
               className="flex h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E86C1]"
             >
@@ -248,10 +255,30 @@ export function CompanyProfileEditor({ initial }: Props) {
           </div>
         )}
 
-        {!isDiaspora && (form.activityType === 'prodhues-perpunues' || form.activityType === 'sherbime') && (
+        {!isDiaspora && initial.sectors?.length > 0 && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Sektori kryesor</label>
-            <p className="text-xs text-gray-500 mb-2">Zgjidh një sektor. Nëse vepron në më shumë se një, na kontakto për qasje shtesë.</p>
+            <div className="flex flex-wrap items-center gap-2">
+              {(initial.sectors as string[]).map((slug: string) => (
+                <span key={slug} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-[#1B4F72] text-white">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  {SECTORS.find((s) => s.slug === slug)?.sq ?? slug}
+                </span>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Sektori ndryshohet vetëm nga administrata, që personalizimi dhe qasja të mbeten të sakta.{' '}
+              <button type="button" onClick={() => openKonsulenti()} className="text-[#2E86C1] font-medium hover:underline">
+                Kërko ndryshim ose sektor shtesë
+              </button>
+            </p>
+          </div>
+        )}
+
+        {!isDiaspora && !(initial.sectors?.length > 0) && (form.activityType === 'prodhues-perpunues' || form.activityType === 'sherbime') && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Sektori kryesor</label>
+            <p className="text-xs text-gray-500 mb-2">Zgjidh një sektor. Pas ruajtjes, ndryshimi bëhet vetëm përmes administratës.</p>
             <div className="flex flex-wrap gap-1.5">
               {SECTORS
                 .filter((s) => form.activityType === 'prodhues-perpunues' ? s.group === 'production' : s.group === 'services')
@@ -655,13 +682,18 @@ export function CompanyProfileEditor({ initial }: Props) {
   )
 }
 
-function Section({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) {
+function Section({ icon: Icon, title, subtitle, children }: { icon: any; title: string; subtitle?: string; children: React.ReactNode }) {
   return (
     <Card>
-      <CardContent className="p-5 space-y-4">
-        <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-          <Icon className="h-4 w-4 text-[#1B4F72]" />
-          <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+      <CardContent className="p-6 space-y-5">
+        <div className="flex items-start gap-3 pb-3 border-b border-gray-100">
+          <div className="rounded-lg bg-[#1B4F72]/10 p-2 shrink-0">
+            <Icon className="h-4 w-4 text-[#1B4F72]" />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold text-gray-900">{title}</h3>
+            {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
+          </div>
         </div>
         {children}
       </CardContent>

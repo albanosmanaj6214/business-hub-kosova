@@ -20,6 +20,13 @@ const interestOptions = [
   { value: 'consultations', label: 'Konsultime' },
 ]
 
+const KOSOVO_MUNICIPALITIES = [
+  'Deçan', 'Dragash', 'Drenas (Gllogovc)', 'Ferizaj', 'Fushë Kosovë', 'Gjakovë', 'Gjilan', 'Hani i Elezit',
+  'Istog', 'Junik', 'Kaçanik', 'Klinë', 'Kllokot', 'Leposaviq', 'Lipjan', 'Malishevë', 'Mamushë', 'Mitrovicë',
+  'Novobërdë', 'Obiliq', 'Partesh', 'Pejë', 'Podujevë', 'Prishtinë', 'Prizren', 'Rahovec', 'Ranillug',
+  'Shtërpcë', 'Shtime', 'Skenderaj', 'Suharekë', 'Viti', 'Vushtrri', 'Zubin Potok', 'Zveçan',
+]
+
 // Public site key. Exposed at build time via NEXT_PUBLIC_*. If absent we
 // fall back to Cloudflare's "always passes" test key so dev/local still works.
 const TURNSTILE_SITE_KEY =
@@ -42,6 +49,8 @@ export default function RegisterPage() {
     activityType: '',
     employeeCount: '',
     sectors: [] as string[],
+    municipality: '',
+    address: '',
     interests: [] as string[],
     language: 'sq',
     femaleOwnership: false,
@@ -84,6 +93,7 @@ export default function RegisterPage() {
       if (!form.activityType) { setError('Zgjidh llojin e aktivitetit të biznesit'); return }
       if (!isEmployeeCount(form.employeeCount)) { setError('Zgjidh numrin e të punësuarve'); return }
       if (activityNeedsSector(form.activityType) && form.sectors.length === 0) { setError('Zgjidh sektorin e biznesit'); return }
+      if (!form.municipality) { setError('Zgjidh komunën e biznesit'); return }
     }
     if (!turnstileToken) {
       setError('Prit pak derisa të kalojë verifikimi i sigurisë.')
@@ -105,6 +115,8 @@ export default function RegisterPage() {
           activityType: form.activityType,
           employeeCount: form.employeeCount,
           sectors: activityNeedsSector(form.activityType) ? form.sectors : [],
+          municipality: form.municipality,
+          address: form.address,
           countryOfOperation: form.countryOfOperation,
           city: form.city,
           diasporaSubRoles: form.diasporaSubRoles,
@@ -390,6 +402,35 @@ export default function RegisterPage() {
                 onChange={(next) => setForm({ ...form, sectors: next })}
                 activityType={form.activityType}
               />
+            )}
+
+            {form.role !== 'INDIVIDUAL' && form.role !== 'DIASPORA' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="municipality" className="block text-sm font-medium text-gray-700 mb-1">
+                    Komuna <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="municipality"
+                    value={form.municipality}
+                    onChange={(e) => setForm({ ...form, municipality: e.target.value })}
+                    required
+                    className="flex h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2E86C1] focus:border-transparent"
+                  >
+                    <option value="">Zgjidh komunën</option>
+                    {KOSOVO_MUNICIPALITIES.map((m) => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+                <Input
+                  id="address"
+                  label="Adresa (opsionale)"
+                  placeholder="Rruga, nr., lagjja..."
+                  value={form.address}
+                  onChange={(e) => setForm({ ...form, address: e.target.value })}
+                />
+              </div>
             )}
 
             {(form.role === 'KOSOVO_BUSINESS' || form.role === 'STARTUP') && (

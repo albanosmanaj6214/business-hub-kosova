@@ -23,7 +23,7 @@ export default async function CompanyProfilePage() {
   // Rolet pa Company: INDIVIDUAL, ADMIN, SUPER_ADMIN
   if (user.role === 'INDIVIDUAL' || user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
     return (
-      <div className="space-y-6">
+      <div className="max-w-2xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Profili i Kompanisë</h1>
         </div>
@@ -49,7 +49,7 @@ export default async function CompanyProfilePage() {
 
   if (!company) {
     return (
-      <div className="space-y-6">
+      <div className="max-w-2xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Profili i Kompanisë</h1>
         </div>
@@ -67,7 +67,7 @@ export default async function CompanyProfilePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">
           {company.roleType === 'DIASPORA' ? 'Profili i Diasporës' : 'Profili i Kompanisë'}
