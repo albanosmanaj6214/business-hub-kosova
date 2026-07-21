@@ -48,7 +48,7 @@ const plans: Plan[] = [
       { text: 'Kërkesë kontakti në Kompani Kosovare', included: true },
       { text: 'Kërko Ofertë + përgjigje në oferta', included: true },
       { text: 'Matchmaking me partnerë e blerës', included: true },
-      { text: 'Njoftime me email për afate të reja', included: true },
+      { text: 'Udhëzues dhe checklista eksporti të plota për çdo treg', included: true },
       { text: 'Konsultime me ekspert (sipas pakos)', included: true },
     ],
     cta: 'Fillo me Professional',
@@ -106,7 +106,7 @@ const faqs = [
   },
   {
     q: 'Si funksionon faturimi?',
-    a: 'Pagesa bëhet me kartë krediti përmes Stripe (siguri PCI-DSS). Fatura në PDF dërgohet automatikisht me email çdo muaj.',
+    a: 'Aktivizimi bëhet pas kontaktit me ekipin: pagesa me faturë dhe transfertë bankare, me aktivizim të shpejtë pas konfirmimit. Faturimi vjetor e thjeshton procesin për të dy palët.',
   },
   {
     q: 'A ofroni zbritje për pagesë vjetore?',
@@ -213,7 +213,7 @@ export default function PricingPage() {
           </div>
 
           <p className="text-center text-sm text-gray-500 mt-10">
-            Të gjitha planet faturohen mujore në EUR. Pagesë me kartë përmes Stripe.
+            Çmimet në EUR. Aktivizimi bëhet me faturë dhe transfertë bankare, pas kontaktit me ekipin.
           </p>
         </div>
       </section>
