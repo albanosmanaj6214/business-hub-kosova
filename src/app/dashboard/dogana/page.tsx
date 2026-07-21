@@ -371,6 +371,13 @@ export default async function DoganaGuidePage() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Udhëzuesi Dogana</h1>
         </div>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Ky udhëzues është përmbledhje ndihmëse dhe është në proces verifikimi zyrtar hap pas hapi.
+          Para se të veprosh, konfirmoji hapat te burimi zyrtar:{' '}
+          <a href={OFFICIAL_URL} target="_blank" rel="noreferrer" className="font-semibold underline hover:no-underline">
+            {OFFICIAL_URL.replace('https://', '')}
+          </a>
+        </div>
         <p className="text-gray-500 mt-2 max-w-3xl leading-relaxed">
           Dogana e Republikës së Kosovës është nën Ministrinë e Financave. Këtu do të gjesh të gjitha
           procedurat e importit dhe eksportit — nga aktivizimi në ASYCUDA World, HS Code, EUR.1, Incoterms,

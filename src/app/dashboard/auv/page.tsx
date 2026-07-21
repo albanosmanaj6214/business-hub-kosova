@@ -327,6 +327,13 @@ export default async function AUVGuidePage() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Udhëzuesi AUV</h1>
         </div>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Ky udhëzues është përmbledhje ndihmëse dhe është në proces verifikimi zyrtar hap pas hapi.
+          Para se të veprosh, konfirmoji hapat te burimi zyrtar:{' '}
+          <a href={OFFICIAL_URL} target="_blank" rel="noreferrer" className="font-semibold underline hover:no-underline">
+            {OFFICIAL_URL.replace('https://', '')}
+          </a>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-xl border border-gray-200 bg-white p-5">
           <div>
             <h2 className="text-sm font-semibold text-gray-900 mb-1">Çka është AUV</h2>

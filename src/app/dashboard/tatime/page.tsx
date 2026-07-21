@@ -441,6 +441,13 @@ export default async function TatimeGuidePage() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Udhëzuesit ATK</h1>
         </div>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Ky udhëzues është përmbledhje ndihmëse dhe është në proces verifikimi zyrtar hap pas hapi.
+          Para se të veprosh, konfirmoji hapat te burimi zyrtar:{' '}
+          <a href={OFFICIAL_URL} target="_blank" rel="noreferrer" className="font-semibold underline hover:no-underline">
+            {OFFICIAL_URL.replace('https://', '')}
+          </a>
+        </div>
         <p className="text-gray-500 mt-2 max-w-3xl leading-relaxed">
           Administrata Tatimore e Kosovës (ATK) është institucioni ku kalojnë të gjitha detyrimet tatimore
           të biznesit tënd. Këtu do të gjesh të gjitha temat kryesore — EDI, TVSH, tatim në fitim, paga,
