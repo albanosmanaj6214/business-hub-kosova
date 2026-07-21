@@ -266,6 +266,8 @@ async function KosovoBusinessDashboard({ firstName, company, unreadNotifs, isAdm
       where: {
         kind: 'GRANT', isActive: true, deletedAt: null, dispatchStatus: 'DISPATCHED',
         OR: [{ deadline: { gte: new Date() } }, { isOngoing: true }],
+        // Te njejtat perjashtime si faqja e granteve (null-safe per audience).
+        AND: [{ OR: [{ audience: null }, { NOT: { audience: 'civil_society' } }] }],
         NOT: [{ tags: { has: 'legacy_synthetic' } }],
       },
       orderBy: { deadline: 'asc' },
@@ -278,7 +280,9 @@ async function KosovoBusinessDashboard({ firstName, company, unreadNotifs, isAdm
     }),
   ])
 
-  const grants = feedFor(profile, grantsRaw as any[]).slice(0, 4)
+  const grants = feedFor(profile, grantsRaw as any[])
+    .filter((g: any) => !/STEND[ËÊE]N|bashk[ëe]financim.{0,40}panair/i.test(`${g.titleSq ?? ''} ${g.title ?? ''}`))
+    .slice(0, 4)
   const fairs = feedFor(profile, fairsRaw as any[]).slice(0, 4)
   const urgent = grants.filter((g: any) => g.deadline && daysUntil(new Date(g.deadline)) <= 14)
 
@@ -382,6 +386,8 @@ async function StartupDashboard({ firstName, company, unreadNotifs }: {
       where: {
         kind: 'GRANT', isActive: true, deletedAt: null, dispatchStatus: 'DISPATCHED',
         OR: [{ deadline: { gte: new Date() } }, { isOngoing: true }],
+        // Te njejtat perjashtime si faqja e granteve (null-safe per audience).
+        AND: [{ OR: [{ audience: null }, { NOT: { audience: 'civil_society' } }] }],
         NOT: [{ tags: { has: 'legacy_synthetic' } }],
       },
       orderBy: { deadline: 'asc' },

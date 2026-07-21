@@ -58,11 +58,15 @@ export default async function BurimeFinancimiPage() {
         deletedAt: null,
         isActive: true,
         dispatchStatus: 'DISPATCHED',
+        // Parity me faqen e granteve: pa OJF (null-safe) dhe pa legacy.
+        AND: [{ OR: [{ audience: null }, { NOT: { audience: 'civil_society' } }] }],
+        NOT: [{ tags: { has: 'legacy_synthetic' } }],
       },
-      select: { isGeneral: true, targetSectors: true, targetActivityTypes: true, forFemaleOwned: true, isOngoing: true, deadline: true },
+      select: { isGeneral: true, targetSectors: true, targetActivityTypes: true, forFemaleOwned: true, isOngoing: true, deadline: true, title: true, titleSq: true },
     })
     const today = new Date(); today.setUTCHours(0, 0, 0, 0)
     const visible = feedFor(profile, grantsRaw)
+      .filter((g) => !/STEND[ËÊE]N|bashk[ëe]financim.{0,40}panair/i.test(`${(g as { titleSq?: string | null }).titleSq ?? ''} ${(g as { title?: string }).title ?? ''}`))
     activeGrantsCount = visible.filter((g) => g.isOngoing || (g.deadline && new Date(g.deadline) >= today)).length
   }
 

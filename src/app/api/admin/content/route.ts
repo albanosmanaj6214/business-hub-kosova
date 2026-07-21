@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sectorBySlug } from '@/lib/sectors'
+import { ACTIVITY_TYPES } from '@/lib/activity'
 import { softDelete, restore } from '@/lib/soft-delete'
 import { logAudit } from '@/lib/audit'
 
@@ -20,7 +21,8 @@ async function requireAdmin() {
   return session
 }
 
-const ALLOWED_ACTIVITY = ['prodhues-perpunues', 'sherbime', 'tregti', 'bujqesi']
+// Nga burimi kanonik — me pare liste e hardkoduar qe mund te divergjonte.
+const ALLOWED_ACTIVITY: readonly string[] = ACTIVITY_TYPES
 
 function cleanSectors(v: unknown): string[] {
   if (!Array.isArray(v)) return []
