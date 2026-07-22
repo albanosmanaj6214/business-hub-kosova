@@ -20,6 +20,8 @@ import {
   Users,
   Info,
   AlertCircle,
+  BarChart3,
+  TrendingUp,
 } from 'lucide-react'
 import { getServerLocale } from '@/lib/i18n-server'
 import type { Locale } from '@/lib/i18n'
@@ -175,6 +177,15 @@ export default async function GuidePage({ params }: { params: { id: string } }) 
   const contacts = (guide.contacts as any[]) ?? []
   const citations = (guide.citations as any[]) ?? []
 
+  // Statistika tregu (Eurostat etj.), te filtruara sipas sektorit te perdoruesit;
+  // pa sektor te caktuar, tregohen te gjithe sektoret qe kane te dhena.
+  const marketStats = (guide.marketStats as Record<string, any> | null) ?? null
+  const marketSectors = marketStats
+    ? Object.keys(marketStats).filter(
+        (slug) => userSectorDefs.length === 0 || userSectorDefs.some((sd) => sd.slug === slug),
+      )
+    : []
+
   const t = (sq: string, en: string) => locale === 'sq' ? sq : en
 
   return (
@@ -213,6 +224,64 @@ export default async function GuidePage({ params }: { params: { id: string } }) 
           <p className="text-gray-700 leading-relaxed whitespace-pre-line">{bi(overview, locale)}</p>
         </CardContent>
       </Card>
+
+      {/* Tregu ne shifra (per-sektor, nga Eurostat) */}
+      {marketSectors.length > 0 && (
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <SectionHeader icon={BarChart3} title={t('Tregu në shifra', 'The market in numbers')} />
+            <p className="text-sm text-gray-500 mb-4 -mt-2">
+              {t('Madhësia e tregut për sektorin tënd, nga të dhëna zyrtare. Shifrat tregojnë shpenzimet vjetore të familjeve, një përafrim i tregut konsumator.',
+                 'Market size for your sector, from official data. Figures show annual household expenditure, a proxy for the consumer market.')}
+            </p>
+            <div className="space-y-5">
+              {marketSectors.map((slug) => {
+                const m = marketStats![slug]
+                const sd = SECTORS.find((x) => x.slug === slug)
+                const maxT = Math.max(...m.trend.map((p: [number, number]) => p[1]))
+                return (
+                  <div key={slug} className="rounded-xl border border-gray-200 p-5">
+                    <div className="text-sm font-semibold text-gray-900 mb-4">{sd?.sq ?? slug}</div>
+                    <div className="grid sm:grid-cols-2 gap-4 mb-5">
+                      <div className="rounded-lg bg-[#1B4F72]/5 border border-[#1B4F72]/10 p-4">
+                        <div className="text-2xl font-bold text-[#1B4F72]">€{(m.sizeMEUR / 1000).toFixed(1)} mld</div>
+                        <div className="text-xs text-gray-600 mt-1 leading-snug">{m.sizeLabel} <span className="text-gray-400">({m.sizeYear})</span></div>
+                      </div>
+                      <div className="rounded-lg bg-gray-50 border border-gray-100 p-4">
+                        <div className="text-2xl font-bold text-gray-900">{(m.consumers / 1e6).toFixed(1)} mln</div>
+                        <div className="text-xs text-gray-600 mt-1 leading-snug">{t('Konsumatorë (popullsia e tregut)', 'Consumers (market population)')} <span className="text-gray-400">({m.consumersYear})</span></div>
+                      </div>
+                    </div>
+                    <div className="mb-4">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        <TrendingUp className="h-3.5 w-3.5 text-[#2E86C1]" /> {t('Tendenca ndër vite', 'Trend over years')}
+                      </div>
+                      <div className="space-y-1.5">
+                        {m.trend.map((p: [number, number]) => (
+                          <div key={p[0]} className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500 w-9 shrink-0">{p[0]}</span>
+                            <div className="flex-1 bg-gray-100 rounded-full h-3.5 overflow-hidden">
+                              <div className="h-3.5 rounded-full bg-[#2E86C1]" style={{ width: `${Math.round((p[1] / maxT) * 100)}%` }} />
+                            </div>
+                            <span className="text-xs font-medium text-gray-700 w-16 text-right shrink-0">€{(p[1] / 1000).toFixed(1)} mld</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 pt-3 border-t border-gray-100">
+                      {m.sources.map((src: { label: string; url: string }, i: number) => (
+                        <a key={i} href={src.url} target="_blank" rel="noreferrer" className="text-[11px] text-gray-400 hover:text-[#2E86C1] hover:underline inline-flex items-center gap-1">
+                          <ExternalLink className="h-2.5 w-2.5" /> {src.label}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Customs & VAT */}
       {customs && (

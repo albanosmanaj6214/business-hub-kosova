@@ -355,6 +355,8 @@ model ExportGuide {
   tradeAgreements Json? // [{ name, benefit:{sq,en}, sourceUrl }]
   contacts        Json? // [{ role, name?, address?, phone?, email?, url? }]
   citations       Json? // [{ title, url }]
+  // Statistika tregu per-sektor (Eurostat etj.). { <sektor>: { sizeMEUR, sizeYear, sizeLabel, consumers, consumersYear, trend:[[year,val]], sources:[{label,url}] } }
+  marketStats     Json?
 
   schemaVersion    Int       @default(1)
   generatedBy      String? // 'manual' | 'claude' | 'reviewed'
