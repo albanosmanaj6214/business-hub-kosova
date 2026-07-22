@@ -244,7 +244,14 @@ export default async function GuidePage({ params }: { params: { id: string } }) 
                     <div className="text-sm font-semibold text-gray-900 mb-4">{sd?.sq ?? slug}</div>
                     <div className="grid sm:grid-cols-2 gap-4 mb-5">
                       <div className="rounded-lg bg-[#1B4F72]/5 border border-[#1B4F72]/10 p-4">
-                        <div className="text-2xl font-bold text-[#1B4F72]">€{(m.sizeMEUR / 1000).toFixed(1)} mld</div>
+                        <div className="flex items-baseline gap-2 flex-wrap">
+                          <span className="text-2xl font-bold text-[#1B4F72]">€{(m.sizeMEUR / 1000).toFixed(1)} mld</span>
+                          {typeof m.growthPct === 'number' && (
+                            <span className={m.growthPct >= 0 ? 'text-xs font-semibold text-[#27AE60]' : 'text-xs font-semibold text-red-500'}>
+                              {m.growthPct >= 0 ? '+' : ''}{m.growthPct}% <span className="font-normal text-gray-400">nga {m.growthFromYear}</span>
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-gray-600 mt-1 leading-snug">{m.sizeLabel} <span className="text-gray-400">({m.sizeYear})</span></div>
                       </div>
                       <div className="rounded-lg bg-gray-50 border border-gray-100 p-4">
@@ -275,6 +282,14 @@ export default async function GuidePage({ params }: { params: { id: string } }) 
                         </a>
                       ))}
                     </div>
+                    {m.checkedAt && (
+                      <p className="text-[11px] text-gray-400 mt-2 leading-snug">
+                        {t(
+                          `Të dhëna zyrtare. Statistika e detajuar e konsumit botohet me vonesë, prandaj viti më i fundit i disponueshëm zyrtarisht është ${m.sizeYear}. Popullsia është e vitit ${m.consumersYear}. Kontrolluar te burimi më ${m.checkedAt}.`,
+                          `Official data. Detailed consumption statistics are published with a lag, so the latest officially available year is ${m.sizeYear}. Population is for ${m.consumersYear}. Verified against the source on ${m.checkedAt}.`,
+                        )}
+                      </p>
+                    )}
                   </div>
                 )
               })}
