@@ -10,7 +10,6 @@ import { redirect } from 'next/navigation'
 import { sectorBySlug, SECTORS } from '@/lib/sectors'
 import { Users, Building2, Rocket, Compass, Award } from 'lucide-react'
 import { DirectoryFilters } from '@/components/dashboard/DirectoryFilters'
-import { excludeTestCompanies } from '@/lib/directory-visibility'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,16 +27,14 @@ interface SearchParams {
 export default async function DirectoryPage({ searchParams }: { searchParams: SearchParams }) {
   const session = await getServerSession(authOptions)
   const userId = (session?.user as { id?: string })?.id
-  const viewerRole = (session?.user as { role?: string })?.role
   if (!userId) redirect('/login')
 
-  // Hide seeded test companies from normal users; admins keep full visibility.
-  const testExclusion = await excludeTestCompanies(viewerRole)
-
+  // Product decision (KIESA evaluation period): demo/test companies remain fully
+  // visible to all users. No test-account filter is applied here. See
+  // docs/product-decisions.md. To be revisited only on explicit owner approval.
   const where: any = {
     profileStatus: 'APPROVED',
     visibilityLevel: { in: ['MEMBERS', 'PUBLIC', 'VERIFIED', 'FEATURED'] },
-    ...testExclusion,
   }
 
   if (searchParams.q) {
@@ -96,7 +93,6 @@ export default async function DirectoryPage({ searchParams }: { searchParams: Se
     where: {
       profileStatus: 'APPROVED',
       visibilityLevel: { in: ['MEMBERS', 'PUBLIC', 'VERIFIED', 'FEATURED'] },
-      ...testExclusion,
     },
   })
 
