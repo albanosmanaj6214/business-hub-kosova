@@ -1,12 +1,16 @@
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
+import { PageHeader } from '@/components/ui/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
+import { VerificationBadge } from '@/components/ui/verification-badge'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { sectorBySlug, SECTORS } from '@/lib/sectors'
-import { Users, Search, MapPin, Building2, Rocket, Compass, Award, ExternalLink } from 'lucide-react'
+import { Users, Building2, Rocket, Compass, Award } from 'lucide-react'
 import { DirectoryFilters } from '@/components/dashboard/DirectoryFilters'
+import { excludeTestCompanies } from '@/lib/directory-visibility'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,11 +28,16 @@ interface SearchParams {
 export default async function DirectoryPage({ searchParams }: { searchParams: SearchParams }) {
   const session = await getServerSession(authOptions)
   const userId = (session?.user as { id?: string })?.id
+  const viewerRole = (session?.user as { role?: string })?.role
   if (!userId) redirect('/login')
+
+  // Hide seeded test companies from normal users; admins keep full visibility.
+  const testExclusion = await excludeTestCompanies(viewerRole)
 
   const where: any = {
     profileStatus: 'APPROVED',
     visibilityLevel: { in: ['MEMBERS', 'PUBLIC', 'VERIFIED', 'FEATURED'] },
+    ...testExclusion,
   }
 
   if (searchParams.q) {
@@ -84,23 +93,31 @@ export default async function DirectoryPage({ searchParams }: { searchParams: Se
   })
 
   const totalCount = await prisma.company.count({
-    where: { profileStatus: 'APPROVED', visibilityLevel: { in: ['MEMBERS', 'PUBLIC', 'VERIFIED', 'FEATURED'] } },
+    where: {
+      profileStatus: 'APPROVED',
+      visibilityLevel: { in: ['MEMBERS', 'PUBLIC', 'VERIFIED', 'FEATURED'] },
+      ...testExclusion,
+    },
   })
+
+  const hasFilters = Boolean(
+    searchParams.q ||
+      searchParams.role ||
+      searchParams.activity ||
+      searchParams.sector ||
+      searchParams.product ||
+      searchParams.country ||
+      searchParams.municipality ||
+      searchParams.verified,
+  )
 
   return (
     <div className="space-y-6">
-      <div>
-        <div className="flex items-center gap-2">
-          <div className="rounded-lg bg-[#1B4F72] p-2">
-            <Users className="h-5 w-5 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Kompani Kosovare</h1>
-        </div>
-        <p className="text-gray-500 mt-2 max-w-3xl leading-relaxed">
-          Directory i bizneseve të regjistruar në KBH. Kërko sipas sektorit, produktit, komunës, ose statusit.
-          Kontaktet nuk shfaqen direkt — dërgo kërkesë kontakti nga profili i secilit biznes.
-        </p>
-      </div>
+      <PageHeader
+        icon={Users}
+        title="Kompani Kosovare"
+        description="Regjistri i bizneseve të regjistruar në KBH. Kërko sipas sektorit, produktit, komunës ose statusit. Kontaktet nuk shfaqen direkt: dërgo kërkesë kontakti nga profili i secilit biznes."
+      />
 
       <DirectoryFilters
         initial={searchParams}
@@ -109,25 +126,41 @@ export default async function DirectoryPage({ searchParams }: { searchParams: Se
       />
 
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-ink-muted">
           {companies.length} / {totalCount} biznese
         </p>
       </div>
 
       {companies.length === 0 ? (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">Asnjë biznes nuk përputhet</h2>
-            <p className="text-sm text-gray-600 max-w-md mx-auto">
-              Provoni me filtra të tjerë ose shikoni {' '}
-              <Link href="/dashboard/directory" className="text-[#2E86C1] hover:underline font-medium">
-                të gjitha bizneset
+        hasFilters ? (
+          <EmptyState
+            icon={Users}
+            title="Asnjë biznes nuk përputhet"
+            description="Provo me filtra të tjerë ose pastro kërkimin për të parë të gjitha bizneset."
+            action={
+              <Link
+                href="/dashboard/directory"
+                className="inline-flex h-9 items-center rounded-control bg-primary px-4 text-sm font-medium text-primary-fg hover:bg-primary-hover"
+              >
+                Pastro filtrat
               </Link>
-              .
-            </p>
-          </CardContent>
-        </Card>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={Users}
+            title="Ende s'ka biznese publike në regjistër"
+            description="Sapo bizneset e para të plotësojnë e publikojnë profilin, do t'i shohësh këtu. Bëhu ndër të parët: plotëso profilin tënd që kompanitë e tjera të mund të lidhen me ty."
+            action={
+              <Link
+                href="/dashboard/profili-kompanise"
+                className="inline-flex h-9 items-center rounded-control bg-primary px-4 text-sm font-medium text-primary-fg hover:bg-primary-hover"
+              >
+                Plotëso profilin tënd
+              </Link>
+            }
+          />
+        )
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {companies.map((c) => (
@@ -150,7 +183,7 @@ function CompanyCard({ c }: { c: any }) {
       <CardContent className="p-4 space-y-3">
         {isFeatured && (
           <div className="inline-flex items-center gap-1 text-xs font-semibold text-[#B37400] bg-[#F39C12]/10 rounded-full px-2 py-0.5">
-            <Award className="h-3 w-3" /> Featured
+            <Award className="h-3 w-3" /> E veçuar
           </div>
         )}
 
@@ -164,18 +197,14 @@ function CompanyCard({ c }: { c: any }) {
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <h3 className="font-semibold text-gray-900 truncate">{c.name}</h3>
-              {isVerified && (
-                <span title="Verified" className="text-green-600">
-                  <Award className="h-4 w-4" />
-                </span>
-              )}
+              {isVerified && <VerificationBadge verified />}
             </div>
             <p className="text-xs text-gray-500 mt-0.5">
               {c.roleType === 'STARTUP' && 'Start Up · '}
               {c.roleType === 'DIASPORA' && 'Diaspora · '}
-              {c.municipality || c.country || '—'}
+              {c.municipality || c.country || 'Kosovë'}
             </p>
           </div>
         </div>

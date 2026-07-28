@@ -3,16 +3,16 @@ import { cn } from '@/lib/utils'
 import { cva, type VariantProps } from 'class-variance-authority'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center rounded-control text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focusring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        default: 'bg-[#1B4F72] text-white hover:bg-[#154360] shadow-sm',
-        secondary: 'bg-[#2E86C1] text-white hover:bg-[#2874A6]',
-        outline: 'border-2 border-[#1B4F72] text-[#1B4F72] hover:bg-[#1B4F72] hover:text-white',
-        ghost: 'hover:bg-gray-100 text-gray-700',
-        danger: 'bg-[#E74C3C] text-white hover:bg-[#CB4335]',
-        success: 'bg-[#27AE60] text-white hover:bg-[#229954]',
+        default: 'bg-primary text-primary-fg hover:bg-primary-hover shadow-card',
+        secondary: 'bg-info text-white hover:bg-link-hover',
+        outline: 'border-2 border-primary text-primary hover:bg-primary hover:text-primary-fg',
+        ghost: 'text-ink-muted hover:bg-surface-sunken',
+        danger: 'bg-danger text-white hover:bg-danger-hover',
+        success: 'bg-success text-white hover:bg-success-hover',
       },
       size: {
         default: 'h-10 px-4 py-2',
@@ -26,7 +26,7 @@ const buttonVariants = cva(
       variant: 'default',
       size: 'default',
     },
-  }
+  },
 )
 
 export interface ButtonProps
@@ -35,14 +35,8 @@ export interface ButtonProps
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, ...props }, ref) => {
-    return (
-      <button
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        {...props}
-      />
-    )
-  }
+    return <button className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+  },
 )
 Button.displayName = 'Button'
 

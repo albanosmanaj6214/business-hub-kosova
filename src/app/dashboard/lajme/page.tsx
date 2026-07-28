@@ -6,6 +6,9 @@ import { matchesAudience } from '@/lib/audience'
 import { currentBusinessProfile } from '@/lib/audience-server'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { PageHeader } from '@/components/ui/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
+import { normalizeText } from '@/lib/text/normalize'
 import { ExternalLink, Newspaper } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -44,36 +47,35 @@ export default async function LajmePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Lajme dhe Informata</h1>
-        <p className="text-gray-500 mt-1">
-          Lajme dhe njoftime relevante për biznesin tënd, të verifikuara nga ekipi ynë.
-        </p>
-      </div>
+      <PageHeader
+        icon={Newspaper}
+        title="Lajme dhe Informata"
+        description="Lajme dhe njoftime relevante për biznesin tënd, të verifikuara nga ekipi ynë."
+      />
 
       {news.length === 0 ? (
-        <Card>
-          <CardContent className="py-16 text-center">
-            <Newspaper className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Ende nuk ka lajme</h3>
-            <p className="text-gray-500 max-w-md mx-auto text-sm">
-              Sapo të publikohen lajme relevante për profilin tënd, do t&apos;i gjesh këtu dhe do të njoftohesh.
-            </p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Newspaper}
+          title="Ende nuk ka lajme"
+          description="Sapo të publikohen lajme relevante për profilin tënd, do t'i gjesh këtu dhe do të njoftohesh."
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {news.map((n) => (
             <Card key={n.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-5">
                 <div className="flex items-start justify-between gap-3 mb-2">
-                  <h3 className="font-semibold text-gray-900 leading-snug">{n.titleSq || n.title}</h3>
+                  <h3 className="font-semibold text-gray-900 leading-snug">
+                    {normalizeText(n.titleSq || n.title)}
+                  </h3>
                   {n.isGeneral && <Badge variant="secondary" className="shrink-0">E përgjithshme</Badge>}
                 </div>
-                {n.summary && <p className="text-sm text-gray-600 mb-3 line-clamp-3">{n.summary}</p>}
+                {n.summary && (
+                  <p className="text-sm text-gray-600 mb-3 line-clamp-3">{normalizeText(n.summary)}</p>
+                )}
                 <div className="flex items-center justify-between text-xs text-gray-500 mt-3">
                   <span className="font-medium text-gray-700">
-                    {n.sourceName || 'Burim i verifikuar'}
+                    {normalizeText(n.sourceName) || 'Burim i verifikuar'}
                     {n.publishedAt && <span className="text-gray-400"> · {formatSqDate(n.publishedAt)}</span>}
                   </span>
                   {n.sourceUrl && (
