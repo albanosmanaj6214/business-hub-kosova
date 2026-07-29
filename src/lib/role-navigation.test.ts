@@ -16,14 +16,30 @@ describe('navigationForRole', () => {
     expect(l).toContain('Njohuri dhe mbështetje')
   })
 
-  it('Eksporti exposes Tregjet, HS Code and Transporti (real routes)', () => {
-    const hrefs = flattenNav(navigationForRole('KOSOVO_BUSINESS')).map((i) => i.href)
-    expect(hrefs).toContain('/dashboard/guides')
-    expect(hrefs).toContain('/dashboard/terma/hs-code')
-    expect(hrefs).toContain('/dashboard/eksporti/transporti')
+  it('Eksporti is a nested parent with the export sub-pages (URLs preserved)', () => {
+    const eksSection = navigationForRole('KOSOVO_BUSINESS').find((s) => s.label === 'Eksporti')!
+    const eksItem = eksSection.items.find((i) => i.name === 'Eksporti')!
+    expect(eksItem.href).toBeUndefined()
+    expect(eksItem.children?.map((c) => c.href)).toEqual([
+      '/dashboard/eksporti',
+      '/dashboard/guides',
+      '/dashboard/terma',
+      '/dashboard/terma/hs-code',
+      '/dashboard/eksporti/transporti',
+    ])
+    // Certifikimet is a sibling leaf in the Eksporti section, not a child.
+    expect(eksSection.items.some((i) => i.href === '/dashboard/certifikime')).toBe(true)
   })
 
-  it('Udhëzuesit is a nested group (no own href) with ARBK/ATK/Dogana/AUV children', () => {
+  it('Panaire dhe ngjarje lives under Rritja e biznesit, not Eksporti', () => {
+    const sections = navigationForRole('KOSOVO_BUSINESS')
+    const rritja = sections.find((s) => s.label === 'Rritja e biznesit')!
+    const eksporti = sections.find((s) => s.label === 'Eksporti')!
+    expect(rritja.items.some((i) => i.href === '/dashboard/panaire-evente')).toBe(true)
+    expect(flattenNav([eksporti]).some((i) => i.href === '/dashboard/panaire-evente')).toBe(false)
+  })
+
+  it('Udhëzuesit is a nested group with ARBK/ATK/Dogana/AUV children', () => {
     const njohuri = navigationForRole('KOSOVO_BUSINESS').find((s) => s.label === 'Njohuri dhe mbështetje')!
     const udh = njohuri.items.find((i) => i.name === 'Udhëzuesit')!
     expect(udh.href).toBeUndefined()
@@ -52,7 +68,8 @@ describe('navigationForRole', () => {
     expect(flat.length).toBeGreaterThan(0)
     expect(flat.every((i) => i.href?.startsWith('/dashboard'))).toBe(true)
     const hrefs = flat.map((i) => i.href)
-    expect(hrefs).toContain('/dashboard/arbk')
-    expect(hrefs).toContain('/dashboard/auv')
+    for (const h of ['/dashboard/eksporti', '/dashboard/guides', '/dashboard/terma', '/dashboard/terma/hs-code', '/dashboard/eksporti/transporti', '/dashboard/arbk', '/dashboard/auv']) {
+      expect(hrefs).toContain(h)
+    }
   })
 })

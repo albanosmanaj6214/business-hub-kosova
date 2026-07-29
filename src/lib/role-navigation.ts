@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Search, Calendar, BookOpen, Bell, Settings, CreditCard,
   MessageSquare, ShieldCheck, Newspaper, Building2, Users, Handshake,
   Landmark, Receipt, Truck, User as UserIcon, Compass, Rocket, Zap,
-  Globe, Barcode, GraduationCap,
+  Globe, Barcode, GraduationCap, Ship, FileText,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -19,7 +19,7 @@ export interface NavItem {
   forSectors?: string[]
   // Real-data badge resolved by the shell (currently: unread notifications).
   badge?: 'unread'
-  // Nested sub-items (e.g. Udhëzuesit → ARBK/ATK/Dogana/AUV).
+  // Nested sub-items (e.g. Eksporti → Përmbledhje/Tregjet/... ; Udhëzuesit → ARBK/ATK/...).
   children?: NavItem[]
 }
 
@@ -29,7 +29,7 @@ export interface NavSection {
 }
 
 // Udhëzuesit: një grup i vetëm vizual me fëmijët ARBK/ATK/Dogana/AUV.
-// URL-të mbeten të pandryshuara.
+// URL-të mbeten të pandryshuara. AUV është i kushtëzuar nga sektori.
 const UDHEZUESIT: NavItem = {
   name: 'Udhëzuesit',
   icon: GraduationCap,
@@ -38,6 +38,19 @@ const UDHEZUESIT: NavItem = {
     { name: 'ATK', href: '/dashboard/tatime', icon: Receipt },
     { name: 'Dogana', href: '/dashboard/dogana', icon: Truck },
     { name: 'AUV', href: '/dashboard/auv', icon: ShieldCheck, forSectors: ['ushqim-dhe-pije', 'bujqesi-blegtori'] },
+  ],
+}
+
+// Eksporti: grup i palosshëm me nën-faqet e eksportit. URL-të e pandryshuara.
+const EKSPORTI_GROUP: NavItem = {
+  name: 'Eksporti',
+  icon: Ship,
+  children: [
+    { name: 'Përmbledhje e eksportit', href: '/dashboard/eksporti', icon: BookOpen },
+    { name: 'Tregjet', href: '/dashboard/guides', icon: Globe },
+    { name: 'Termet e eksportit', href: '/dashboard/terma', icon: FileText },
+    { name: 'HS Code', href: '/dashboard/terma/hs-code', icon: Barcode },
+    { name: 'Transporti', href: '/dashboard/eksporti/transporti', icon: Truck },
   ],
 }
 
@@ -53,14 +66,11 @@ const KOSOVO_BUSINESS: NavSection[] = [
     { name: 'Kompani Kosovare', href: '/dashboard/directory', icon: Users },
     { name: 'Kërko ofertë', href: '/dashboard/kerko-oferte', icon: Handshake },
     { name: 'Matchmaking', href: '/dashboard/matchmaking', icon: Compass },
+    { name: 'Panaire dhe ngjarje', href: '/dashboard/panaire-evente', icon: Calendar },
   ]},
   { label: 'Eksporti', items: [
-    { name: 'Eksporti', href: '/dashboard/eksporti', icon: BookOpen },
-    { name: 'Tregjet', href: '/dashboard/guides', icon: Globe },
-    { name: 'HS Code', href: '/dashboard/terma/hs-code', icon: Barcode },
+    EKSPORTI_GROUP,
     { name: 'Certifikimet', href: '/dashboard/certifikime', icon: ShieldCheck },
-    { name: 'Panairet', href: '/dashboard/panaire-evente', icon: Calendar },
-    { name: 'Transporti', href: '/dashboard/eksporti/transporti', icon: Truck },
     { name: 'Tregu i Energjisë', href: '/dashboard/energji', icon: Zap, energyOnly: true },
   ]},
   { label: 'Biznesi im', items: [
@@ -117,7 +127,7 @@ const DIASPORA: NavSection[] = [
     { name: 'Kompani Kosovare', href: '/dashboard/directory', icon: Users },
     { name: 'Kërko ofertë', href: '/dashboard/kerko-oferte', icon: Handshake },
     { name: 'Matchmaking', href: '/dashboard/matchmaking', icon: Compass },
-    { name: 'Panairet', href: '/dashboard/panaire-evente', icon: Calendar },
+    { name: 'Panaire dhe ngjarje', href: '/dashboard/panaire-evente', icon: Calendar },
   ]},
   { label: 'Biznesi im', items: [
     { name: 'Profili i Diasporës', href: '/dashboard/profili-kompanise', icon: UserIcon },

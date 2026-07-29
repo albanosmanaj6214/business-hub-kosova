@@ -14,12 +14,12 @@ const SEGMENT_LABELS: Record<string, string> = {
   transporti: 'Transporti',
   guides: 'Tregjet',
   checklist: 'Checklista e eksportit',
-  terma: 'Terma',
+  terma: 'Termet e eksportit',
   'hs-code': 'HS Code',
   incoterms: 'Incoterms',
   certifikime: 'Certifikimet',
-  'panaire-evente': 'Panairet',
-  fairs: 'Panairet',
+  'panaire-evente': 'Panaire dhe ngjarje',
+  fairs: 'Panaire dhe ngjarje',
   materiale: 'Materiale',
   energji: 'Tregu i Energjisë',
   arbk: 'Udhëzuesi ARBK',
@@ -42,7 +42,7 @@ const DYNAMIC_LABEL_BY_PARENT: Record<string, string> = {
   directory: 'Profili i biznesit',
   guides: 'Udhëzuesi i tregut',
   'kerko-oferte': 'Detajet e kërkesës',
-  terma: 'Kategoria',
+  terma: 'Termi',
 }
 
 const ID_LIKE = /^(c[a-z0-9]{20,}|[0-9a-f]{8}-[0-9a-f]{4}|\d+)$/i
