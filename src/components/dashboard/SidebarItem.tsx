@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -20,11 +20,18 @@ export function SidebarItem({ item, pathname, collapsed, unreadCount, onNavigate
   const active = isActive(pathname, item.href)
   const childActive = hasActiveChild(item, pathname)
   const [open, setOpen] = useState(childActive)
+  // Auto-expand the parent whenever a child route becomes active (e.g. after a
+  // client-side navigation into an Export destination), without collapsing a
+  // group the user opened manually.
+  useEffect(() => {
+    if (childActive) setOpen(true)
+  }, [childActive])
   const badgeCount = item.badge === 'unread' ? unreadCount : 0
 
-  // Parent group (e.g. Udhëzuesit)
+  // Parent group (e.g. Eksporti)
   if (item.children) {
-    // Icon-only mode: render children flattened as icons so everything stays reachable.
+    // Icon-only mode: render children flattened as icons so every destination
+    // stays reachable, each with its own accessible tooltip.
     if (collapsed) {
       return (
         <>
@@ -50,11 +57,11 @@ export function SidebarItem({ item, pathname, collapsed, unreadCount, onNavigate
           aria-expanded={open}
           className={cn(
             'w-full flex items-center gap-3 rounded-control px-3 py-2 text-sm transition-colors',
-            childActive ? 'text-primary font-medium' : 'text-ink-muted hover:bg-surface-sunken',
+            childActive ? 'text-primary font-medium bg-primary-soft/60' : 'text-ink-muted hover:bg-surface-sunken',
           )}
         >
           <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-          <span className="flex-1 text-left truncate">{item.name}</span>
+          <span className="flex-1 text-left">{item.name}</span>
           <ChevronDown className={cn('h-4 w-4 shrink-0 transition-transform', open && 'rotate-180')} aria-hidden="true" />
         </button>
         {open && (
@@ -78,13 +85,14 @@ export function SidebarItem({ item, pathname, collapsed, unreadCount, onNavigate
 
   // Leaf link
   const Icon = item.icon
+  const twoLine = !collapsed && !!item.subtitle
   return (
     <Link
       href={item.href!}
       onClick={onNavigate}
       aria-current={active ? 'page' : undefined}
       title={collapsed ? item.name : undefined}
-      aria-label={collapsed ? item.name : undefined}
+      aria-label={collapsed ? item.name : item.name}
       className={cn(
         'relative flex items-center gap-3 rounded-control px-3 py-2 text-sm transition-colors',
         collapsed && 'justify-center',
@@ -94,7 +102,18 @@ export function SidebarItem({ item, pathname, collapsed, unreadCount, onNavigate
       )}
     >
       <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-      {!collapsed && <span className="flex-1 truncate">{item.name}</span>}
+      {twoLine ? (
+        // Two-line: task label (primary) + institution abbreviation (secondary).
+        // No truncation — long procedure labels stay fully readable.
+        <span className="flex-1 min-w-0 leading-tight">
+          <span className="block">{item.title ?? item.name}</span>
+          <span className={cn('block text-[11px]', active ? 'text-primary-fg/75' : 'text-ink-subtle')}>
+            {item.subtitle}
+          </span>
+        </span>
+      ) : (
+        !collapsed && <span className="flex-1 truncate">{item.name}</span>
+      )}
       {!collapsed && badgeCount > 0 && (
         <span
           className={cn(
