@@ -1,8 +1,7 @@
 import {
-  LayoutDashboard, Search, Calendar, BookOpen, Bell, Settings, CreditCard,
-  MessageSquare, ShieldCheck, Newspaper, Building2, Users, Handshake,
-  Landmark, Receipt, Truck, User as UserIcon, Compass, Rocket, Zap,
-  Globe, Barcode, GraduationCap, Ship, FileText,
+  LayoutDashboard, Search, Calendar, BookOpen, Bell, Building2, Users, Handshake,
+  Landmark, Receipt, Truck, User as UserIcon, Compass, Rocket, Zap, MessageSquare,
+  Newspaper, ShieldCheck, Globe, Barcode, FileText, FileCheck, Leaf,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -19,7 +18,7 @@ export interface NavItem {
   forSectors?: string[]
   // Real-data badge resolved by the shell (currently: unread notifications).
   badge?: 'unread'
-  // Nested sub-items (e.g. Eksporti → Përmbledhje/Tregjet/... ; Udhëzuesit → ARBK/ATK/...).
+  // Nested sub-items (mbështetje e ruajtur; s'përdoret në IA-në aktuale të sheshtë).
   children?: NavItem[]
 }
 
@@ -28,136 +27,96 @@ export interface NavSection {
   items: NavItem[]
 }
 
-// Udhëzuesit: një grup i vetëm vizual me fëmijët ARBK/ATK/Dogana/AUV.
-// URL-të mbeten të pandryshuara. AUV është i kushtëzuar nga sektori.
-const UDHEZUESIT: NavItem = {
-  name: 'Udhëzuesit',
-  icon: GraduationCap,
-  children: [
-    { name: 'ARBK', href: '/dashboard/arbk', icon: Landmark },
-    { name: 'ATK', href: '/dashboard/tatime', icon: Receipt },
-    { name: 'Dogana', href: '/dashboard/dogana', icon: Truck },
-    { name: 'AUV', href: '/dashboard/auv', icon: ShieldCheck, forSectors: ['ushqim-dhe-pije', 'bujqesi-blegtori'] },
-  ],
-}
+// --- Elemente të ripërdorshme (etiketa task-first, institucioni pas) ---
+const NEWS: NavItem = { name: 'Lajme dhe informata', href: '/dashboard/lajme', icon: Newspaper }
+const NOTIF: NavItem = { name: 'Njoftime', href: '/dashboard/notifications', icon: Bell, badge: 'unread' }
+const CONSULT: NavItem = { name: 'Konsultime', href: '/dashboard/bookings', icon: MessageSquare }
+const FINANCE: NavItem = { name: 'Financime', href: '/dashboard/burime-financimi', icon: Search }
+const FAIRS: NavItem = { name: 'Panaire dhe ngjarje', href: '/dashboard/panaire-evente', icon: Calendar }
+const MATCH: NavItem = { name: 'Matchmaking', href: '/dashboard/matchmaking', icon: Compass }
+const NETWORK: NavItem = { name: 'Rrjeti i bizneseve', href: '/dashboard/directory', icon: Users }
+const RFQ: NavItem = { name: 'Kërko ofertë', href: '/dashboard/kerko-oferte', icon: Handshake }
 
-// Eksporti: grup i palosshëm me nën-faqet e eksportit. URL-të e pandryshuara.
-const EKSPORTI_GROUP: NavItem = {
-  name: 'Eksporti',
-  icon: Ship,
-  children: [
-    { name: 'Përmbledhje e eksportit', href: '/dashboard/eksporti', icon: BookOpen },
-    { name: 'Tregjet', href: '/dashboard/guides', icon: Globe },
-    { name: 'Termet e eksportit', href: '/dashboard/terma', icon: FileText },
-    { name: 'HS Code', href: '/dashboard/terma/hs-code', icon: Barcode },
-    { name: 'Transporti', href: '/dashboard/eksporti/transporti', icon: Truck },
-  ],
-}
+// Procedurat & pajtueshmëria: task-based labels first, institution second.
+const ARBK: NavItem = { name: 'Regjistrimi dhe ndryshimet · ARBK', href: '/dashboard/arbk', icon: Landmark }
+const ATK: NavItem = { name: 'Tatimet dhe deklarimet · ATK', href: '/dashboard/tatime', icon: Receipt }
+const DOGANA: NavItem = { name: 'Dogana dhe dokumentet', href: '/dashboard/dogana', icon: FileCheck }
+// AUV: i kushtëzuar nga sektori (ushqim/bujqësi/blegtori/përpunim ushqimor); adminët e shohin gjithmonë.
+const AUV: NavItem = { name: 'Siguria e ushqimit · AUV', href: '/dashboard/auv', icon: Leaf, forSectors: ['ushqim-dhe-pije', 'bujqesi-blegtori'] }
+// Tregu i Energjisë: vetëm biznese të kualifikuara (50+ punonjës) dhe adminët.
+const ENERGY: NavItem = { name: 'Tregu i Energjisë', href: '/dashboard/energji', icon: Zap, energyOnly: true }
+
+const EKSPORTI_ITEMS: NavItem[] = [
+  { name: 'Përmbledhje e eksportit', href: '/dashboard/eksporti', icon: BookOpen },
+  { name: 'Tregjet', href: '/dashboard/guides', icon: Globe },
+  { name: 'HS Code', href: '/dashboard/terma/hs-code', icon: Barcode },
+  { name: 'Certifikimet', href: '/dashboard/certifikime', icon: ShieldCheck },
+  { name: 'Termet e eksportit', href: '/dashboard/terma', icon: FileText },
+  { name: 'Transporti', href: '/dashboard/eksporti/transporti', icon: Truck },
+]
 
 // ---------------------------------------------------------------------------
-// BIZNES KOSOVAR (default) — objektivat: rritje → eksport → biznesi im → njohuri
+// BIZNES KOSOVAR (default) — IA sipas udhëtimit të biznesit
 // ---------------------------------------------------------------------------
 const KOSOVO_BUSINESS: NavSection[] = [
   { label: 'Kryesore', items: [
     { name: 'Përmbledhja', href: '/dashboard', icon: LayoutDashboard },
   ]},
-  { label: 'Rritja e biznesit', items: [
-    { name: 'Gjej financim', href: '/dashboard/burime-financimi', icon: Search },
-    { name: 'Kompani Kosovare', href: '/dashboard/directory', icon: Users },
-    { name: 'Kërko ofertë', href: '/dashboard/kerko-oferte', icon: Handshake },
-    { name: 'Matchmaking', href: '/dashboard/matchmaking', icon: Compass },
-    { name: 'Panaire dhe ngjarje', href: '/dashboard/panaire-evente', icon: Calendar },
-  ]},
-  { label: 'Eksporti', items: [
-    EKSPORTI_GROUP,
-    { name: 'Certifikimet', href: '/dashboard/certifikime', icon: ShieldCheck },
-    { name: 'Tregu i Energjisë', href: '/dashboard/energji', icon: Zap, energyOnly: true },
-  ]},
   { label: 'Biznesi im', items: [
     { name: 'Profili i kompanisë', href: '/dashboard/profili-kompanise', icon: Building2 },
-    { name: 'Abonimi', href: '/dashboard/subscription', icon: CreditCard },
-    { name: 'Cilësimet', href: '/dashboard/settings', icon: Settings },
   ]},
-  { label: 'Njohuri dhe mbështetje', items: [
-    UDHEZUESIT,
-    { name: 'Lajmet', href: '/dashboard/lajme', icon: Newspaper },
-    { name: 'Njoftimet', href: '/dashboard/notifications', icon: Bell, badge: 'unread' },
-    { name: 'Konsultimet', href: '/dashboard/bookings', icon: MessageSquare },
-  ]},
+  { label: 'Mundësi', items: [FINANCE, FAIRS] },
+  { label: 'Tregu & partnerët', items: [MATCH, NETWORK, RFQ] },
+  { label: 'Eksporti', items: EKSPORTI_ITEMS },
+  { label: 'Procedurat & pajtueshmëria', items: [ARBK, ATK, DOGANA, AUV, ENERGY] },
+  { label: 'Mbështetje', items: [NEWS, NOTIF, CONSULT] },
 ]
 
 // ---------------------------------------------------------------------------
-// STARTUP — pa modul eksporti; theks te financimi dhe rrjeti/bashkëpunimi
+// STARTUP — pa modul eksporti; pa energji
 // ---------------------------------------------------------------------------
 const STARTUP: NavSection[] = [
   { label: 'Kryesore', items: [
     { name: 'Përmbledhja', href: '/dashboard', icon: LayoutDashboard },
   ]},
-  { label: 'Rritja e biznesit', items: [
-    { name: 'Gjej financim', href: '/dashboard/burime-financimi', icon: Search },
-    { name: 'Kompani Kosovare', href: '/dashboard/directory', icon: Users },
-    { name: 'Kërko bashkëpunim', href: '/dashboard/kerko-oferte', icon: Handshake },
-    { name: 'Matchmaking', href: '/dashboard/matchmaking', icon: Compass },
-    { name: 'Trajnime dhe workshope', href: '/dashboard/panaire-evente', icon: Calendar },
-  ]},
   { label: 'Biznesi im', items: [
     { name: 'Profili i kompanisë', href: '/dashboard/profili-kompanise', icon: Rocket },
-    { name: 'Abonimi', href: '/dashboard/subscription', icon: CreditCard },
-    { name: 'Cilësimet', href: '/dashboard/settings', icon: Settings },
   ]},
-  { label: 'Njohuri dhe mbështetje', items: [
-    UDHEZUESIT,
-    { name: 'Njoftimet', href: '/dashboard/notifications', icon: Bell, badge: 'unread' },
-    { name: 'Konsultimet', href: '/dashboard/bookings', icon: MessageSquare },
-  ]},
+  { label: 'Mundësi', items: [FINANCE, FAIRS] },
+  { label: 'Tregu & partnerët', items: [MATCH, NETWORK, RFQ] },
+  { label: 'Procedurat & pajtueshmëria', items: [ARBK, ATK, DOGANA, AUV] },
+  { label: 'Mbështetje', items: [NOTIF, CONSULT] },
 ]
 
 // ---------------------------------------------------------------------------
-// DIASPORA — "Investo në Kosovë" hub qendror; rrjeti dhe njohuritë pas tij
+// DIASPORA — "Investo në Kosovë" te Mundësitë; pa eksport, pa energji
 // ---------------------------------------------------------------------------
 const DIASPORA: NavSection[] = [
   { label: 'Kryesore', items: [
     { name: 'Përmbledhja', href: '/dashboard', icon: LayoutDashboard },
   ]},
-  { label: 'Investime dhe financim', items: [
-    { name: 'Investo në Kosovë', href: '/dashboard/investime', icon: Building2 },
-    { name: 'Gjej financim', href: '/dashboard/burime-financimi', icon: Search },
-  ]},
-  { label: 'Rritja e biznesit', items: [
-    { name: 'Kompani Kosovare', href: '/dashboard/directory', icon: Users },
-    { name: 'Kërko ofertë', href: '/dashboard/kerko-oferte', icon: Handshake },
-    { name: 'Matchmaking', href: '/dashboard/matchmaking', icon: Compass },
-    { name: 'Panaire dhe ngjarje', href: '/dashboard/panaire-evente', icon: Calendar },
-  ]},
   { label: 'Biznesi im', items: [
     { name: 'Profili i Diasporës', href: '/dashboard/profili-kompanise', icon: UserIcon },
-    { name: 'Abonimi', href: '/dashboard/subscription', icon: CreditCard },
-    { name: 'Cilësimet', href: '/dashboard/settings', icon: Settings },
   ]},
-  { label: 'Njohuri dhe mbështetje', items: [
-    UDHEZUESIT,
-    { name: 'Lajmet', href: '/dashboard/lajme', icon: Newspaper },
-    { name: 'Njoftimet', href: '/dashboard/notifications', icon: Bell, badge: 'unread' },
-    { name: 'Konsultimet', href: '/dashboard/bookings', icon: MessageSquare },
+  { label: 'Mundësi', items: [
+    { name: 'Investo në Kosovë', href: '/dashboard/investime', icon: Building2 },
+    FINANCE,
+    FAIRS,
   ]},
+  { label: 'Tregu & partnerët', items: [MATCH, NETWORK, RFQ] },
+  { label: 'Procedurat & pajtueshmëria', items: [ARBK, ATK, DOGANA, AUV] },
+  { label: 'Mbështetje', items: [NEWS, NOTIF, CONSULT] },
 ]
 
 // ---------------------------------------------------------------------------
-// INDIVID — vetëm njohuri dhe procedura, pa vegla biznesi
+// INDIVID — vetëm procedura dhe mbështetje
 // ---------------------------------------------------------------------------
 const INDIVIDUAL: NavSection[] = [
   { label: 'Kryesore', items: [
     { name: 'Përmbledhja', href: '/dashboard', icon: LayoutDashboard },
   ]},
-  { label: 'Njohuri dhe mbështetje', items: [
-    UDHEZUESIT,
-    { name: 'Lajmet', href: '/dashboard/lajme', icon: Newspaper },
-    { name: 'Njoftimet', href: '/dashboard/notifications', icon: Bell, badge: 'unread' },
-    { name: 'Konsultimet', href: '/dashboard/bookings', icon: MessageSquare },
-  ]},
-  { label: 'Llogaria', items: [
-    { name: 'Cilësimet', href: '/dashboard/settings', icon: Settings },
-  ]},
+  { label: 'Procedurat & pajtueshmëria', items: [ARBK, ATK, DOGANA, AUV] },
+  { label: 'Mbështetje', items: [NEWS, NOTIF, CONSULT] },
 ]
 
 const NAV_BY_ROLE: Record<string, NavSection[]> = {

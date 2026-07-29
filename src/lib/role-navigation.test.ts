@@ -6,69 +6,76 @@ beforeAll(() => {
 })
 
 const labels = (role: string) => navigationForRole(role).map((s) => s.label)
+const section = (role: string, label: string) => navigationForRole(role).find((s) => s.label === label)
+const hrefsIn = (role: string, label: string) => (section(role, label)?.items ?? []).flatMap((i) => (i.children ? i.children.map((c) => c.href) : [i.href]))
 
-describe('navigationForRole', () => {
-  it('KOSOVO_BUSINESS uses the new objective-based groups', () => {
-    const l = labels('KOSOVO_BUSINESS')
-    expect(l).toContain('Rritja e biznesit')
-    expect(l).toContain('Eksporti')
-    expect(l).toContain('Biznesi im')
-    expect(l).toContain('Njohuri dhe mbështetje')
+describe('navigationForRole — journey-based IA', () => {
+  it('KOSOVO_BUSINESS uses the final journey groups', () => {
+    expect(labels('KOSOVO_BUSINESS')).toEqual([
+      'Kryesore',
+      'Biznesi im',
+      'Mundësi',
+      'Tregu & partnerët',
+      'Eksporti',
+      'Procedurat & pajtueshmëria',
+      'Mbështetje',
+    ])
   })
 
-  it('Eksporti is a nested parent with the export sub-pages (URLs preserved)', () => {
-    const eksSection = navigationForRole('KOSOVO_BUSINESS').find((s) => s.label === 'Eksporti')!
-    const eksItem = eksSection.items.find((i) => i.name === 'Eksporti')!
-    expect(eksItem.href).toBeUndefined()
-    expect(eksItem.children?.map((c) => c.href)).toEqual([
+  it('Eksporti is a flat section in journey order', () => {
+    expect(hrefsIn('KOSOVO_BUSINESS', 'Eksporti')).toEqual([
       '/dashboard/eksporti',
       '/dashboard/guides',
-      '/dashboard/terma',
       '/dashboard/terma/hs-code',
+      '/dashboard/certifikime',
+      '/dashboard/terma',
       '/dashboard/eksporti/transporti',
     ])
-    // Certifikimet is a sibling leaf in the Eksporti section, not a child.
-    expect(eksSection.items.some((i) => i.href === '/dashboard/certifikime')).toBe(true)
   })
 
-  it('Panaire dhe ngjarje lives under Rritja e biznesit, not Eksporti', () => {
-    const sections = navigationForRole('KOSOVO_BUSINESS')
-    const rritja = sections.find((s) => s.label === 'Rritja e biznesit')!
-    const eksporti = sections.find((s) => s.label === 'Eksporti')!
-    expect(rritja.items.some((i) => i.href === '/dashboard/panaire-evente')).toBe(true)
-    expect(flattenNav([eksporti]).some((i) => i.href === '/dashboard/panaire-evente')).toBe(false)
+  it('Mundësi groups financing + fairs', () => {
+    expect(hrefsIn('KOSOVO_BUSINESS', 'Mundësi')).toEqual(['/dashboard/burime-financimi', '/dashboard/panaire-evente'])
   })
 
-  it('Udhëzuesit is a nested group with ARBK/ATK/Dogana/AUV children', () => {
-    const njohuri = navigationForRole('KOSOVO_BUSINESS').find((s) => s.label === 'Njohuri dhe mbështetje')!
-    const udh = njohuri.items.find((i) => i.name === 'Udhëzuesit')!
-    expect(udh.href).toBeUndefined()
-    expect(udh.children?.map((c) => c.href)).toEqual([
-      '/dashboard/arbk',
-      '/dashboard/tatime',
-      '/dashboard/dogana',
-      '/dashboard/auv',
-    ])
+  it('Tregu & partnerët groups matchmaking + directory (Rrjeti i bizneseve) + RFQ', () => {
+    const items = section('KOSOVO_BUSINESS', 'Tregu & partnerët')!.items
+    expect(items.map((i) => i.href)).toEqual(['/dashboard/matchmaking', '/dashboard/directory', '/dashboard/kerko-oferte'])
+    expect(items.find((i) => i.href === '/dashboard/directory')!.name).toBe('Rrjeti i bizneseve')
   })
 
-  it('INDIVIDUAL has no business-growth or export groups', () => {
-    const l = labels('INDIVIDUAL')
-    expect(l).not.toContain('Rritja e biznesit')
-    expect(l).not.toContain('Eksporti')
+  it('Procedurat & pajtueshmëria holds ARBK/ATK/Dogana/AUV/Energji with task-first labels', () => {
+    const proc = section('KOSOVO_BUSINESS', 'Procedurat & pajtueshmëria')!.items
+    expect(proc.map((i) => i.href)).toEqual(['/dashboard/arbk', '/dashboard/tatime', '/dashboard/dogana', '/dashboard/auv', '/dashboard/energji'])
+    expect(proc.find((i) => i.href === '/dashboard/arbk')!.name).toContain('ARBK')
+    expect(proc.find((i) => i.href === '/dashboard/auv')!.forSectors).toEqual(['ushqim-dhe-pije', 'bujqesi-blegtori'])
+    expect(proc.find((i) => i.href === '/dashboard/energji')!.energyOnly).toBe(true)
   })
 
-  it('STARTUP has growth but no export group', () => {
-    const l = labels('STARTUP')
-    expect(l).toContain('Rritja e biznesit')
-    expect(l).not.toContain('Eksporti')
+  it('account actions (Abonimi/Cilësimet) are NOT in the sidebar', () => {
+    const all = flattenNav(navigationForRole('KOSOVO_BUSINESS')).map((i) => i.href)
+    expect(all).not.toContain('/dashboard/subscription')
+    expect(all).not.toContain('/dashboard/settings')
   })
 
-  it('flattenNav keeps every leaf on a real /dashboard route (URLs preserved)', () => {
+  it('no nested groups remain (flat IA)', () => {
+    const anyChildren = navigationForRole('KOSOVO_BUSINESS').some((s) => s.items.some((i) => i.children))
+    expect(anyChildren).toBe(false)
+  })
+
+  it('INDIVIDUAL has only Kryesore, Procedurat, Mbështetje', () => {
+    expect(labels('INDIVIDUAL')).toEqual(['Kryesore', 'Procedurat & pajtueshmëria', 'Mbështetje'])
+  })
+
+  it('STARTUP has no Eksporti group and no energy item', () => {
+    expect(labels('STARTUP')).not.toContain('Eksporti')
+    expect(flattenNav(navigationForRole('STARTUP')).map((i) => i.href)).not.toContain('/dashboard/energji')
+  })
+
+  it('every leaf keeps a real /dashboard route (URLs preserved)', () => {
     const flat = flattenNav(navigationForRole('KOSOVO_BUSINESS'))
-    expect(flat.length).toBeGreaterThan(0)
     expect(flat.every((i) => i.href?.startsWith('/dashboard'))).toBe(true)
     const hrefs = flat.map((i) => i.href)
-    for (const h of ['/dashboard/eksporti', '/dashboard/guides', '/dashboard/terma', '/dashboard/terma/hs-code', '/dashboard/eksporti/transporti', '/dashboard/arbk', '/dashboard/auv']) {
+    for (const h of ['/dashboard/eksporti', '/dashboard/guides', '/dashboard/terma', '/dashboard/terma/hs-code', '/dashboard/eksporti/transporti', '/dashboard/arbk', '/dashboard/auv', '/dashboard/directory']) {
       expect(hrefs).toContain(h)
     }
   })

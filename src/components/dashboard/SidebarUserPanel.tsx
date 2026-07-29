@@ -1,8 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { signOut } from 'next-auth/react'
-import { LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -20,6 +18,8 @@ function initials(name?: string | null): string {
   return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || 'KB'
 }
 
+// Identity + profile-completion. Account actions (Abonimi, Cilësimet, Dil) live
+// in the header user menu, not here.
 export function SidebarUserPanel({ name, companyName, roleLabel, profilePct, collapsed, onNavigate }: Props) {
   if (collapsed) {
     return (
@@ -61,15 +61,6 @@ export function SidebarUserPanel({ name, companyName, roleLabel, profilePct, col
           <p className="text-sm font-medium text-ink truncate">{name || companyName || 'Përdorues'}</p>
           <p className="text-xs text-ink-subtle truncate">{companyName || roleLabel}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => signOut({ callbackUrl: '/' })}
-          aria-label="Dil nga llogaria"
-          title="Dil"
-          className="shrink-0 rounded-control p-2 text-ink-muted hover:bg-surface-sunken hover:text-danger"
-        >
-          <LogOut className="h-4 w-4" />
-        </button>
       </div>
     </div>
   )
