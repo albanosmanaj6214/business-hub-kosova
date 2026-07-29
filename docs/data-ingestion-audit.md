@@ -124,9 +124,16 @@ Collapsing three paths without regressing the 5 working scrapers; backfilling pr
 
 Normalizer/mapping units; adapter fixture/golden-file; contract; dedup, idempotency, retry, pagination, rate-limit, SSRF, file-size; source-tier and publication-policy; relevance role/sector. Fix that CI (`.github/workflows/deploy.yml`) runs no tests before deploy.
 
-## 25. First recommended pilot source
+## 25. Candidate pilot sources (no final decision approved yet)
 
-Eurostat (Tier B, official JSON-stat / SDMX REST API). Rationale: API-first (no HTML fragility), open-licensed (low legal risk), reliably reachable from the server (proven this session), and it directly fixes the biggest gap (`marketStats` has no writer/harvester). It exercises the full new pipeline end to end on one clean source and yields correctly-labeled indicators. ASK/ASKdata is the ideal Tier-A Kosovo target but blocks automated access (verify via owner-supplied files), so Eurostat is the pragmatic first pilot. Activate nothing until Phase 1/2 governance + pipeline are approved.
+**Correction (2026-07-29):** an earlier draft of this audit stated that ASK/ASKdata blocks automated access. That claim was **not verified and was incorrect for the PxWeb API**; it derived from an unverified note about the ASK/BQK HTML portal. On 2026-07-29 the ASKdata PxWeb API was probed read-only (Phase 0 "API availability" inspection, not source activation) at `askdata.rks-gov.net/api/v1/sq/ASKdata/` and **returned HTTP 200 and valid JSON** (a real table directory, e.g. "Anketa mbi të Ardhurat dhe Kushtet e Jetesës", "Household budget survey"). **ASKdata is reachable at the API level**, and is therefore a **viable official Tier A source**.
+
+**No final pilot has been approved or selected.** Two official sources are retained as candidates for the owner's decision; both were connectivity-probed read-only on 2026-07-29 and both returned HTTP 200 + JSON:
+
+- **Eurostat** (Tier B, official JSON-stat / SDMX REST API): technically convenient for validating JSON-stat/SDMX ingestion and the currently unwritten market-statistics flow. API-first (no HTML fragility), open-licensed, and its JSON-stat output mirrors the existing `ExportGuide.marketStats` structure (the guide already references `nama_10_co3_p3` + `demo_pjan`, `guides/[id]/page.tsx:180`), so it exercises the new pipeline end to end with the least new modeling.
+- **ASKdata** (Tier A, Agjencia e Statistikave të Kosovës, official PxWeb JSON API): strategically important as Kosovo's own Tier A official statistical source; it would also replace the hardcoded `verified:false` homepage `TRADE_PULSE` with real ASK figures.
+
+Do not activate either source or implement either pilot until Phase 1/2 governance and pipeline are approved and the owner selects a pilot.
 
 ---
 
