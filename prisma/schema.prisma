@@ -422,6 +422,32 @@ enum SourceTier {
   A
   B
   C
+  D
+}
+
+// Phase 1: controlled source lifecycle (governance metadata; does NOT drive
+// ingestion, which still keys off Source.isActive). NULL = legacy/ungoverned.
+enum SourceLifecycle {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  ACTIVE
+  PAUSED
+  DISABLED
+  REJECTED
+  ARCHIVED
+}
+
+enum SourceHealthState {
+  UNKNOWN
+  HEALTHY
+  DEGRADED
+  FAILING
+  STALE
+  PAUSED
+  DISABLED
+  AUTH_REQUIRED
+  SCHEMA_CHANGED
 }
 
 enum SourceCategory {
@@ -484,12 +510,79 @@ model Source {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
+  // --- Phase 1: Source governance (additive; all nullable/defaulted). Reuse
+  // note: sectorsHint=relevantSectors, kind=accessMethod(legacy), category=primary
+  // content type, reliability=operational score, SourceHealth.lastSuccessAt=last run.
+  institutionName         String?
+  description             String?
+  officialDomain          String?
+  sourceType              String? // ministry|agency|statistical|customs|regulator|bank|chamber|donor|media|directory
+  country                 String?
+  contentTypes            String[]          @default([])
+  relevantRoles           String[]          @default([])
+  relevantCountries       String[]          @default([])
+  relevantHsChapters      String[]          @default([])
+  accessMethod            String? // api|sdmx|jsonstat|rss|csv|excel|xml|sitemap|html|pdf|manual
+  authenticationType      String?           @default("none") // none|apiKey|oauth|basic
+  secretReference         String? // ENV VAR NAME ONLY — never a secret value
+  license                 String?
+  termsOfUseStatus        String?           @default("not_reviewed") // not_reviewed|approved|restricted|prohibited
+  termsReviewedAt         DateTime?
+  robotsStatus            String? // not_reviewed|allowed|restricted
+  robotsReviewedAt        DateTime?
+  attributionRequirements String?
+  rateLimitPerMin         Int?
+  concurrencyLimit        Int?
+  requestTimeoutMs        Int?
+  retryPolicy             Json?
+  freshnessSlaHours       Int?
+  nextScheduledRunAt      DateTime?
+  healthStatus            SourceHealthState @default(UNKNOWN)
+  owner                   String?
+  reviewer                String?
+  lifecycle               SourceLifecycle? // NULL = legacy/ungoverned; new sources start DRAFT
+  autoPublishAllowed      Boolean           @default(false)
+  notes                   String?
+
   opportunities Opportunity[]
   attempts      ScrapeAttempt[]
   health        SourceHealth?
+  endpoints     SourceEndpoint[]
 
   @@index([tier, isActive])
   @@index([category])
+  @@index([lifecycle])
+}
+
+// Phase 1: multiple governed endpoints per source (config only; live scraper
+// logic is NOT migrated here per Phase 1 non-goals).
+model SourceEndpoint {
+  id               String            @id @default(cuid())
+  sourceId         String
+  name             String
+  url              String
+  endpointType     String? // api|sdmx|jsonstat|rss|csv|html|pdf
+  contentType      String?
+  accessMethod     String?
+  authReference    String? // ENV VAR NAME ONLY
+  datasetId        String?
+  language         String?
+  country          String?
+  enabled          Boolean           @default(false)
+  priority         Int               @default(0)
+  rateLimitPerMin  Int?
+  requestTimeoutMs Int?
+  scheduleOverride String?
+  lastCheckedAt    DateTime?
+  lastSuccessAt    DateTime?
+  healthStatus     SourceHealthState @default(UNKNOWN)
+  notes            String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  source Source @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@index([sourceId])
 }
 
 model Opportunity {
