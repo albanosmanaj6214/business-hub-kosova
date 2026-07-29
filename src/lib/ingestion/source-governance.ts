@@ -79,3 +79,42 @@ export function classifySource(s: ClassifyInput): SourceClass {
   }
   return hasAdapter ? 'dormant' : 'decorative'
 }
+
+// ---- Activation preconditions (a source must satisfy these before ACTIVE) ----
+export interface ActivationCandidate {
+  tier: string | null
+  institutionName: string | null
+  baseUrl: string | null
+  accessMethod: string | null
+  kind: string | null
+  license: string | null
+  termsOfUseStatus: string | null
+  rateLimitPerMin: number | null
+  requestTimeoutMs: number | null
+  owner: string | null
+  reviewer: string | null
+  lifecycle: Lifecycle | null
+}
+
+export interface ActivationReadiness {
+  ok: boolean
+  missing: string[]
+}
+
+/** Governance gate: what a source still needs before it may transition to ACTIVE. */
+export function activationReadiness(s: ActivationCandidate): ActivationReadiness {
+  const missing: string[] = []
+  if (!s.tier) missing.push('authority tier')
+  if (!s.institutionName) missing.push('institucioni')
+  if (!s.baseUrl) missing.push('URL e burimit')
+  if (!s.accessMethod && !s.kind) missing.push('metoda e qasjes')
+  // licence OR an explicit reviewed terms status counts as "review recorded"
+  if (!s.license && (!s.termsOfUseStatus || s.termsOfUseStatus === 'not_reviewed')) missing.push('licenca ose statusi i kushteve')
+  if (!s.termsOfUseStatus || s.termsOfUseStatus === 'not_reviewed') missing.push('rishikimi i kushteve të përdorimit')
+  if (s.rateLimitPerMin == null) missing.push('rate limit')
+  if (s.requestTimeoutMs == null) missing.push('timeout')
+  if (!s.owner) missing.push('owner')
+  if (!s.reviewer) missing.push('reviewer')
+  if (s.lifecycle !== 'APPROVED') missing.push('burimi duhet të jetë APPROVED më parë')
+  return { ok: missing.length === 0, missing: Array.from(new Set(missing)) }
+}

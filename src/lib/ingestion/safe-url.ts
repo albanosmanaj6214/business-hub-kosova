@@ -146,3 +146,68 @@ export async function safeFetch(raw: string, opts: SafeFetchOptions = {}): Promi
   }
   throw new UnsafeUrlError('Shumë ridrejtime')
 }
+
+export interface ConnectionProbe {
+  ok: boolean
+  status: number | null
+  contentType: string | null
+  sizeBytes: number | null
+  redirectCount: number
+  durationMs: number
+  error?: string
+}
+
+/**
+ * Admin-facing Test Connection: SSRF-guarded probe returning only safe, non-
+ * sensitive metrics. Never returns internal IPs, secret values, response bodies,
+ * or raw stack traces.
+ */
+export async function probeConnection(raw: string, opts: SafeFetchOptions = {}): Promise<ConnectionProbe> {
+  const started = Date.now()
+  const maxBytes = opts.maxBytes ?? 2_000_000
+  const timeoutMs = opts.timeoutMs ?? 12_000
+  const maxRedirects = opts.maxRedirects ?? 3
+  let currentUrl = raw
+  let redirectCount = 0
+  try {
+    for (let hop = 0; hop <= maxRedirects; hop++) {
+      const url = await assertSafeUrl(currentUrl) // re-validate EVERY hop (incl. redirects)
+      const res = await fetch(url, {
+        redirect: 'manual',
+        signal: AbortSignal.timeout(timeoutMs),
+        headers: { 'user-agent': 'KosovaBusinessHubBot/1.0 (+source-governance)' },
+      })
+      if (res.status >= 300 && res.status < 400) {
+        const loc = res.headers.get('location')
+        if (!loc) return { ok: false, status: res.status, contentType: null, sizeBytes: null, redirectCount, durationMs: Date.now() - started, error: 'Ridrejtim pa Location' }
+        redirectCount++
+        currentUrl = new URL(loc, url).toString()
+        continue
+      }
+      // read up to the cap only to measure size safely
+      const reader = res.body?.getReader()
+      let total = 0
+      if (reader) {
+        for (;;) {
+          const { done, value } = await reader.read()
+          if (done) break
+          total += value.byteLength
+          if (total > maxBytes) { await reader.cancel(); break }
+        }
+      }
+      return { ok: res.status >= 200 && res.status < 400, status: res.status, contentType: res.headers.get('content-type'), sizeBytes: total, redirectCount, durationMs: Date.now() - started }
+    }
+    return { ok: false, status: null, contentType: null, sizeBytes: null, redirectCount, durationMs: Date.now() - started, error: 'Shumë ridrejtime' }
+  } catch (e) {
+    return { ok: false, status: null, contentType: null, sizeBytes: null, redirectCount, durationMs: Date.now() - started, error: sanitizeFetchError(e) }
+  }
+}
+
+/** Convert any fetch/validation error into a safe, user-facing Albanian message (no IPs, no stack, no secrets). */
+export function sanitizeFetchError(e: unknown): string {
+  if (e instanceof UnsafeUrlError) return e.message
+  const name = (e as { name?: string })?.name
+  if (name === 'TimeoutError' || name === 'AbortError') return 'Koha e pritjes skadoi'
+  if (name === 'TypeError') return 'Lidhja dështoi (host i paarritshëm)'
+  return 'Lidhja dështoi'
+}

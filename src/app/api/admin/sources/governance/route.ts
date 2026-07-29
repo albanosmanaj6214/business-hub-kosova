@@ -4,12 +4,13 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { logAudit } from '@/lib/audit'
 import { sourceGovernanceSchema, endpointSchema, toClientSource } from '@/lib/ingestion/source-validation'
-import { assertTierAllowsContentTypes, canTransition, isActivation, type Lifecycle, type Tier } from '@/lib/ingestion/source-governance'
-import { safeFetch, UnsafeUrlError } from '@/lib/ingestion/safe-url'
+import { assertTierAllowsContentTypes, canTransition, isActivation, activationReadiness, type Lifecycle, type Tier } from '@/lib/ingestion/source-governance'
+import { probeConnection, UnsafeUrlError } from '@/lib/ingestion/safe-url'
 
 // SUPER_ADMIN only. Governance mutations for the source registry. Secrets are
-// never returned. Approval and activation are SEPARATE transitions. Creating or
-// approving a source never activates ingestion and never changes a schedule.
+// never returned. Approval and activation are SEPARATE transitions; activation
+// requires prior APPROVED + governance preconditions. Creating/approving a
+// source never activates ingestion and never changes a schedule.
 async function requireSuperAdmin() {
   const session = await getServerSession(authOptions)
   const role = (session?.user as { role?: string } | undefined)?.role
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
           },
         })
         await logAudit({ ...actor, action: 'SOURCE_GOV_CREATE', entityType: 'Source', entityId: created.id, summary: `Krijoi burim draft ${created.code} (tier ${created.tier})` })
-        return NextResponse.json({ source: toClientSource(created as any) })
+        return NextResponse.json({ source: toClientSource(created as Record<string, unknown>) })
       }
 
       case 'update': {
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
           },
         })
         await logAudit({ ...actor, action: 'SOURCE_GOV_UPDATE', entityType: 'Source', entityId: updated.id, summary: `Përditësoi qeverisjen e burimit ${updated.code}` })
-        return NextResponse.json({ source: toClientSource(updated as any) })
+        return NextResponse.json({ source: toClientSource(updated as Record<string, unknown>) })
       }
 
       case 'transition': {
@@ -87,27 +88,33 @@ export async function POST(req: NextRequest) {
         if (!canTransition(from, to as Lifecycle)) {
           return NextResponse.json({ error: `Tranzicion i palejuar: ${from ?? 'legacy'} -> ${to}` }, { status: 409 })
         }
-        // Activation is the ONLY transition that flips isActive on. Pause/disable/
-        // reject/archive turn it off. Approval does NOT activate.
+        // Activation gate: ACTIVE requires prior APPROVED + governance preconditions.
+        if (isActivation(to as Lifecycle)) {
+          const readiness = activationReadiness({
+            tier: existing.tier, institutionName: existing.institutionName, baseUrl: existing.baseUrl,
+            accessMethod: existing.accessMethod, kind: existing.kind, license: existing.license,
+            termsOfUseStatus: existing.termsOfUseStatus, rateLimitPerMin: existing.rateLimitPerMin,
+            requestTimeoutMs: existing.requestTimeoutMs, owner: existing.owner, reviewer: existing.reviewer,
+            lifecycle: from,
+          })
+          if (!readiness.ok) {
+            return NextResponse.json({ error: 'Parakushtet e aktivizimit nuk plotësohen', missing: readiness.missing }, { status: 422 })
+          }
+        }
         const deactivating = ['PAUSED', 'DISABLED', 'REJECTED', 'ARCHIVED'].includes(to)
         const updated = await prisma.source.update({
           where: { id },
           data: { lifecycle: to as Lifecycle, ...(isActivation(to as Lifecycle) ? { isActive: true } : deactivating ? { isActive: false } : {}) },
         })
         await logAudit({ ...actor, action: 'SOURCE_LIFECYCLE', entityType: 'Source', entityId: id, summary: `${existing.code}: ${from ?? 'legacy'} -> ${to}`, meta: { from, to, activated: isActivation(to as Lifecycle) } })
-        return NextResponse.json({ source: toClientSource(updated as any) })
+        return NextResponse.json({ source: toClientSource(updated as Record<string, unknown>) })
       }
 
       case 'testConnection': {
-        // SSRF-guarded reachability probe. Never activates or changes the source.
+        // SSRF-guarded reachability probe with safe metrics only. Never activates.
         if (typeof body.url !== 'string') return NextResponse.json({ error: 'url i munguar' }, { status: 400 })
-        try {
-          const r = await safeFetch(body.url, { timeoutMs: 12000, maxBytes: 2_000_000, maxRedirects: 3 })
-          return NextResponse.json({ ok: r.status >= 200 && r.status < 400, status: r.status, contentType: r.contentType, note: 'Testi i lidhjes nuk aktivizon burimin.' })
-        } catch (e) {
-          if (e instanceof UnsafeUrlError) return NextResponse.json({ ok: false, error: e.message }, { status: 422 })
-          return NextResponse.json({ ok: false, error: 'Lidhja dështoi' }, { status: 502 })
-        }
+        const probe = await probeConnection(body.url, { timeoutMs: 12000, maxBytes: 2_000_000, maxRedirects: 3 })
+        return NextResponse.json({ ...probe, note: 'Testi i lidhjes nuk aprovon dhe nuk aktivizon burimin.' })
       }
 
       case 'addEndpoint': {
@@ -116,7 +123,24 @@ export async function POST(req: NextRequest) {
         if (!parsed.success) return NextResponse.json({ error: 'validim', issues: parsed.error.issues }, { status: 400 })
         const ep = await prisma.sourceEndpoint.create({ data: { sourceId: body.sourceId, ...parsed.data } })
         await logAudit({ ...actor, action: 'SOURCE_ENDPOINT_ADD', entityType: 'SourceEndpoint', entityId: ep.id, summary: `Shtoi endpoint te burimi ${body.sourceId}` })
-        return NextResponse.json({ endpoint: toClientSource(ep as any) })
+        return NextResponse.json({ endpoint: toClientSource(ep as Record<string, unknown>) })
+      }
+
+      case 'updateEndpoint': {
+        if (typeof body.endpointId !== 'string') return NextResponse.json({ error: 'endpointId i munguar' }, { status: 400 })
+        const parsed = endpointSchema.partial().safeParse(body.data)
+        if (!parsed.success) return NextResponse.json({ error: 'validim', issues: parsed.error.issues }, { status: 400 })
+        const ep = await prisma.sourceEndpoint.update({ where: { id: body.endpointId }, data: parsed.data })
+        await logAudit({ ...actor, action: 'SOURCE_ENDPOINT_UPDATE', entityType: 'SourceEndpoint', entityId: ep.id, summary: `Përditësoi endpoint ${ep.id}` })
+        return NextResponse.json({ endpoint: toClientSource(ep as Record<string, unknown>) })
+      }
+
+      case 'toggleEndpoint': {
+        if (typeof body.endpointId !== 'string' || typeof body.enabled !== 'boolean') return NextResponse.json({ error: 'endpointId/enabled i munguar' }, { status: 400 })
+        // Enabling endpoint CONFIG does not connect live scraping in Phase 1.
+        const ep = await prisma.sourceEndpoint.update({ where: { id: body.endpointId }, data: { enabled: body.enabled } })
+        await logAudit({ ...actor, action: 'SOURCE_ENDPOINT_UPDATE', entityType: 'SourceEndpoint', entityId: ep.id, summary: `Endpoint ${ep.id} enabled=${body.enabled}` })
+        return NextResponse.json({ endpoint: toClientSource(ep as Record<string, unknown>) })
       }
 
       case 'deleteEndpoint': {
@@ -130,8 +154,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'action i panjohur' }, { status: 400 })
     }
   } catch (e) {
+    if (e instanceof UnsafeUrlError) return NextResponse.json({ error: e.message }, { status: 422 })
     const msg = e instanceof Error ? e.message : 'gabim i brendshëm'
-    // Governance/authority validation errors are safe to surface to the SUPER_ADMIN.
     return NextResponse.json({ error: msg }, { status: 400 })
   }
 }
