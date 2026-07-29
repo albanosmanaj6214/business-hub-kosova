@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import { navigationForRole, flattenNav } from '@/lib/role-navigation'
-import { hasActiveChild, isActive } from '@/components/dashboard/nav-utils'
 
 beforeAll(() => {
   process.env.NEXT_PUBLIC_ROLE_BASED_SIDEBAR = 'true'
@@ -32,46 +31,31 @@ describe('navigationForRole — journey-based IA', () => {
     ])
   })
 
-  it('Eksporti exposes the six destinations in journey order', () => {
-    expect(hrefsIn('KOSOVO_BUSINESS', 'Eksporti')).toEqual(EXPORT_HREFS)
-  })
-
-  // --- Export nested-group correction ---
-  it('Eksporti is an expandable parent with the six children in order', () => {
-    const eksporti = section('KOSOVO_BUSINESS', 'Eksporti')!
-    expect(eksporti.items).toHaveLength(1)
-    const parent = eksporti.items[0]
-    expect(parent.name).toBe('Eksporti')
-    expect(parent.href).toBeUndefined() // expandable group, not a link
-    expect(parent.children).toBeDefined()
-    expect(parent.children!.map((c) => c.name)).toEqual([
-      'Përmbledhja', 'Tregjet', 'HS Code', 'Certifikimet', 'Termet e eksportit', 'Transporti',
+  // --- Export is a FLAT section (no expandable parent, no "Përmbledhja") ---
+  it('Eksporti is a flat section with six direct destinations in order', () => {
+    const items = section('KOSOVO_BUSINESS', 'Eksporti')!.items
+    expect(items.map((i) => i.name)).toEqual([
+      'Eksporti', 'Tregjet', 'HS Code', 'Certifikimet', 'Termet e eksportit', 'Transporti',
     ])
-    expect(parent.children!.map((c) => c.href)).toEqual(EXPORT_HREFS)
+    expect(items.map((i) => i.href)).toEqual(EXPORT_HREFS)
   })
 
-  it('Eksporti is the ONLY nested group; every other section is flat', () => {
-    const nested = navigationForRole('KOSOVO_BUSINESS')
-      .filter((s) => s.items.some((i) => i.children))
-      .map((s) => s.label)
-    expect(nested).toEqual(['Eksporti'])
+  it('Eksporti has no expandable parent, no children, and no "Përmbledhja"', () => {
+    const items = section('KOSOVO_BUSINESS', 'Eksporti')!.items
+    expect(items.every((i) => typeof i.href === 'string')).toBe(true) // every item is a real link
+    expect(items.some((i) => i.children)).toBe(false) // no nested Export level
+    expect(items.some((i) => i.name === 'Përmbledhja')).toBe(false)
+    expect(items.find((i) => i.href === '/dashboard/eksporti')!.name).toBe('Eksporti')
   })
 
-  it('a parent auto-expands when one of its children is the active route', () => {
-    const parent = section('KOSOVO_BUSINESS', 'Eksporti')!.items[0]
-    expect(hasActiveChild(parent, '/dashboard/guides')).toBe(true)
-    expect(hasActiveChild(parent, '/dashboard/eksporti/transporti')).toBe(true)
-    expect(hasActiveChild(parent, '/dashboard/matchmaking')).toBe(false)
-    // nested child route still resolves an active child
-    expect(isActive('/dashboard/terma/hs-code', '/dashboard/terma/hs-code')).toBe(true)
+  it('no section anywhere uses nested children (fully flat IA)', () => {
+    const anyNested = navigationForRole('KOSOVO_BUSINESS').some((s) => s.items.some((i) => i.children))
+    expect(anyNested).toBe(false)
   })
 
-  it('Export destinations appear exactly once and only inside Eksporti', () => {
+  it('all six Export routes appear exactly once', () => {
     const all = flattenNav(navigationForRole('KOSOVO_BUSINESS')).map((i) => i.href)
     for (const h of EXPORT_HREFS) expect(all.filter((x) => x === h)).toHaveLength(1)
-    const nonExport = navigationForRole('KOSOVO_BUSINESS').filter((s) => s.label !== 'Eksporti')
-    const nonExportHrefs = flattenNav(nonExport).map((i) => i.href)
-    for (const h of EXPORT_HREFS) expect(nonExportHrefs).not.toContain(h)
   })
 
   it('Mundësi groups financing + fairs', () => {
@@ -89,25 +73,24 @@ describe('navigationForRole — journey-based IA', () => {
     expect(items.find((i) => i.href === '/dashboard/directory')!.name).toBe('Rrjeti i bizneseve')
   })
 
-  it('Procedurat & pajtueshmëria holds ARBK/ATK/Dogana/AUV/Energji with task-first labels', () => {
+  // --- Procedures: concise single labels, no visible subtitle line ---
+  it('Procedurat use concise single labels with institutions only in aria-label', () => {
     const proc = section('KOSOVO_BUSINESS', 'Procedurat & pajtueshmëria')!.items
     expect(proc.map((i) => i.href)).toEqual(['/dashboard/arbk', '/dashboard/tatime', '/dashboard/dogana', '/dashboard/auv', '/dashboard/energji'])
-    expect(proc.find((i) => i.href === '/dashboard/arbk')!.name).toContain('ARBK')
-    expect(proc.find((i) => i.href === '/dashboard/auv')!.forSectors).toEqual(['ushqim-dhe-pije', 'bujqesi-blegtori'])
-    expect(proc.find((i) => i.href === '/dashboard/energji')!.energyOnly).toBe(true)
+    expect(proc.map((i) => i.name)).toEqual(['Regjistrimi i biznesit', 'Tatimet', 'Dogana', 'Siguria e ushqimit', 'Tregu i Energjisë'])
+    // No two-line subtitle field is present on any procedure item.
+    expect(proc.every((i) => !('subtitle' in i) && !('title' in i))).toBe(true)
+    // Institution remains available via the accessible full label.
+    expect(proc.find((i) => i.href === '/dashboard/arbk')!.ariaLabel).toContain('ARBK')
+    expect(proc.find((i) => i.href === '/dashboard/tatime')!.ariaLabel).toContain('ATK')
+    expect(proc.find((i) => i.href === '/dashboard/dogana')!.ariaLabel).toContain('Dogana')
+    expect(proc.find((i) => i.href === '/dashboard/auv')!.ariaLabel).toContain('AUV')
   })
 
-  it('long procedure labels carry a two-line title/subtitle without dropping the full name', () => {
+  it('AUV sector gating and Energy eligibility metadata are unchanged', () => {
     const proc = section('KOSOVO_BUSINESS', 'Procedurat & pajtueshmëria')!.items
-    const arbk = proc.find((i) => i.href === '/dashboard/arbk')!
-    expect(arbk.title).toBe('Regjistrimi dhe ndryshimet')
-    expect(arbk.subtitle).toBe('ARBK')
-    expect(arbk.name).toContain('ARBK') // full accessible label preserved for tooltip/breadcrumb
-    expect(proc.find((i) => i.href === '/dashboard/tatime')!.subtitle).toBe('ATK')
-    expect(proc.find((i) => i.href === '/dashboard/dogana')!.subtitle).toBe('Dogana')
-    expect(proc.find((i) => i.href === '/dashboard/auv')!.subtitle).toBe('AUV')
-    // short labels stay single-line (no subtitle)
-    expect(proc.find((i) => i.href === '/dashboard/energji')!.subtitle).toBeUndefined()
+    expect(proc.find((i) => i.href === '/dashboard/auv')!.forSectors).toEqual(['ushqim-dhe-pije', 'bujqesi-blegtori'])
+    expect(proc.find((i) => i.href === '/dashboard/energji')!.energyOnly).toBe(true)
   })
 
   it('account actions (Abonimi/Cilësimet) are NOT in the sidebar', () => {
