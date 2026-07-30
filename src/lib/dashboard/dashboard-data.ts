@@ -6,8 +6,9 @@ import { currentBusinessProfile } from '@/lib/audience-server'
 import { matchesForCompany, MATCH_TYPE_LABEL } from '@/lib/matchmaking'
 import { sectorsLabel } from '@/lib/sectors'
 import { isEnergyEligible } from '@/lib/energy'
-import { AlertTriangle, Bell, Building2, Calendar, Clock, Compass, UserCircle } from 'lucide-react'
+import { AlertTriangle, Bell, Building2, Calendar, Clock, Compass, Handshake, UserCircle } from 'lucide-react'
 import { loadEligibleMarketPulse } from './market-pulse'
+import { resolveCommercialRole } from './role-dashboard-config'
 import type { DashboardData, DashRole, CompanyLite, OppItem, MatchItem, NewsLite, Priority } from './types'
 
 function daysUntil(d: Date): number { return Math.ceil((new Date(d).getTime() - Date.now()) / 86_400_000) }
@@ -63,6 +64,8 @@ export async function loadDashboardData(opts: { userId?: string; role: DashRole;
   const bp = profileRaw ?? { activityType: null, entitledSectors: [] as string[], femaleOwnership: null }
   const sectors = bp.entitledSectors
   const energyOk = isEnergyEligible(opts.employeeCount) || isAdmin
+  const companyLite = company as CompanyLite | null
+  const commercialRole = resolveCommercialRole(role, bp.activityType, companyLite?.diasporaProfile?.subRoles ?? [])
 
   const [grantsRaw, fairsRaw, trainingsRaw, newsRaw, approvedCompanies, matchesRaw] = await Promise.all([
     !isIndividual ? prisma.grant.findMany({ where: grantWhere(), orderBy: { deadline: 'asc' }, take: 30 }) : Promise.resolve([]),
@@ -94,9 +97,8 @@ export async function loadDashboardData(opts: { userId?: string; role: DashRole;
   const matches: MatchItem[] = (matchesRaw as { company: { id: string; name: string }; matchType: keyof typeof MATCH_TYPE_LABEL; reasons: string[] }[])
     .map((m) => ({ id: m.company.id, name: m.company.name, matchTypeLabel: MATCH_TYPE_LABEL[m.matchType], reason: m.reasons[0] ?? '', href: `/dashboard/directory/${m.company.id}` }))
 
-  const companyLite = company as CompanyLite | null
   return {
-    role, firstName: opts.firstName, isAdmin, hasCompany: !!company, company: companyLite,
+    role, commercialRole, firstName: opts.firstName, isAdmin, hasCompany: !!company, company: companyLite,
     profileCompletionPct: companyLite ? profileCompletion(companyLite) : 0, profileStatus: companyLite?.profileStatus ?? null,
     sectors, sectorsText: sectors.length ? sectorsLabel(sectors) : '', activityType: bp.activityType, energyOk,
     unreadNotifs, grants, fairs, trainings, news, matches, approvedCompanies,
@@ -120,6 +122,11 @@ export function buildPriorities(d: DashboardData): Priority[] {
   const soonFair = d.fairs.find((f) => f.deadlineDays != null && f.deadlineDays >= 0 && f.deadlineDays <= 30)
   if (soonFair) {
     out.push({ id: `fair-${soonFair.id}`, icon: Calendar, title: soonFair.title, body: 'Ngjarje relevante që po afrohet.', reason: soonFair.reason, cta: { label: 'Shiko ngjarjen', href: soonFair.href }, urgency: 'normal', deadlineDays: soonFair.deadlineDays })
+  }
+  // Resolved-profile nudge: trade-oriented roles (Kosovo trader / diaspora buyer-importer)
+  // get a sourcing prompt, grounded in the real count of verified businesses in the network.
+  if ((d.commercialRole === 'trader' || d.commercialRole === 'diaspora_trade') && d.approvedCompanies > 0 && out.length < 5) {
+    out.push({ id: 'sourcing', icon: Handshake, title: 'Kërko ofertë nga furnizuesit', body: `${d.approvedCompanies} biznes${d.approvedCompanies === 1 ? '' : 'e'} të verifikuar${d.approvedCompanies === 1 ? '' : 'a'} në Rrjetin e bizneseve.`, reason: d.commercialRole === 'trader' ? 'Sipas aktivitetit tënd tregtar.' : 'Sipas rolit tënd si blerës/importues nga diaspora.', cta: { label: 'Dërgo kërkesë ofertë', href: '/dashboard/kerko-oferte' }, urgency: 'normal' })
   }
   if (d.matches.length > 0 && out.length < 5) {
     out.push({ id: 'matches', icon: Compass, title: 'Rekomandime bashkëpunimi', body: `${d.matches.length} biznes${d.matches.length === 1 ? '' : 'e'} që përputhen me profilin tënd.`, cta: { label: 'Shiko përputhjet', href: '/dashboard/matchmaking' }, urgency: 'normal' })

@@ -4,6 +4,13 @@ import type { LucideIcon } from 'lucide-react'
 
 export type DashRole = 'KOSOVO_BUSINESS' | 'STARTUP' | 'DIASPORA' | 'INDIVIDUAL' | 'ADMIN' | 'SUPER_ADMIN' | 'USER'
 
+// Resolved commercial role, derived from real fields only (Company.activityType for
+// business/startup, DiasporaProfile.subRoles for diaspora). 'general' = no signal.
+export type CommercialRole =
+  | 'producer' | 'agri' | 'trader' | 'service'
+  | 'diaspora_investor' | 'diaspora_trade' | 'diaspora_service' | 'diaspora_partner'
+  | 'general'
+
 export interface CompanyLite {
   id: string
   name: string
@@ -68,6 +75,7 @@ export interface MarketPulseRow {
 
 export interface DashboardData {
   role: DashRole
+  commercialRole: CommercialRole
   firstName: string
   isAdmin: boolean
   hasCompany: boolean

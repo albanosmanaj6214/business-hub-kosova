@@ -1,15 +1,58 @@
-// Role-aware Dashboard configuration: which sections appear, in what order, and
-// which tools are offered (with AUV sector gating + Energy eligibility + company
-// context preserved). Adds no routes and changes no permissions.
+// Role- and profile-aware Dashboard configuration: which sections appear, in what
+// order, and which tools are offered. Selection uses the RESOLVED profile
+// (account role + resolved commercial role from activityType / diaspora sub-roles),
+// with AUV sector gating + Energy eligibility + company context preserved.
+// Adds no routes, invents no roles, and changes no permissions.
 import {
   Users, Ship, Search, Calendar, Handshake, Landmark, Receipt, Truck, Leaf, Zap,
   GraduationCap, Building2, Rocket,
 } from 'lucide-react'
-import type { DashboardData, DashboardTool, DashRole } from './types'
+import type { CommercialRole, DashboardData, DashboardTool, DashRole } from './types'
 
-function normalizeRole(role: DashRole): 'KOSOVO_BUSINESS' | 'STARTUP' | 'DIASPORA' | 'INDIVIDUAL' {
+export function normalizeRole(role: DashRole): 'KOSOVO_BUSINESS' | 'STARTUP' | 'DIASPORA' | 'INDIVIDUAL' {
   if (role === 'STARTUP' || role === 'DIASPORA' || role === 'INDIVIDUAL') return role
   return 'KOSOVO_BUSINESS' // ADMIN / SUPER_ADMIN / USER fall back to the business experience
+}
+
+/**
+ * Resolve the commercial role from real profile fields only — never invented.
+ * Business/startup: from Company.activityType (the 4 ACTIVITY_TYPES).
+ * Diaspora: from DiasporaProfile.subRoles (the 6 DiasporaSubRole values), by
+ * intent precedence INVESTOR > trade (BUYER/IMPORTER/DISTRIBUTOR) > SERVICE_PROVIDER > PARTNER.
+ * Missing signal falls back to 'general' (no over-fitting, current behavior preserved).
+ */
+export function resolveCommercialRole(
+  role: DashRole,
+  activityType: string | null,
+  diasporaSubRoles: string[],
+): CommercialRole {
+  if (normalizeRole(role) === 'DIASPORA') {
+    const subs = (diasporaSubRoles ?? []).map((s) => s.toUpperCase())
+    if (subs.includes('INVESTOR')) return 'diaspora_investor'
+    if (subs.some((s) => s === 'BUYER' || s === 'IMPORTER' || s === 'DISTRIBUTOR')) return 'diaspora_trade'
+    if (subs.includes('SERVICE_PROVIDER')) return 'diaspora_service'
+    if (subs.includes('PARTNER')) return 'diaspora_partner'
+    return 'general'
+  }
+  switch (activityType) {
+    case 'prodhues-perpunues': return 'producer'
+    case 'bujqesi': return 'agri'
+    case 'tregti': return 'trader'
+    case 'sherbime': return 'service'
+    default: return 'general'
+  }
+}
+
+export const COMMERCIAL_ROLE_LABEL: Record<CommercialRole, string> = {
+  producer: 'Prodhues / përpunues',
+  agri: 'Bujqësi / blegtori',
+  trader: 'Tregti',
+  service: 'Shërbime',
+  diaspora_investor: 'Diasporë — investitor',
+  diaspora_trade: 'Diasporë — blerës / importues',
+  diaspora_service: 'Diasporë — ofrues shërbimi',
+  diaspora_partner: 'Diasporë — partner',
+  general: 'I përgjithshëm',
 }
 
 const AUV_SECTORS = ['ushqim-dhe-pije', 'bujqesi-blegtori']
@@ -32,6 +75,7 @@ const TOOLS: Record<string, ToolDef> = {
   hapBiznes: { href: '/dashboard/hap-biznes-kosove', icon: Rocket, title: 'Hap biznes në Kosovë', subtitle: 'Dokumentet, autorizimi, banka' },
 }
 
+// Base tool set per ACCOUNT role (used for 'general' commercial role — preserves prior behavior).
 const ROLE_TOOLS: Record<string, string[]> = {
   KOSOVO_BUSINESS: ['network', 'eksporti', 'financime', 'arbk', 'tatime', 'auv', 'energji', 'konsultime'],
   STARTUP: ['arbk', 'tatime', 'financime', 'network', 'panaire', 'konsultime'],
@@ -39,9 +83,28 @@ const ROLE_TOOLS: Record<string, string[]> = {
   INDIVIDUAL: ['arbk', 'tatime', 'konsultime'],
 }
 
-/** Role- and profile-aware tool set (max 6), honoring AUV/Energy gating. */
+// Resolved-commercial-role tool ordering. Applied for KOSOVO_BUSINESS + DIASPORA
+// (and the ADMIN business fallback). Every key references an existing TOOLS entry /
+// existing route — no new routes, no new permissions. STARTUP/INDIVIDUAL keep their
+// curated stage/individual lists (their primary axis is stage, not activity).
+const COMMERCIAL_TOOLS: Partial<Record<CommercialRole, string[]>> = {
+  producer: ['eksporti', 'dogana', 'auv', 'financime', 'network', 'tatime', 'konsultime'],
+  agri: ['financime', 'auv', 'dogana', 'network', 'panaire', 'tatime', 'konsultime'],
+  trader: ['dogana', 'network', 'kerkoOferte', 'financime', 'tatime', 'konsultime'],
+  service: ['network', 'konsultime', 'financime', 'panaire', 'tatime', 'arbk'],
+  diaspora_investor: ['investime', 'network', 'hapBiznes', 'panaire', 'konsultime'],
+  diaspora_trade: ['network', 'kerkoOferte', 'panaire', 'hapBiznes', 'konsultime'],
+  diaspora_service: ['network', 'hapBiznes', 'konsultime', 'panaire', 'investime'],
+  diaspora_partner: ['network', 'panaire', 'hapBiznes', 'investime', 'konsultime'],
+}
+
+/** Role- and resolved-commercial-role-aware tool set (max 6), honoring AUV/Energy gating. */
 export function toolsFor(d: DashboardData): DashboardTool[] {
-  const keys = ROLE_TOOLS[normalizeRole(d.role)] ?? ROLE_TOOLS.KOSOVO_BUSINESS
+  const nr = normalizeRole(d.role)
+  const base = ROLE_TOOLS[nr] ?? ROLE_TOOLS.KOSOVO_BUSINESS
+  const applyCommercial = nr === 'KOSOVO_BUSINESS' || nr === 'DIASPORA'
+  const commercial = applyCommercial ? COMMERCIAL_TOOLS[d.commercialRole] : undefined
+  const keys = commercial ?? base
   return keys
     .map((k) => TOOLS[k])
     .filter(Boolean)
@@ -71,12 +134,32 @@ export function sectionsFor(role: DashRole): DashSection[] {
   }
 }
 
+const BUSINESS_CR_HINT: Partial<Record<CommercialRole, string>> = {
+  producer: 'Përzgjedhur për prodhimin dhe eksportin: tregjet, dogana dhe standardet.',
+  agri: 'Përzgjedhur për bujqësinë: financime, standardet e ushqimit dhe tregjet.',
+  trader: 'Përzgjedhur për tregtinë: dogana, furnizuesit dhe kërkesat për ofertë.',
+  service: 'Përzgjedhur për shërbimet: rrjeti, klientët dhe konsultimet.',
+}
+
+const DIASPORA_CR_HINT: Partial<Record<CommercialRole, string>> = {
+  diaspora_investor: 'Mundësi investimi, zona ekonomike dhe partnerë në Kosovë.',
+  diaspora_trade: 'Furnizues dhe prodhues të Kosovës për blerje e importim.',
+  diaspora_service: 'Ofro shërbimet e tua dhe lidhu me biznese në Kosovë.',
+  diaspora_partner: 'Gjej partnerë dhe bashkëpunime me biznese të Kosovës.',
+}
+
 export function greetingFor(d: DashboardData): { title: string; subtitle: string } {
   const title = `Mirë se erdhe, ${d.firstName}.`
   const r = normalizeRole(d.role)
   if (r === 'INDIVIDUAL') return { title, subtitle: 'Informata publike, lajme ekonomike dhe udhëzuesit bazë.' }
-  if (r === 'DIASPORA') return { title, subtitle: d.diasporaCountry ? `Ura jote nga ${d.diasporaCountry} drejt bizneseve të Kosovës.` : 'Ura jote drejt bizneseve të Kosovës.' }
+  if (r === 'DIASPORA') {
+    const hint = DIASPORA_CR_HINT[d.commercialRole]
+    const base = d.diasporaCountry ? `Ura jote nga ${d.diasporaCountry} drejt bizneseve të Kosovës.` : 'Ura jote drejt bizneseve të Kosovës.'
+    return { title, subtitle: hint ? `${base} ${hint}` : base }
+  }
+  const crHint = BUSINESS_CR_HINT[d.commercialRole]
+  if (crHint) return { title, subtitle: d.sectorsText ? `${crHint} Sektori: ${d.sectorsText}.` : crHint }
   if (d.sectorsText) return { title, subtitle: `Përmbajtja më poshtë është përzgjedhur për sektorin tënd: ${d.sectorsText}.` }
-  if (d.hasCompany) return { title, subtitle: 'Cakto sektorin te profili që përmbajtja të përshtatet për biznesin tënd.' }
+  if (d.hasCompany) return { title, subtitle: 'Cakto llojin e aktivitetit dhe sektorin te profili që përmbajtja të përshtatet për biznesin tënd.' }
   return { title, subtitle: 'Ja çka kërkon vëmendjen tënde dhe mundësitë më relevante për biznesin.' }
 }
