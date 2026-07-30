@@ -2,17 +2,13 @@ import * as cheerio from 'cheerio'
 import { politeFetch } from '../fetcher'
 import type { Adapter, StandardOpportunity } from '../types'
 
-// Works for both RSS (<item>) and Atom (<entry>). Feeds are the most stable
-// way to track a site, so prefer this over HTML scraping when available.
-export const rssAdapter: Adapter = async (source, cfg) => {
-  const url = cfg.feedUrl || source.baseUrl
-  const r = await politeFetch(url)
-  if (!r.ok) throw new Error(`HTTP ${r.status} for feed ${url}`)
-  const $ = cheerio.load(r.body, { xmlMode: true })
+// Pure RSS/Atom parser (no network) so feed parsing is unit-testable with fixtures.
+// Works for both RSS (<item>) and Atom (<entry>).
+export function parseFeed(body: string, sourceName: string, feedUrl: string, maxItems = 40): StandardOpportunity[] {
+  const $ = cheerio.load(body, { xmlMode: true })
   const out: StandardOpportunity[] = []
-  const max = cfg.maxItems ?? 40
   $('item, entry').each((_, el) => {
-    if (out.length >= max) return
+    if (out.length >= maxItems) return
     const node = $(el)
     const title = node.find('title').first().text().trim()
     if (!title) return
@@ -24,12 +20,20 @@ export const rssAdapter: Adapter = async (source, cfg) => {
     out.push({
       title,
       description: desc || null,
-      sourceName: source.name,
-      sourceUrl: link || url,
+      sourceName,
+      sourceUrl: link || feedUrl,
       publishedAt: d && !isNaN(+d) ? d : null,
-      extractedFrom: url,
+      extractedFrom: feedUrl,
       originalTextSnippet: desc ? desc.slice(0, 500) : null,
     })
   })
   return out
+}
+
+// Feeds are the most stable way to track a site, so prefer this over HTML scraping.
+export const rssAdapter: Adapter = async (source, cfg) => {
+  const url = cfg.feedUrl || source.baseUrl
+  const r = await politeFetch(url)
+  if (!r.ok) throw new Error(`HTTP ${r.status} for feed ${url}`)
+  return parseFeed(r.body, source.name, url, cfg.maxItems ?? 40)
 }

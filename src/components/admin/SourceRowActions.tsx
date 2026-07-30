@@ -21,7 +21,7 @@ export function SourceRowActions({ id, isActive, canRun }: { id: string; isActiv
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Gabim')
       if (action === 'run' && data.result) {
-        setMsg(data.result.ok ? `${data.result.itemsNew} të reja, ${data.result.itemsReview} për rishikim` : (data.result.error || 'Dështoi'))
+        setMsg(data.result.ok ? `${data.result.itemsNew ?? data.result.items ?? 0} artikuj (${data.result.itemsUpdated ?? 0} përditësime)` : (data.result.error || 'Dështoi'))
       }
       router.refresh()
     } catch (e) {
