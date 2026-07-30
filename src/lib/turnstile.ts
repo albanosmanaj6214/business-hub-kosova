@@ -1,15 +1,27 @@
 /**
- * Cloudflare Turnstile server-side verification + IP rate limiting.
+ * Cloudflare Turnstile server-side verification + in-memory login/registration
+ * rate limiting.
  *
- * Turnstile is a free, privacy-friendly CAPTCHA. The client widget produces a
- * token via JS challenge; we POST it to siteverify with our secret key to
- * confirm it is valid and consumed exactly once.
- *
- * Rate limiter is an in-memory Map keyed by IP. Fine for a single Node
- * process behind one PM2 worker. Move to Redis if we scale to multiple workers.
+ * Security hotfix: production now FAILS CLOSED when Turnstile is misconfigured
+ * (missing keys, or a known Cloudflare *test* key configured, or no expected
+ * hostname). It also verifies the response hostname (and action when used).
+ * The secret key is read at request time and never logged or returned.
  */
 
 const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
+
+// Publicly documented Cloudflare Turnstile *test* keys. They always pass/fail
+// deterministically and MUST NOT be used in production.
+export const CLOUDFLARE_TEST_SITE_KEYS = new Set([
+  '1x00000000000000000000AA', // visible, always passes
+  '2x00000000000000000000AB', // visible, always blocks
+  '3x00000000000000000000FF', // forces an interactive challenge
+])
+export const CLOUDFLARE_TEST_SECRET_KEYS = new Set([
+  '1x0000000000000000000000000000000AA', // always passes
+  '2x0000000000000000000000000000000AA', // always fails
+  '3x0000000000000000000000000000000AA', // token already spent
+])
 
 export interface TurnstileVerifyResult {
   success: boolean
@@ -17,26 +29,74 @@ export interface TurnstileVerifyResult {
   codes?: string[]
 }
 
+export type TurnstileConfigReason =
+  | 'ok'
+  | 'missing_secret'
+  | 'missing_site_key'
+  | 'test_secret_in_production'
+  | 'test_site_key_in_production'
+  | 'missing_expected_hostname'
+
+export interface TurnstileConfigStatus {
+  ok: boolean
+  reason: TurnstileConfigReason
+}
+
+/**
+ * Whether we are running as production. An explicit APP_ENV overrides NODE_ENV
+ * so an isolated prod-like verification can be run without a real prod build.
+ */
+export function isProductionRuntime(): boolean {
+  if (process.env.APP_ENV) return process.env.APP_ENV === 'production'
+  return process.env.NODE_ENV === 'production'
+}
+
+/**
+ * Validate the Turnstile configuration. In production this refuses test keys,
+ * missing keys, and a missing expected hostname. Development and automated
+ * tests may use the official Cloudflare test keys.
+ */
+export function turnstileConfigStatus(): TurnstileConfigStatus {
+  const secret = process.env.TURNSTILE_SECRET_KEY
+  const site = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+  if (!secret) return { ok: false, reason: 'missing_secret' }
+  if (isProductionRuntime()) {
+    if (!site) return { ok: false, reason: 'missing_site_key' }
+    if (CLOUDFLARE_TEST_SECRET_KEYS.has(secret)) return { ok: false, reason: 'test_secret_in_production' }
+    if (CLOUDFLARE_TEST_SITE_KEYS.has(site)) return { ok: false, reason: 'test_site_key_in_production' }
+    if (!process.env.TURNSTILE_EXPECTED_HOSTNAME) return { ok: false, reason: 'missing_expected_hostname' }
+  }
+  return { ok: true, reason: 'ok' }
+}
+
+// Generic, non-leaking user-facing messages.
+const MSG_CONFIG = 'Verifikimi i sigurisë nuk është i disponueshëm për momentin.'
+const MSG_MISSING_TOKEN = 'Mungon verifikimi i sigurisë (Turnstile).'
+const MSG_FAILED = 'Verifikimi i sigurisë dështoi. Provo prap.'
+const MSG_NETWORK = 'Gabim rrjeti gjatë verifikimit të sigurisë.'
+
 /**
  * Verify a Turnstile token against Cloudflare's siteverify endpoint.
- * Returns success=false (never throws) so callers can map to a 400 response.
+ * Fails closed on misconfiguration, missing/invalid token, hostname/action
+ * mismatch, or network/parse error. Never throws; never logs or returns the
+ * secret or the token.
  */
 export async function verifyTurnstile(
   token: string | undefined | null,
   remoteIp?: string,
 ): Promise<TurnstileVerifyResult> {
+  const cfg = turnstileConfigStatus()
+  if (!cfg.ok) {
+    // Fail closed. Log the reason CODE only, never any key value.
+    console.error(`[turnstile] verification refused: misconfiguration (${cfg.reason})`)
+    return { success: false, error: MSG_CONFIG }
+  }
+
   if (!token || typeof token !== 'string') {
-    return { success: false, error: 'Mungon verifikimi i sigurisë (Turnstile).' }
+    return { success: false, error: MSG_MISSING_TOKEN }
   }
 
-  const secret = process.env.TURNSTILE_SECRET_KEY
-  if (!secret) {
-    // Fail closed: if the server is misconfigured we do not silently accept
-    // unverified requests. Surfaces fast in logs.
-    console.error('[turnstile] TURNSTILE_SECRET_KEY missing from env')
-    return { success: false, error: 'Konfigurimi i sigurisë mungon në server.' }
-  }
-
+  const secret = process.env.TURNSTILE_SECRET_KEY as string
   const params = new URLSearchParams()
   params.set('secret', secret)
   params.set('response', token)
@@ -52,28 +112,41 @@ export async function verifyTurnstile(
 
     const data = (await res.json()) as {
       success: boolean
+      hostname?: string
+      action?: string
       'error-codes'?: string[]
     }
 
     if (!data.success) {
-      return {
-        success: false,
-        error: 'Verifikimi i sigurisë dështoi. Provo prap.',
-        codes: data['error-codes'],
-      }
+      return { success: false, error: MSG_FAILED, codes: data['error-codes'] }
+    }
+
+    // Hostname pinning: in production this env var is required (see config).
+    const expectedHost = process.env.TURNSTILE_EXPECTED_HOSTNAME
+    if (expectedHost && data.hostname !== expectedHost) {
+      console.error('[turnstile] hostname mismatch')
+      return { success: false, error: MSG_FAILED }
+    }
+
+    // Action pinning: only enforced when the implementation configures one.
+    const expectedAction = process.env.TURNSTILE_EXPECTED_ACTION
+    if (expectedAction && data.action !== expectedAction) {
+      console.error('[turnstile] action mismatch')
+      return { success: false, error: MSG_FAILED }
     }
 
     return { success: true }
-  } catch (err) {
-    console.error('[turnstile] verify request failed:', err)
-    return { success: false, error: 'Gabim rrjeti gjatë verifikimit të sigurisë.' }
+  } catch {
+    // Fail closed. Never log the error object (avoids leaking request detail).
+    console.error('[turnstile] verify request failed')
+    return { success: false, error: MSG_NETWORK }
   }
 }
 
 /**
- * Extract a best-effort client IP from a Next.js Request. Trusts standard
- * proxy headers because we sit behind Cloudflare. Falls back to a literal
- * marker so the rate limiter never keys on `undefined`.
+ * Extract a best-effort client IP from a Next.js Request. Trusts standard proxy
+ * headers because we sit behind Cloudflare. Falls back to a literal marker so
+ * the rate limiter never keys on `undefined`.
  */
 export function getClientIp(req: Request): string {
   const headers = req.headers
@@ -87,7 +160,8 @@ export function getClientIp(req: Request): string {
 }
 
 // ---------------------------------------------------------------------------
-// In-memory rate limiter: max N hits per window per IP. Reset hourly.
+// In-memory rate limiter: max N hits per window per IP. Single Node process
+// behind one PM2 worker; move to Redis if we scale to multiple workers.
 // ---------------------------------------------------------------------------
 
 interface Bucket {
@@ -95,47 +169,57 @@ interface Bucket {
   resetAt: number
 }
 
-const REGISTRATION_BUCKETS: Map<string, Bucket> = new Map()
-const REGISTRATION_LIMIT = 3
-const REGISTRATION_WINDOW_MS = 60 * 60 * 1000 // 1 hour
-
 export interface RateLimitResult {
   ok: boolean
   remaining: number
   resetAt: number
 }
 
-/**
- * Check + increment the registration rate limit for an IP. Returns ok=false
- * if the IP has already hit REGISTRATION_LIMIT inside the window.
- */
-export function checkRegistrationRateLimit(ip: string): RateLimitResult {
+function checkBucket(map: Map<string, Bucket>, ip: string, limit: number, windowMs: number): RateLimitResult {
   const now = Date.now()
-  const existing = REGISTRATION_BUCKETS.get(ip)
-
+  const existing = map.get(ip)
   if (!existing || existing.resetAt <= now) {
-    const fresh: Bucket = { count: 1, resetAt: now + REGISTRATION_WINDOW_MS }
-    REGISTRATION_BUCKETS.set(ip, fresh)
-    return { ok: true, remaining: REGISTRATION_LIMIT - 1, resetAt: fresh.resetAt }
+    const fresh: Bucket = { count: 1, resetAt: now + windowMs }
+    map.set(ip, fresh)
+    return { ok: true, remaining: limit - 1, resetAt: fresh.resetAt }
   }
-
-  if (existing.count >= REGISTRATION_LIMIT) {
+  if (existing.count >= limit) {
     return { ok: false, remaining: 0, resetAt: existing.resetAt }
   }
-
   existing.count += 1
-  return {
-    ok: true,
-    remaining: REGISTRATION_LIMIT - existing.count,
-    resetAt: existing.resetAt,
-  }
+  return { ok: true, remaining: limit - existing.count, resetAt: existing.resetAt }
 }
 
-// Opportunistic sweep on every check so the map does not grow forever in a
-// long-lived process. Cheap (single pass over a tiny map).
+const REGISTRATION_BUCKETS: Map<string, Bucket> = new Map()
+const REGISTRATION_LIMIT = 3
+const REGISTRATION_WINDOW_MS = 60 * 60 * 1000 // 1 hour
+
+const LOGIN_BUCKETS: Map<string, Bucket> = new Map()
+const LOGIN_LIMIT = 10
+const LOGIN_WINDOW_MS = 15 * 60 * 1000 // 15 minutes
+
+/** Registration limit: max 3 per IP per hour. */
+export function checkRegistrationRateLimit(ip: string): RateLimitResult {
+  return checkBucket(REGISTRATION_BUCKETS, ip, REGISTRATION_LIMIT, REGISTRATION_WINDOW_MS)
+}
+
+/** Login limit: max 10 attempts per IP per 15 minutes (independent of Turnstile). */
+export function checkLoginRateLimit(ip: string): RateLimitResult {
+  return checkBucket(LOGIN_BUCKETS, ip, LOGIN_LIMIT, LOGIN_WINDOW_MS)
+}
+
+/** Test-only: clear all rate-limit state. */
+export function __resetRateLimitsForTest(): void {
+  REGISTRATION_BUCKETS.clear()
+  LOGIN_BUCKETS.clear()
+}
+
+// Opportunistic sweep so the maps do not grow forever in a long-lived process.
 setInterval(() => {
   const now = Date.now()
-  REGISTRATION_BUCKETS.forEach((bucket, ip) => {
-    if (bucket.resetAt <= now) REGISTRATION_BUCKETS.delete(ip)
-  })
+  for (const map of [REGISTRATION_BUCKETS, LOGIN_BUCKETS]) {
+    map.forEach((bucket, ip) => {
+      if (bucket.resetAt <= now) map.delete(ip)
+    })
+  }
 }, REGISTRATION_WINDOW_MS).unref?.()

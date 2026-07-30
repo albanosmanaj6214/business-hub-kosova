@@ -3,7 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import { PrismaAdapter } from '@next-auth/prisma-adapter'
 import { prisma } from './prisma'
 import { compare } from 'bcryptjs'
-import { verifyTurnstile } from './turnstile'
+import { verifyTurnstile, checkLoginRateLimit } from './turnstile'
 
 // Auditimi i autentikimit. Shkruhet drejtpërdrejt te AuditLog (jo përmes logAudit),
 // që të shmanget varësia rrethore audit.ts -> auth.ts. Fire-and-forget: një dështim
@@ -72,6 +72,14 @@ export const authOptions: NextAuthOptions = {
           (req?.headers?.['x-real-ip'] as string | undefined) ||
           undefined
         const userAgent = (req?.headers?.['user-agent'] as string | undefined)?.slice(0, 300)
+        // Independent login rate limit (before Turnstile + any bcrypt/DB work). Generic
+        // response; does not disclose whether the account exists.
+        const loginRate = checkLoginRateLimit(ip ?? 'unknown')
+        if (!loginRate.ok) {
+          await auditLogin({ ok: false, email: credentials.email, ip, userAgent, reason: 'shumë përpjekje hyrjeje' })
+          throw new Error('Shumë përpjekje hyrjeje nga ky rrjet. Provo më vonë.')
+        }
+
         const captcha = await verifyTurnstile(credentials.turnstileToken, ip)
         if (!captcha.success) {
           throw new Error(captcha.error || 'Verifikimi i sigurisë dështoi.')
