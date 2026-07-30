@@ -8,11 +8,10 @@ import { Turnstile, TurnstileInstance } from '@marsidev/react-turnstile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Globe2, Loader2 } from 'lucide-react'
+import { TURNSTILE_SITE_KEY } from '@/lib/turnstile-client'
 
 const UNVERIFIED_MSG = 'Email-i nuk është verifikuar. Kontrollo kutinë postare.'
 
-const TURNSTILE_SITE_KEY =
-  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'
 
 export default function LoginPage() {
   const router = useRouter()

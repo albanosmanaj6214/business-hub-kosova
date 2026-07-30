@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react'
 import Link from 'next/link'
 import { Turnstile, TurnstileInstance } from '@marsidev/react-turnstile'
+import { TURNSTILE_SITE_KEY } from '@/lib/turnstile-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Loader2, MailCheck, Building2, Rocket, Compass, User as UserIcon } from 'lucide-react'
@@ -29,8 +30,6 @@ const KOSOVO_MUNICIPALITIES = [
 
 // Public site key. Exposed at build time via NEXT_PUBLIC_*. If absent we
 // fall back to Cloudflare's "always passes" test key so dev/local still works.
-const TURNSTILE_SITE_KEY =
-  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'
 
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
