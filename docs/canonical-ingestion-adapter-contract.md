@@ -46,3 +46,22 @@ handoff). Persistence is behind the `PipelineStore` interface
 - Dry-run performs every safe stage but persists no citations/review items.
 - Phase 2 never auto-publishes, notifies, or dispatches (those stages are inert
   typed hooks recorded as `SKIPPED`).
+
+## Persistent version-aware handoff (completion patch)
+
+Review handoff is now a single `store.handoffRecord(runId, input)` that is durable
+and idempotent:
+
+- resolves a stable `IngestionRecord` identity (precedence: official_id →
+  dataset_id → canonical_url → fingerprint);
+- compares the content hash (over normalized content, not identifiers) to decide
+  new / unchanged / changed;
+- writes an `IngestionRecordVersion` per change with previous-version linkage and a
+  field-level diff;
+- routes one Opportunity per version (`verificationStatus='needs_review'`), never
+  publishing/notifying;
+- flags `duplicateCandidate` when identical content arrives under a different
+  identity;
+- is concurrency-safe (unique constraints + upsert + P2002 recovery).
+
+`RawSnapshot` is keyed by a provenance-safe `snapshotKey`, not a bare checksum.

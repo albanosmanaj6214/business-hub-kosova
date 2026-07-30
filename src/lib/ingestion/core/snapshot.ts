@@ -2,6 +2,7 @@
 // (under a documented cap); larger payloads MUST be a file/object reference —
 // we never store arbitrarily large documents inline in PostgreSQL.
 import { createHash } from 'node:crypto'
+import { deterministicFingerprint } from './dedupe'
 
 // Documented inline cap. Anything larger must use a storage reference.
 export const INLINE_SNAPSHOT_LIMIT_BYTES = 262_144 // 256 KB
@@ -39,6 +40,7 @@ export interface SnapshotRecord {
   contentType?: string | null
   contentLength: number
   checksum: string
+  snapshotKey: string
   etag?: string | null
   lastModified?: string | null
   publicationDate?: string | null
@@ -89,6 +91,7 @@ export function buildSnapshot(input: SnapshotInput): SnapshotRecord {
     contentType: input.contentType ?? null,
     contentLength,
     checksum,
+    snapshotKey: deterministicFingerprint([input.sourceId, input.sourceEndpointId ?? '', input.requestedUrl ?? input.datasetId ?? '', checksum]),
     etag: input.etag ?? null,
     lastModified: input.lastModified ?? null,
     publicationDate: input.publicationDate ?? null,

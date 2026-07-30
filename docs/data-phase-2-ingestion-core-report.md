@@ -71,3 +71,54 @@ active-source schedules are all untouched.
 
 ## Files changed
 See the completion report's changed-file list.
+
+---
+
+## Completion patch — persistent idempotency, versioning, snapshot identity
+
+The idempotency/versioning behavior is now PERSISTENT (Prisma-backed), not only
+in-memory.
+
+**Canonical record identity** (`IngestionRecord`): durable identity with
+deterministic precedence official_id → dataset_id → canonical_url → fallback
+fingerprint (never the mutable content hash). Unique `(sourceId, identityHash)`.
+
+**Version history** (`IngestionRecordVersion`): per-version content hash,
+change type, links to ImportRun/RawSnapshot/SourceCitation, `previousVersionId`,
+small `normalizedSummary` + `structuredDiff` (field-level; no large bodies).
+Unique `(ingestionRecordId, version)`.
+
+**Persistent behavior**:
+- First observation → record v1 + version + one Opportunity + citation.
+- Same identity + same content-hash → unchanged: update lastSeenAt only; no new Opportunity/version.
+- Same identity + different content-hash → increment version, link previous, one new Opportunity per version, keep history; field-level diff when available.
+- Same content, different identity → separate record, flagged `duplicateCandidate` (never auto-merged).
+
+**Content hash** is computed over the normalized *content* (canonicalSummary),
+excluding identifiers, so identical content under different identities is a
+duplicate candidate rather than a false version.
+
+**Opportunity traceability** (additive nullable columns): `ingestionRecordId`,
+`ingestionVersion`, `ingestionChangeType`, `previousOpportunityId`. Legacy rows
+keep NULL; legacy scraper behavior unchanged.
+
+**Snapshot identity**: `RawSnapshot.snapshotKey` = hash(sourceId,
+sourceEndpointId, requestedUrl|datasetId, checksum), UNIQUE. Same bytes from a
+different endpoint/dataset keep distinct provenance; the same endpoint+checksum is
+reused idempotently.
+
+**Immutability**: snapshots + version rows have no update path; in-memory rows are
+frozen and explicit guards throw `ImmutabilityError`. Database-level immutability
+(triggers/permissions) is documented as deferred.
+
+**Concurrency**: unique constraints on `(sourceId, identityHash)`,
+`(ingestionRecordId, version)`, `snapshotKey`, and `(sourceId, externalId)` on
+Opportunity, plus upsert + P2002 conflict recovery + an optimistic version bump,
+make two overlapping runs converge to one record / one v1 / one Opportunity.
+
+**Dry-run** persists nothing durable (no IngestionRecord/version/Opportunity/
+citation/snapshot) — only a clearly marked DRY_RUN ImportRun.
+
+**Admin**: the ImportRun list gained new/unchanged/changed/duplicate counters plus
+a canonical IngestionRecord table (id, identity, current version, version count,
+state, duplicate flag, latest review reference).

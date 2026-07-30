@@ -20,7 +20,8 @@ export async function GET() {
       currentStage: true, adapterName: true, adapterVersion: true, startedAt: true, completedAt: true,
       durationMs: true, recordsDiscovered: true, recordsFetched: true, recordsParsed: true,
       recordsNormalized: true, recordsDeduplicated: true, recordsValidated: true, recordsRejected: true,
-      recordsSentToReview: true, recordsPublished: true, errorCode: true, errorSummary: true,
+      recordsSentToReview: true, recordsPublished: true, recordsNew: true, recordsUnchanged: true,
+      recordsChanged: true, recordsDuplicateCandidate: true, errorCode: true, errorSummary: true,
       _count: { select: { snapshots: true, citations: true } },
     },
   })

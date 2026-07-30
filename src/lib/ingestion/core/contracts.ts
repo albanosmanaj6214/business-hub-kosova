@@ -184,6 +184,10 @@ export interface PipelineResult {
     rejected: number
     sentToReview: number
     published: number
+    newRecords: number
+    unchanged: number
+    changedVersions: number
+    duplicateCandidates: number
   }
   errorSummary?: string
   reviewHandoff: ReviewHandoffItem[]

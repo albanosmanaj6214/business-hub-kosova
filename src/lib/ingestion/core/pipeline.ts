@@ -1,7 +1,8 @@
 // Canonical ingestion orchestrator. Runs the canonical lifecycle stages in order,
 // records a StageResult for each, STOPS downstream execution on a failed stage,
-// and hands validated records to review WITHOUT publishing or notifying. Dry-run
-// performs every safe stage but persists no citations/review items.
+// and hands validated records to a version-aware, idempotent review handoff
+// WITHOUT publishing or notifying. Dry-run performs every safe stage but persists
+// no snapshots, records, versions, citations, or review items.
 import { DEFERRED_STAGES, type ImportStage, type StageResult } from './stages'
 import type {
   AdapterContext, IngestionAdapter, FetchResult, ParsedItem, NormalizedRecord,
@@ -10,7 +11,9 @@ import type {
 import type { PipelineStore } from './store'
 import { buildSnapshot } from './snapshot'
 import { buildCitation } from './citation'
-import { computeRecordFingerprint, contentHash, dedupeDecision, dedupeWithinRun } from './dedupe'
+import { contentHash, dedupeWithinRun } from './dedupe'
+import { canonicalSummary } from './versioning'
+import { computeIdentity, type RecordIdentity } from './identity'
 import { emptyCounts, deriveRunStatus, sanitizeRunError } from './import-run'
 
 export interface RunPipelineArgs {
@@ -30,6 +33,7 @@ interface WorkItem {
   snapshotId?: string | null
   fingerprint: string
   contentHash: string
+  identity: RecordIdentity
   validation?: ValidationOutcome
 }
 
@@ -89,17 +93,18 @@ export async function runPipeline(args: RunPipelineArgs): Promise<PipelineResult
     })
     counts.fetched = fetched.length
 
-    // 3. SNAPSHOT (immutable; skip 304 cache hits)
+    // 3. SNAPSHOT (immutable; dry-run persists nothing durable; skip 304)
     const snapByIndex = new Map<number, string>()
     await stage('SNAPSHOT', fetched.length, async () => {
       let made = 0
       for (let i = 0; i < fetched.length; i++) {
         const fr = fetched[i]
         if (fr.fromCache) continue
+        made++
+        if (options.dryRun) continue // no durable snapshot content in a dry run
         const snap = buildSnapshot({ sourceId, sourceEndpointId, importRunId, requestedUrl: fr.ref.url, datasetId: fr.ref.datasetId, retrievedAt: fr.retrievedAt, httpStatus: fr.status, contentType: fr.contentType, bodyText: fr.bodyText, etag: fr.etag, lastModified: fr.lastModified, adapterVersion: adapter.version })
         const { id } = await store.createSnapshot(snap)
         snapByIndex.set(i, id)
-        made++
       }
       return { outputCount: made }
     })
@@ -124,22 +129,19 @@ export async function runPipeline(args: RunPipelineArgs): Promise<PipelineResult
     })
     counts.normalized = normalized.length
 
-    // 6. CLASSIFY (deferred business logic hook: pass-through, kind preserved)
+    // 6. CLASSIFY (hook) / 7. MAP (hook)
     await stage('CLASSIFY', normalized.length, async () => ({ outputCount: normalized.length }))
-    // 7. MAP (hook: canonical already mapped by the adapter)
     await stage('MAP', normalized.length, async () => ({ outputCount: normalized.length }))
 
-    // 8. DEDUPLICATE (deterministic; idempotent; version-aware)
-    const work: WorkItem[] = normalized.map((n) => ({ rec: n.rec, snapshotId: n.snapshotId, fingerprint: computeRecordFingerprint(n.rec.canonical), contentHash: contentHash(n.rec.canonical) }))
+    // 8. DEDUPLICATE (compute stable identity + content hash; collapse in-run dups)
+    const work: WorkItem[] = normalized.map((n) => {
+      const identity = computeIdentity(n.rec.canonical, args.datasetId ?? null)
+      return { rec: n.rec, snapshotId: n.snapshotId, fingerprint: identity.hash, contentHash: contentHash(canonicalSummary(n.rec.canonical)), identity }
+    })
     const deduped: WorkItem[] = []
     await stage('DEDUPLICATE', work.length, async () => {
-      const { unique } = dedupeWithinRun(work)
-      const existing = await store.findExistingByFingerprint(kind, unique.map((u) => u.fingerprint))
-      for (const u of unique) {
-        const decision = dedupeDecision(u.fingerprint, u.contentHash, existing)
-        if (decision.decision === 'duplicate') continue // idempotent skip
-        deduped.push(u)
-      }
+      const { unique } = dedupeWithinRun(work) // same identity within a run collapses
+      deduped.push(...unique)
       return { outputCount: deduped.length, rejectedCount: work.length - deduped.length }
     })
     counts.deduplicated = deduped.length
@@ -158,9 +160,9 @@ export async function runPipeline(args: RunPipelineArgs): Promise<PipelineResult
       return { outputCount: passed.length, rejectedCount: counts.rejected }
     })
 
-    // 11. REVIEW_HANDOFF (citation required; never publishes/notifies; dry-run persists nothing)
+    // 11. REVIEW_HANDOFF (version-aware, idempotent; dry-run persists nothing)
+    let newRecords = 0, unchanged = 0, changedVersions = 0, duplicateCandidates = 0, reviewCreated = 0
     await stage('REVIEW_HANDOFF', counts.validated, async () => {
-      let sent = 0
       for (const d of deduped) {
         if (!d.validation?.ok) continue
         const citation = buildCitation({
@@ -173,24 +175,31 @@ export async function runPipeline(args: RunPipelineArgs): Promise<PipelineResult
           fingerprint: d.fingerprint, canonical: d.rec.canonical, validation: d.validation,
           citation: { sourceId, importRunId, rawSnapshotId: d.snapshotId ?? undefined, canonicalUrl: citation.canonicalUrl ?? undefined, retrievedAt: citation.retrievedAt },
         })
-        if (!options.dryRun) {
-          await store.createCitation(citation)
-          await store.createReviewItem(importRunId, { fingerprint: d.fingerprint, canonical: d.rec.canonical, validation: d.validation, snapshotId: d.snapshotId ?? null, contentHash: d.contentHash })
-        }
-        sent++
+        if (options.dryRun) continue
+        const outcome = await store.handoffRecord(importRunId, {
+          canonical: d.rec.canonical, identity: d.identity, sourceEndpointId, contentHash: d.contentHash,
+          snapshotId: d.snapshotId ?? null, citation, validation: d.validation, now,
+        })
+        if (outcome.changeType === 'new') newRecords++
+        else if (outcome.changeType === 'unchanged') unchanged++
+        else changedVersions++
+        if (outcome.duplicateCandidate) duplicateCandidates++
+        if (outcome.reviewItemCreated) reviewCreated++
       }
-      return { outputCount: sent }
+      return { outputCount: options.dryRun ? reviewHandoff.length : reviewCreated }
     })
-    counts.sentToReview = reviewHandoff.length
+    counts.newRecords = newRecords
+    counts.unchanged = unchanged
+    counts.changedVersions = changedVersions
+    counts.duplicateCandidates = duplicateCandidates
+    counts.sentToReview = options.dryRun ? reviewHandoff.length : reviewCreated
   } catch (err) {
     if (!(err instanceof StageAbort)) {
-      // Unexpected fatal error outside a stage.
-      const sr: StageResult = { stage: 'DISCOVER', status: 'FAILED', startedAt: new Date(runStart).toISOString(), endedAt: now().toISOString(), durationMs: 0, inputCount: 0, outputCount: 0, rejectedCount: 0, errorSummary: sanitizeRunError(err) }
-      stages.push(sr)
+      stages.push({ stage: 'DISCOVER', status: 'FAILED', startedAt: new Date(runStart).toISOString(), endedAt: now().toISOString(), durationMs: 0, inputCount: 0, outputCount: 0, rejectedCount: 0, errorSummary: sanitizeRunError(err) })
     }
   }
 
-  // Deferred business stages are recorded as SKIPPED — never executed in Phase 2.
+  // Deferred business stages recorded as SKIPPED — never executed in Phase 2.
   const failed = stages.some((s) => s.status === 'FAILED')
   if (!failed) {
     for (const s of DEFERRED_STAGES) {
@@ -200,9 +209,8 @@ export async function runPipeline(args: RunPipelineArgs): Promise<PipelineResult
   }
 
   const status = deriveRunStatus(stages)
-  const finalStatus = options.dryRun ? 'DRY_RUN' : status
   await store.updateImportRun(importRunId, {
-    status: finalStatus, currentStage: null, counts, completedAt: now().toISOString(),
+    status: options.dryRun ? 'DRY_RUN' : status, currentStage: null, counts, completedAt: now().toISOString(),
     durationMs: Math.max(0, now().getTime() - runStart), bytesTransferred: bytes, stages,
     errorSummary: stages.find((s) => s.status === 'FAILED')?.errorSummary ?? null,
   })

@@ -12,10 +12,14 @@ export interface RunCounts {
   rejected: number
   sentToReview: number
   published: number
+  newRecords: number
+  unchanged: number
+  changedVersions: number
+  duplicateCandidates: number
 }
 
 export function emptyCounts(): RunCounts {
-  return { discovered: 0, fetched: 0, parsed: 0, normalized: 0, deduplicated: 0, validated: 0, rejected: 0, sentToReview: 0, published: 0 }
+  return { discovered: 0, fetched: 0, parsed: 0, normalized: 0, deduplicated: 0, validated: 0, rejected: 0, sentToReview: 0, published: 0, newRecords: 0, unchanged: 0, changedVersions: 0, duplicateCandidates: 0 }
 }
 
 export function deriveRunStatus(stages: StageResult[]): 'SUCCEEDED' | 'FAILED' | 'PARTIAL' {

@@ -551,6 +551,7 @@ model Source {
   importRuns    ImportRun[]
   rawSnapshots  RawSnapshot[]
   citations     SourceCitation[]
+  ingestionRecords IngestionRecord[]
 
   @@index([tier, isActive])
   @@index([category])
@@ -587,6 +588,7 @@ model SourceEndpoint {
   importRuns    ImportRun[]
   rawSnapshots  RawSnapshot[]
   citations     SourceCitation[]
+  ingestionRecords IngestionRecord[]
 
   @@index([sourceId])
 }
@@ -621,6 +623,10 @@ model Opportunity {
   originalTextSnippet String?           @db.Text
   extractedFrom       String?
   scrapedAt           DateTime?
+  ingestionRecordId     String?
+  ingestionVersion      Int?
+  ingestionChangeType   String?
+  previousOpportunityId String?
 
   source  Source         @relation(fields: [sourceId], references: [id], onDelete: Cascade)
   attempt ScrapeAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
@@ -1122,6 +1128,10 @@ model ImportRun {
   recordsRejected     Int             @default(0)
   recordsSentToReview Int             @default(0)
   recordsPublished    Int             @default(0)
+  recordsNew                Int             @default(0)
+  recordsUnchanged          Int             @default(0)
+  recordsChanged            Int             @default(0)
+  recordsDuplicateCandidate Int             @default(0)
   retryCount          Int             @default(0)
   bytesTransferred    Int             @default(0)
   errorCode           String?
@@ -1153,6 +1163,7 @@ model RawSnapshot {
   contentType      String?
   contentLength    Int                 @default(0)
   checksum         String
+  snapshotKey      String              @unique
   etag             String?
   lastModified     String?
   publicationDate  DateTime?
@@ -1203,4 +1214,75 @@ model SourceCitation {
   @@index([entityType, entityId])
   @@index([sourceId])
   @@index([importRunId])
+}
+
+// ===========================================================================
+// DATA PHASE 2 COMPLETION PATCH — persistent idempotency + record versioning
+// + snapshot identity (additive).
+// ===========================================================================
+enum IngestionChangeType {
+  NEW
+  CHANGED
+  UNCHANGED
+}
+
+enum IngestionRecordState {
+  ACTIVE
+  SUPERSEDED
+  ARCHIVED
+}
+
+model IngestionRecord {
+  id                  String               @id @default(cuid())
+  sourceId            String
+  sourceEndpointId    String?
+  externalRecordId    String?
+  canonicalUrl        String?
+  identityKind        String
+  identityHash        String
+  currentContentHash  String
+  currentVersion      Int                  @default(1)
+  firstSeenAt         DateTime             @default(now())
+  lastSeenAt          DateTime             @default(now())
+  lastChangedAt       DateTime             @default(now())
+  latestImportRunId   String?
+  latestRawSnapshotId String?
+  latestCitationId    String?
+  reviewEntityType    String?
+  reviewEntityId      String?
+  duplicateCandidate  Boolean              @default(false)
+  state               IngestionRecordState @default(ACTIVE)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  source   Source                   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  endpoint SourceEndpoint?          @relation(fields: [sourceEndpointId], references: [id], onDelete: SetNull)
+  versions IngestionRecordVersion[]
+
+  @@unique([sourceId, identityHash])
+  @@index([sourceId])
+  @@index([currentContentHash])
+}
+
+model IngestionRecordVersion {
+  id                String              @id @default(cuid())
+  ingestionRecordId String
+  version           Int
+  contentHash       String
+  changeType        IngestionChangeType
+  importRunId       String?
+  rawSnapshotId     String?
+  sourceCitationId  String?
+  reviewEntityType  String?
+  reviewEntityId    String?
+  previousVersionId String?
+  structuredDiff    Json?
+  normalizedSummary Json?
+  detectedAt        DateTime            @default(now())
+  createdAt         DateTime            @default(now())
+
+  record IngestionRecord @relation(fields: [ingestionRecordId], references: [id], onDelete: Cascade)
+
+  @@unique([ingestionRecordId, version])
+  @@index([ingestionRecordId])
 }

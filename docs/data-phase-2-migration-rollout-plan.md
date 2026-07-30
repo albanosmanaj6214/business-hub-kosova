@@ -76,3 +76,20 @@ canonical pipeline is dormant until a governed source is explicitly wired to it
 No live import, backfill, source activation, cron/PM2/schedule change, or
 unrelated drift repair. If preflight or backup-restore does not match
 expectations, **stop and escalate**.
+
+## Completion patch migration (idempotency + versioning + snapshot identity)
+
+An additional additive migration `20260730120000_phase2_idempotency_patch` runs
+AFTER the Phase 2 core migration. It adds: `IngestionRecord`,
+`IngestionRecordVersion`, two enums (`IngestionChangeType`,
+`IngestionRecordState`), `RawSnapshot.snapshotKey` (+ unique index), four
+`ImportRun` counter columns, and four nullable `Opportunity` traceability columns
+(existing rows keep NULL). No existing column is dropped/renamed/made required.
+
+Full production rollout chain (all reviewed SQL via psql, never blind
+`migrate deploy`): **Phase 1 → Phase 2 core → Phase 2 idempotency patch**.
+
+Verified isolated chain on a clone of production: 44 Source rows unchanged;
+existing Grant/TradeFair/Opportunity/ScrapeAttempt/SourceHealth counts unchanged;
+existing Opportunity rows keep NULL ingestion columns; new canonical-record tables
+empty before fixture tests; constraints + foreign keys valid.
