@@ -8,7 +8,7 @@ describe('canonical adapter registry — explicit + closed', () => {
     expect(hasAdapter('ASKDATA_EXTERNAL_TRADE')).toBe(true)
   })
   it('rejects unknown codes safely (no adapter inferred)', () => {
-    expect(getAdapterEntry('KIESA')).toBeNull()
+    expect(getAdapterEntry('MINT')).toBeNull()
     expect(getAdapterEntry('../../etc/passwd')).toBeNull()
     expect(getAdapterEntry('some/module/path')).toBeNull()
     expect(getAdapterEntry('')).toBeNull()
@@ -17,7 +17,7 @@ describe('canonical adapter registry — explicit + closed', () => {
   it('ASKdata is registered as DRAFT', () => {
     expect(adapterIsDraft('ASKDATA_EXTERNAL_TRADE')).toBe(true)
     const list = listAdapters()
-    expect(list).toHaveLength(1)
+    expect(list.length).toBeGreaterThanOrEqual(2)
     expect(list[0]).toMatchObject({ id: 'askdata-external-trade', family: 'jsonstat', status: 'draft' })
   })
   it('the availability list exposes no factories or predicates', () => {

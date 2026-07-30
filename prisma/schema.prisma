@@ -1378,3 +1378,19 @@ model StatisticalObservation {
   @@index([datasetId, referenceYear])
   @@index([ingestionRecordId])
 }
+
+/// Cross-process lease lock for canonical ingestion runs. Advisory (pg_advisory)
+/// locks are session-scoped; with Prisma's connection pool the acquire and release
+/// can land on different pooled connections (leaking the lock), and the `pg` client
+/// is not available for a dedicated connection — so a lease table is used instead.
+/// Atomic claim via the unique key + a TTL that reclaims a crashed holder's lease.
+model CanonicalRunLock {
+  key        String   @id // "<sourceId>:<endpointId|_>"
+  sourceId   String
+  endpointId String?
+  holder     String   // process/run identifier
+  acquiredAt DateTime @default(now())
+  expiresAt  DateTime // lease expiry; a lease past this may be reclaimed
+  @@index([sourceId])
+  @@index([expiresAt])
+}

@@ -4,6 +4,7 @@
 // unknown code resolves to null and the run service refuses it.
 import type { IngestionAdapter } from './core/contracts'
 import { createAskdataAdapter } from './sources/askdata/adapter'
+import { createKiesaAdapter } from './sources/kiesa/adapter'
 
 export type AdapterStatus = 'draft' | 'available'
 
@@ -28,6 +29,14 @@ const REGISTRY: readonly AdapterEntry[] = Object.freeze([
     description: 'ASK PxWeb external-trade turnover (JSON-stat). DRAFT/inactive.',
     matchesCode: (code) => code === 'ASKDATA_EXTERNAL_TRADE' || code === 'ASKDATA_PILOT',
     create: () => createAskdataAdapter(),
+  },
+  {
+    id: 'kiesa-public-calls',
+    family: 'html',
+    status: 'draft', // shadow/dry-run pilot only; legacy KIESA remains the active runtime.
+    description: 'KIESA public-calls listing (deterministic HTML, no AI). DRAFT shadow pilot.',
+    matchesCode: (code) => code === 'KIESA',
+    create: () => createKiesaAdapter(),
   },
 ])
 

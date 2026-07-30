@@ -80,7 +80,7 @@ export default async function AdminSourcesPage() {
                     <div className="text-xs text-gray-400 font-mono">{h.code}</div>
                   </td>
                   <td className="p-3">
-                    <span className="text-xs text-gray-600">{h.path === 'custom' ? 'custom scraper' : h.path === 'framework' ? 'framework adapter' : 'config-only'}</span>
+                    <span className="text-xs text-gray-600">{h.path === 'custom' ? 'custom scraper' : h.path === 'framework' ? 'framework adapter' : 'config-only'}</span><div className="text-[11px] text-gray-400">{h.runtime}{h.canonicalAvailable ? ' · canonical: shadow' : ''}</div>
                   </td>
                   <td className="p-3">
                     <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold ${STATE_STYLE[h.state]}`}>{h.state}</span>

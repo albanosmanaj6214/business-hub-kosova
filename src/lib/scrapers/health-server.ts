@@ -14,6 +14,7 @@ export interface SourceHealthRow extends HealthAssessment {
   isActive: boolean
   path: 'custom' | 'framework' | 'none'
   runtime: SourceRuntime
+  canonicalAvailable: boolean
 }
 
 function pathFor(code: string, kind: string | null): 'custom' | 'framework' | 'none' {
@@ -22,12 +23,14 @@ function pathFor(code: string, kind: string | null): 'custom' | 'framework' | 'n
   return 'none'
 }
 
-// Which runtime owns a source. Canonical takes precedence when a canonical adapter
-// exists (governed sources); otherwise the legacy custom/framework path, else none.
+// PRIMARY runtime that actually produces a source's live records. Legacy paths take
+// precedence because they are the active runtime; a canonical adapter that also exists
+// is surfaced separately as `canonicalAvailable` (e.g. KIESA = LEGACY_CUSTOM primary +
+// canonical shadow available). Only a source with NO legacy path (ASKdata) is CANONICAL.
 function runtimeFor(code: string, kind: string | null): SourceRuntime {
-  if (hasAdapter(code)) return 'CANONICAL'
   if (CUSTOM_CODES.includes(code)) return 'LEGACY_CUSTOM'
   if (kind && REGISTRY_KINDS.includes(kind)) return 'LEGACY_FRAMEWORK'
+  if (hasAdapter(code)) return 'CANONICAL'
   return 'NONE'
 }
 
@@ -74,7 +77,7 @@ export async function loadSourceHealth(opts: { includeConfigOnly?: boolean; now?
       recent: recentBySource.get(s.id) ?? [],
       now,
     })
-    rows.push({ ...assessment, id: s.id, name: s.name, isActive: s.isActive, path, runtime })
+    rows.push({ ...assessment, id: s.id, name: s.name, isActive: s.isActive, path, runtime, canonicalAvailable: hasAdapter(s.code) })
   }
   return rows
 }

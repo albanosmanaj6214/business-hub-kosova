@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { runPipeline } from './core/pipeline'
 import { PrismaPipelineStore } from './core/prisma-store'
 import { getAdapterEntry, type AdapterStatus } from './registry'
+import { acquireRunLock, releaseRunLock } from './lock'
 import type { PipelineStore } from './core/store'
 
 export type RunBlock =
@@ -121,8 +122,16 @@ export async function runCanonicalSource(args: RunCanonicalArgs): Promise<RunOut
   if (!allowed) return { ok: false, mode, sourceCode: source.code, blocks, error: `Bllokuar: ${blocks.join(', ')}` }
 
   const entry = getAdapterEntry(source.code)!
+  // Fast local guard (single process) …
   if (running.has(source.id)) return { ok: false, mode, sourceCode: source.code, blocks: ['already_running'], error: 'Tashmë duke u ekzekutuar.' }
   running.add(source.id)
+  // … plus the authoritative cross-process DB lease lock (scoped by source+endpoint).
+  const holder = `${args.initiatedBy ?? 'run'}-${(source.id + (endpoint?.id ?? '')).slice(0, 8)}-${mode}`
+  const lock = await acquireRunLock(source.id, endpoint?.id ?? null, holder)
+  if (!lock) {
+    running.delete(source.id)
+    return { ok: false, mode, sourceCode: source.code, blocks: ['already_running'], error: 'Tashmë duke u ekzekutuar (lock).' }
+  }
   try {
     const store = args.store ?? new PrismaPipelineStore()
     const result = await runPipeline({
@@ -145,6 +154,7 @@ export async function runCanonicalSource(args: RunCanonicalArgs): Promise<RunOut
   } catch (e) {
     return { ok: false, mode, sourceCode: source.code, error: safeError(e) }
   } finally {
+    await releaseRunLock(lock)
     running.delete(source.id)
   }
 }

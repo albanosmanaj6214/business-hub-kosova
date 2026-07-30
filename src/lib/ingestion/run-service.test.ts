@@ -12,7 +12,7 @@ describe('canonical run eligibility gates', () => {
     expect(e.realImportBlocks).toEqual(expect.arrayContaining(['source_inactive', 'lifecycle_not_active', 'terms_not_reviewed']))
   })
   it('unknown source (no adapter): nothing allowed', () => {
-    const e = evaluateEligibility({ code: 'KIESA', isActive: true, lifecycle: 'ACTIVE', termsOfUseStatus: 'approved' })
+    const e = evaluateEligibility({ code: 'MINT', isActive: true, lifecycle: 'ACTIVE', termsOfUseStatus: 'approved' })
     expect(e.adapterId).toBeNull()
     expect(e.canTestConnection).toBe(false)
     expect(e.canDryRun).toBe(false)
