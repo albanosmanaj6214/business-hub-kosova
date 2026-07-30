@@ -28,3 +28,13 @@ No technical release defect remains: code, unit tests, DB-backed tests, the addi
 ## Known limitations
 - Browser smoke QA captured 12 screenshots (6 roles × 1440/390) with full programmatic verification (login OK, overflow 0, no Market Pulse, no ASKdata, correct greetings); on-screen visual re-inspection of the RC screenshots was blocked by a temporary image-tool outage — the same dashboard rendering was visually inspected during the approved Redesign Phase 3 verification (identical code).
 - The migration chain is applied via reviewed `psql -f` (not `migrate deploy`) because production evolved partly via `db push`; this is intentional and matches prior approved data-phase runbooks.
+
+---
+
+# Condition-Closure Addendum (release/rc-1-condition-closure)
+
+**RC1 remains CONDITIONAL GO.** The technical gate is now **READY FOR PRODUCTION AUTHORIZATION** (migration method selected + rehearsed via `prisma migrate deploy`; migration-history handling proven; preflight passes against a correct production-like env and blocks the current prod env; visual RC smoke inspected across all roles with no defects; no committed secret; no unresolved RC defect). Actual deployment status stays CONDITIONAL GO until the operator confirms the 8 prerequisites (real Turnstile keys + hostname, disable dev impersonation, Stripe present, deploy owner, rollback owner, deploy window, fresh backup authorization, authorization to restart prod during deploy).
+
+**Production impact correction (accurate):** during RC1 cleanup a broad `pkill -9 -f "next-server"` also matched the production Next.js process; PM2 restarted the production application **once**. No production code, database data or schema, source, schedule, environment value, or deployment changed; production recovered automatically on `ec8d5ff`; homepage returned HTTP 200. Do not state production services were completely untouched — one process restart occurred. Prevention controls are documented in `docs/rc1-incident-report.md` and were applied throughout the condition-closure phase (timeout-wrapped isolated processes; prod health checked 200 before and after every QA action; no process-termination command issued; prod `restarts` stayed at 1).
+
+**Selected production migration method:** `prisma migrate deploy` (see `docs/rc1-migration-control-decision.md`). **Preflight:** `scripts/rc1-preflight.sh` (see `docs/rc1-production-preflight.md`). **Secrets:** `docs/rc1-production-secret-provisioning.md`. **Visual QA:** `docs/rc1-final-visual-qa.md`. **Summary:** `docs/rc1-condition-closure-report.md`.
