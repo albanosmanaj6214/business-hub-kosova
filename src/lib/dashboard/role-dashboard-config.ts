@@ -87,11 +87,14 @@ const ROLE_TOOLS: Record<string, string[]> = {
 // (and the ADMIN business fallback). Every key references an existing TOOLS entry /
 // existing route — no new routes, no new permissions. STARTUP/INDIVIDUAL keep their
 // curated stage/individual lists (their primary axis is stage, not activity).
+// Cross-cutting gated tools (auv = food/agri sectors, energji = 50+ employees) are
+// kept as candidates in each business list so a role's specialization never hides a
+// tool the company is genuinely eligible for. They still only appear after gating.
 const COMMERCIAL_TOOLS: Partial<Record<CommercialRole, string[]>> = {
-  producer: ['eksporti', 'dogana', 'auv', 'financime', 'network', 'tatime', 'konsultime'],
-  agri: ['financime', 'auv', 'dogana', 'network', 'panaire', 'tatime', 'konsultime'],
-  trader: ['dogana', 'network', 'kerkoOferte', 'financime', 'tatime', 'konsultime'],
-  service: ['network', 'konsultime', 'financime', 'panaire', 'tatime', 'arbk'],
+  producer: ['eksporti', 'dogana', 'auv', 'financime', 'network', 'energji', 'tatime', 'konsultime'],
+  agri: ['financime', 'auv', 'dogana', 'network', 'energji', 'panaire', 'tatime', 'konsultime'],
+  trader: ['dogana', 'network', 'kerkoOferte', 'auv', 'financime', 'energji', 'tatime', 'konsultime'],
+  service: ['network', 'konsultime', 'financime', 'panaire', 'energji', 'tatime', 'arbk'],
   diaspora_investor: ['investime', 'network', 'hapBiznes', 'panaire', 'konsultime'],
   diaspora_trade: ['network', 'kerkoOferte', 'panaire', 'hapBiznes', 'konsultime'],
   diaspora_service: ['network', 'hapBiznes', 'konsultime', 'panaire', 'investime'],
@@ -157,7 +160,10 @@ export function greetingFor(d: DashboardData): { title: string; subtitle: string
     const base = d.diasporaCountry ? `Ura jote nga ${d.diasporaCountry} drejt bizneseve të Kosovës.` : 'Ura jote drejt bizneseve të Kosovës.'
     return { title, subtitle: hint ? `${base} ${hint}` : base }
   }
-  const crHint = BUSINESS_CR_HINT[d.commercialRole]
+  // The commercial-role subtitle applies to the business experience only (KOSOVO_BUSINESS
+  // + admin fallback). A startup's greeting stays sector/stage-oriented so it never
+  // promises export/customs tools its stage-based tool set does not surface.
+  const crHint = r === 'KOSOVO_BUSINESS' ? BUSINESS_CR_HINT[d.commercialRole] : undefined
   if (crHint) return { title, subtitle: d.sectorsText ? `${crHint} Sektori: ${d.sectorsText}.` : crHint }
   if (d.sectorsText) return { title, subtitle: `Përmbajtja më poshtë është përzgjedhur për sektorin tënd: ${d.sectorsText}.` }
   if (d.hasCompany) return { title, subtitle: 'Cakto llojin e aktivitetit dhe sektorin te profili që përmbajtja të përshtatet për biznesin tënd.' }

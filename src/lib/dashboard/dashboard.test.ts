@@ -81,6 +81,30 @@ describe('resolveCommercialRole — derived from real fields only, never invente
   })
 })
 
+describe('account-role behavior — USER / ADMIN / SUPER_ADMIN', () => {
+  it('USER falls back to the business layout and resolves to general (no invented commercial role)', () => {
+    expect(sectionsFor('USER')).toEqual(sectionsFor('KOSOVO_BUSINESS'))
+    expect(resolveCommercialRole('USER', null, [])).toBe('general')
+    // USER with no company: no profile-completion prompt, no sector claim
+    const d = data({ role: 'USER', hasCompany: false, company: null, sectorsText: '' })
+    expect(buildPriorities(d).some((p) => p.id === 'profile')).toBe(false)
+    expect(greetingFor(d).subtitle).not.toContain('sektorin tënd')
+  })
+  it('ADMIN and SUPER_ADMIN intentionally share the business configuration', () => {
+    expect(sectionsFor('ADMIN')).toEqual(sectionsFor('SUPER_ADMIN'))
+    expect(sectionsFor('SUPER_ADMIN')).toEqual(sectionsFor('KOSOVO_BUSINESS'))
+  })
+  it('neither Admin role gets company-specific claims when they have no company', () => {
+    for (const role of ['ADMIN', 'SUPER_ADMIN'] as const) {
+      const d = data({ role, isAdmin: true, hasCompany: false, company: null, sectorsText: '', energyOk: true })
+      expect(buildPriorities(d).some((p) => p.id === 'profile')).toBe(false) // no "complete your company"
+      expect(greetingFor(d).subtitle).not.toContain('sektorin tënd')
+      // admin ungates AUV (preview all) and is energy-eligible
+      expect(toolsFor(d).some((t) => t.href === '/dashboard/auv')).toBe(true)
+    }
+  })
+})
+
 describe('sectionsFor — role-aware order, marketPulse gated section present', () => {
   it('KOSOVO_BUSINESS + ADMIN fall back to the business layout', () => {
     expect(sectionsFor('KOSOVO_BUSINESS')).toEqual(['greeting', 'priorities', 'opportunities', 'network', 'tools', 'marketPulse'])
@@ -148,6 +172,20 @@ describe('toolsFor — resolved commercial role drives which tools surface', () 
     const h = hrefs(data({ commercialRole: 'general' }))
     expect(h[0]).toBe('/dashboard/directory') // KOSOVO_BUSINESS base list
   })
+  it('cross-cutting Energy tool survives a commercial role for an eligible (50+) company', () => {
+    // negative: small producer -> no energy; positive: large producer -> energy shows
+    expect(hrefs(data({ commercialRole: 'producer', energyOk: false })).includes('/dashboard/energji')).toBe(false)
+    expect(hrefs(data({ commercialRole: 'producer', energyOk: true })).includes('/dashboard/energji')).toBe(true)
+    expect(hrefs(data({ commercialRole: 'service', energyOk: true })).includes('/dashboard/energji')).toBe(true)
+    expect(hrefs(data({ commercialRole: 'trader', energyOk: true })).includes('/dashboard/energji')).toBe(true)
+  })
+  it('cross-cutting AUV tool survives a commercial role for a food/agri sector', () => {
+    // food trader keeps AUV; non-food trader does not
+    expect(hrefs(data({ commercialRole: 'trader', sectors: ['ushqim-dhe-pije'] })).includes('/dashboard/auv')).toBe(true)
+    expect(hrefs(data({ commercialRole: 'trader', sectors: ['druri-mobilje'] })).includes('/dashboard/auv')).toBe(false)
+    expect(hrefs(data({ commercialRole: 'producer', sectors: ['ushqim-dhe-pije'] })).includes('/dashboard/auv')).toBe(true)
+    expect(hrefs(data({ commercialRole: 'producer', sectors: ['druri-mobilje'] })).includes('/dashboard/auv')).toBe(false)
+  })
   it('every commercial-role tool set stays within the 6-tool cap and gates correctly', () => {
     const roles: Array<[DashRole, CommercialRole]> = [
       ['KOSOVO_BUSINESS', 'producer'], ['KOSOVO_BUSINESS', 'agri'], ['KOSOVO_BUSINESS', 'trader'],
@@ -178,5 +216,11 @@ describe('greetingFor — resolved-profile aware', () => {
   })
   it('diaspora greeting reflects the sub-role intent', () => {
     expect(greetingFor(data({ role: 'DIASPORA', commercialRole: 'diaspora_investor', diasporaCountry: 'Gjermani' })).subtitle.toLowerCase()).toContain('investim')
+  })
+  it('a startup does NOT get the business commercial-role hint (no export/customs promise)', () => {
+    // startup resolves to a commercial role from activityType, but its greeting stays sector-oriented
+    const sub = greetingFor(data({ role: 'STARTUP', commercialRole: 'producer', sectorsText: 'Ushqim dhe pije' })).subtitle
+    expect(sub.toLowerCase()).not.toContain('eksport')
+    expect(sub).toContain('Ushqim dhe pije')
   })
 })

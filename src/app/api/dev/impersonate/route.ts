@@ -50,7 +50,9 @@ export async function GET(req: NextRequest) {
     where: { email },
     select: {
       id: true, email: true, name: true, role: true, language: true, companyName: true,
+      employeeCount: true,
       subscription: { select: { tier: true } },
+      company: { select: { employeeCount: true } },
     },
   })
   if (!user) return deny(404, 'Përdoruesi testues s\'u gjet.')
@@ -71,6 +73,9 @@ export async function GET(req: NextRequest) {
     language: user.language,
     companyName: user.companyName,
     tier: user.subscription?.tier ?? 'FREE',
+    // Preview fidelity: mirror the real auth JWT so the dashboard's Energy (50+) gating
+    // reflects the impersonated company. Dev-only route; does not touch prod authOptions.
+    employeeCount: user.company?.employeeCount ?? user.employeeCount ?? null,
   }
   const jwt = await encode({ token, secret, maxAge })
 
