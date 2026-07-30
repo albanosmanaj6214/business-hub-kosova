@@ -1,97 +1,124 @@
-// KIESA shadow mode + read-only reconciliation. Shadow runs the canonical adapter to
-// produce an audit ImportRun + an immutable RawSnapshot of the listing + validation
-// output, but creates NO Grant/TradeFair/Opportunity/IngestionRecord (no duplicate
-// business content, no publish, no notify, no schedule). Reconciliation is read-only.
+// KIESA shadow mode + field-level reconciliation (Phase 4). Shadow fetches the
+// listing AND each item's detail page, persists an audit ImportRun + a RawSnapshot
+// per fetched page, extracts deterministic detail fields, and creates ZERO domain
+// records. Reconciliation compares FIELD VALUES (not only identity) against legacy.
 import { createHash } from 'node:crypto'
 import { prisma } from '@/lib/prisma'
-import { createKiesaAdapter, parseKiesaListing, legacyExternalId, type KiesaAdapterOptions } from './adapter'
-import type { AdapterContext } from '../../core/contracts'
+import { parseKiesaListing, parseKiesaDetail, fetchKiesaDetail, legacyExternalId, safeTolerantGetPublic, type KiesaDetailFields } from './adapter'
+
+const ADAPTER = { name: 'kiesa', version: 'kiesa-canonical@2' }
+
+async function snapshot(sourceId: string, importRunId: string, url: string, body: string) {
+  return prisma.rawSnapshot.create({
+    data: {
+      sourceId, importRunId, requestedUrl: url, httpStatus: 200, contentType: 'text/html',
+      checksum: createHash('sha256').update(body).digest('hex'),
+      storageKind: 'INLINE', retention: 'STANDARD', inlineBody: body.slice(0, 200_000),
+      snapshotKey: createHash('sha256').update(`${sourceId}|${url}|${createHash('sha256').update(body).digest('hex')}`).digest('hex'),
+      retrievedAt: new Date(),
+    },
+    select: { id: true },
+  }).catch(() => null)
+}
 
 export interface ShadowResult {
   importRunId: string
-  discovered: number
-  parsed: number
-  valid: number
-  invalid: number
-  warnings: number
-  snapshotId: string | null
-  createdDomainRecords: 0 // always zero by construction
+  listingItems: number
+  detailsFetched: number
+  snapshots: number
+  withPublicationDate: number
+  withAttachments: number
+  createdDomainRecords: 0
+  enriched: Array<{ itemId: string; title: string; type: string; url: string; detail: KiesaDetailFields }>
 }
 
-/** Run KIESA canonical in shadow: provenance + validation only, no domain records. */
-export async function runKiesaShadow(sourceId: string, opts: KiesaAdapterOptions = {}): Promise<ShadowResult> {
-  const adapter = createKiesaAdapter(opts)
-  const now = () => new Date()
+export interface KiesaShadowOptions {
+  offlineListing?: string
+  offlineDetails?: Record<string, string> // itemId -> detail html
+  maxDetails?: number // bound live HTTP
+}
+
+export async function runKiesaShadow(sourceId: string, opts: KiesaShadowOptions = {}): Promise<ShadowResult> {
+  const listingUrl = 'https://kiesa.rks-gov.net/page.aspx?id=2,134'
   const run = await prisma.importRun.create({
-    data: { sourceId, trigger: 'DRY_RUN', dryRun: true, status: 'RUNNING', adapterName: adapter.name, adapterVersion: adapter.version, initiatedBy: 'SHADOW' },
+    data: { sourceId, trigger: 'DRY_RUN', dryRun: true, status: 'RUNNING', adapterName: ADAPTER.name, adapterVersion: ADAPTER.version, initiatedBy: 'SHADOW' },
     select: { id: true },
   })
-  const ctx: AdapterContext = { sourceId, importRunId: run.id, dryRun: true, now }
-  let snapshotId: string | null = null
+  let snaps = 0
   try {
-    const refs = await adapter.discover(ctx)
-    const fetched = await adapter.fetch(refs[0], ctx)
-    // Immutable snapshot of exactly what we fetched (audit; not a business record).
-    const snap = await prisma.rawSnapshot.create({
-      data: {
-        sourceId, importRunId: run.id, requestedUrl: refs[0].url ?? '', httpStatus: fetched.status,
-        contentType: fetched.contentType, checksum: fetched.checksum,
-        storageKind: 'INLINE', retention: 'STANDARD', inlineBody: fetched.bodyText.slice(0, 200_000),
-        snapshotKey: createHash('sha256').update(`${sourceId}|${refs[0].url}|${fetched.checksum}`).digest('hex'),
-        retrievedAt: new Date(fetched.retrievedAt),
-      },
-      select: { id: true },
-    }).catch(() => null)
-    snapshotId = snap?.id ?? null
-
-    const parsedItems = await adapter.parse(fetched, ctx)
-    let valid = 0, invalid = 0, warnings = 0
-    for (const item of parsedItems) {
-      const norm = await adapter.normalize(item, ctx)
-      warnings += norm.warnings.length
-      const outcome = await adapter.validate(norm, ctx)
-      if (outcome.ok) valid++; else invalid++
+    const listingHtml = opts.offlineListing ?? (await safeTolerantGetPublic(listingUrl)).body
+    if (await snapshot(sourceId, run.id, listingUrl, listingHtml)) snaps++
+    const items = parseKiesaListing(listingHtml)
+    const cap = opts.maxDetails ?? items.length
+    const enriched: ShadowResult['enriched'] = []
+    let detailsFetched = 0, withDate = 0, withAtt = 0
+    for (const it of items.slice(0, cap)) {
+      let detailHtml: string
+      try { detailHtml = await fetchKiesaDetail(it.url, opts.offlineDetails, it.itemId) }
+      catch { continue } // one failed detail page must not invalidate the run
+      detailsFetched++
+      if (await snapshot(sourceId, run.id, it.url, detailHtml)) snaps++
+      const detail = parseKiesaDetail(detailHtml)
+      if (detail.publicationDate) withDate++
+      if (detail.attachmentUrls.length) withAtt++
+      enriched.push({ itemId: it.itemId, title: it.title, type: it.type, url: it.url, detail })
     }
     await prisma.importRun.update({ where: { id: run.id }, data: { status: 'DRY_RUN', completedAt: new Date() } })
-    return { importRunId: run.id, discovered: refs.length, parsed: parsedItems.length, valid, invalid, warnings, snapshotId, createdDomainRecords: 0 }
+    return { importRunId: run.id, listingItems: items.length, detailsFetched, snapshots: snaps, withPublicationDate: withDate, withAttachments: withAtt, createdDomainRecords: 0, enriched }
   } catch (e) {
     await prisma.importRun.update({ where: { id: run.id }, data: { status: 'FAILED', completedAt: new Date() } }).catch(() => {})
     throw e
   }
 }
 
-export type MatchClass = 'matched_opportunity' | 'matched_grant_or_fair' | 'canonical_only'
-export interface ReconItem { itemId: string; title: string; url: string; type: string; match: MatchClass }
+// ── field-level reconciliation ───────────────────────────────────────────────
+export type FieldClass = 'exact' | 'canonical_improvement' | 'legacy_only' | 'canonical_only' | 'formatting_only' | 'material_mismatch' | 'ambiguous'
+export interface FieldDiff { field: string; legacy: string | null; canonical: string | null; cls: FieldClass }
+export interface ReconRow {
+  itemId: string; title: string; url: string; type: string
+  identityMatched: boolean
+  fields: FieldDiff[]
+}
 export interface ReconResult {
   canonicalCount: number
-  matchedOpportunity: number
-  matchedGrantOrFair: number
+  identityMatched: number
   canonicalOnly: number
-  legacyOnly: number
-  items: ReconItem[]
+  rows: ReconRow[]
+  fieldSummary: Record<string, Partial<Record<FieldClass, number>>>
 }
 
-/**
- * READ-ONLY reconciliation of canonical parse output against the existing legacy
- * KIESA records in the (clone) DB. Identity precedence: legacy Opportunity by
- * (sourceId, externalId=sha1("KIESA:<id>")); then Grant/TradeFair by canonical URL.
- * Never uses title alone. Mutates nothing.
- */
-export async function reconcileKiesa(sourceId: string, html: string): Promise<ReconResult> {
-  const canonical = parseKiesaListing(html)
-  const legacyOpps = await prisma.opportunity.findMany({ where: { sourceId }, select: { externalId: true } })
-  const oppSet = new Set(legacyOpps.map((o) => o.externalId))
-  const items: ReconItem[] = []
-  let mOpp = 0, mGrantFair = 0, only = 0
-  const matchedUrls = new Set<string>()
-  for (const c of canonical) {
-    const ext = legacyExternalId(c.itemId)
-    if (oppSet.has(ext)) { items.push({ ...c, match: 'matched_opportunity' }); mOpp++; matchedUrls.add(c.url); continue }
-    const g = await prisma.grant.findFirst({ where: { url: c.url }, select: { id: true } })
-    const f = g ? null : await prisma.tradeFair.findFirst({ where: { website: c.url }, select: { id: true } })
-    if (g || f) { items.push({ ...c, match: 'matched_grant_or_fair' }); mGrantFair++; matchedUrls.add(c.url); continue }
-    items.push({ ...c, match: 'canonical_only' }); only++
+function classifyField(field: string, legacy: string | null, canonical: string | null): FieldClass {
+  if (legacy == null && canonical == null) return 'exact'
+  if (legacy != null && canonical == null) return 'legacy_only'      // e.g. deadline/amount from legacy AI
+  if (legacy == null && canonical != null) return 'canonical_improvement' // e.g. deterministic publicationDate
+  if (legacy === canonical) return 'exact'
+  if (legacy!.trim().toLowerCase() === canonical!.trim().toLowerCase()) return 'formatting_only'
+  return 'material_mismatch'
+}
+
+/** Read-only field-level reconciliation vs legacy Opportunity + Grant/TradeFair. */
+export async function reconcileKiesaFields(sourceId: string, enriched: ShadowResult['enriched']): Promise<ReconResult> {
+  const rows: ReconRow[] = []
+  const fieldSummary: ReconResult['fieldSummary'] = {}
+  let identityMatched = 0, canonicalOnly = 0
+  const bump = (f: string, c: FieldClass) => { fieldSummary[f] ??= {}; fieldSummary[f][c] = (fieldSummary[f][c] ?? 0) + 1 }
+
+  for (const e of enriched) {
+    const ext = legacyExternalId(e.itemId)
+    const opp = await prisma.opportunity.findFirst({ where: { sourceId, externalId: ext }, select: { title: true, deadline: true } })
+    const grant = await prisma.grant.findFirst({ where: { url: e.url }, select: { title: true, deadline: true, amount: true, descriptionSq: true, provider: true } })
+    const matched = !!(opp || grant)
+    if (matched) identityMatched++; else canonicalOnly++
+    const legacyDeadline = grant?.deadline ? grant.deadline.toISOString().slice(0, 10) : (opp?.deadline ? opp.deadline.toISOString().slice(0, 10) : null)
+    const fields: FieldDiff[] = [
+      { field: 'title', legacy: grant?.title ?? opp?.title ?? null, canonical: e.title, cls: classifyField('title', grant?.title ?? opp?.title ?? null, e.title) },
+      { field: 'publicationDate', legacy: null, canonical: e.detail.publicationDate, cls: classifyField('publicationDate', null, e.detail.publicationDate) },
+      { field: 'deadline', legacy: legacyDeadline, canonical: e.detail.deadline, cls: classifyField('deadline', legacyDeadline, e.detail.deadline) },
+      { field: 'amount', legacy: grant?.amount ?? null, canonical: e.detail.amount, cls: classifyField('amount', grant?.amount ?? null, e.detail.amount) },
+      { field: 'attachments', legacy: null, canonical: e.detail.attachmentUrls[0] ?? null, cls: classifyField('attachments', null, e.detail.attachmentUrls[0] ?? null) },
+    ]
+    for (const fd of fields) bump(fd.field, fd.cls)
+    rows.push({ itemId: e.itemId, title: e.title, url: e.url, type: e.type, identityMatched: matched, fields })
   }
-  const legacyOnly = Math.max(0, oppSet.size - mOpp)
-  return { canonicalCount: canonical.length, matchedOpportunity: mOpp, matchedGrantOrFair: mGrantFair, canonicalOnly: only, legacyOnly, items }
+  return { canonicalCount: enriched.length, identityMatched, canonicalOnly, rows, fieldSummary }
 }

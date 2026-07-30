@@ -131,3 +131,67 @@ export function createKiesaAdapter(opts: KiesaAdapterOptions = {}): IngestionAda
     async reportHealth(): Promise<HealthReport> { return { ok: true, state: 'HEALTHY' } },
   }
 }
+
+// ── Phase 4: deterministic DETAIL-page extraction (no AI) ────────────────────
+export interface KiesaDetailFields {
+  publicationDate: string | null // ISO date, only when unambiguous (dd/mm/yyyy)
+  location: string | null        // e.g. "Prishtinë" preceding the date
+  attachmentUrls: string[]       // official PDF documents
+  bodyText: string | null        // raw official summary text (not interpreted)
+  // Substantive fields (deadline, amount, eligibility) live inside the PDF and are
+  // NOT deterministically available here — left null (AI-only; see the scorecard).
+  deadline: null
+  amount: null
+  eligibility: null
+}
+
+const DATE_RE = /(\d{1,2})\/(\d{1,2})\/(\d{4})/
+const LOC_DATE_RE = /([A-Za-zëçÿÖüÄÀ-ſ]+),\s*(\d{1,2})\/(\d{1,2})\/(\d{4})/
+
+function toIsoDate(dd: string, mm: string, yyyy: string): string | null {
+  const d = new Date(`${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}T00:00:00Z`)
+  return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10)
+}
+
+/** Pure detail parser (no network) — unit-testable with a recorded detail fixture. */
+export function parseKiesaDetail(html: string): KiesaDetailFields {
+  const $ = cheerio.load(html)
+  // Search the whole page text for the single publication date/location line
+  // ("Prishtinë, dd/mm/yyyy"); the summary uses the content region when present.
+  const text = $('body').text().replace(/\s+/g, ' ').trim()
+  const ci = $('.content-inner').first()
+  const summary = (ci.length ? ci.text() : text).replace(/\s+/g, ' ').trim()
+
+  let publicationDate: string | null = null
+  let location: string | null = null
+  const lm = text.match(LOC_DATE_RE)
+  if (lm) { location = lm[1]; publicationDate = toIsoDate(lm[2], lm[3], lm[4]) }
+  else { const dm = text.match(DATE_RE); if (dm) publicationDate = toIsoDate(dm[1], dm[2], dm[3]) }
+
+  const attachmentUrls: string[] = []
+  $('a[href$=".pdf"], a[href*=".pdf?"]').each((_, a) => {
+    const href = $(a).attr('href')
+    if (href) { const u = absoluteUrl(href); if (!attachmentUrls.includes(u)) attachmentUrls.push(u) }
+  })
+
+  const bodyText = summary ? summary.slice(0, 1000) : null
+  return { publicationDate, location, attachmentUrls, bodyText, deadline: null, amount: null, eligibility: null }
+}
+
+export interface EnrichedKiesaItem {
+  itemId: string; title: string; url: string; type: string
+  legacyExternalId: string
+  detail: KiesaDetailFields
+  detailHtml: string
+}
+
+/** SSRF-gated tolerant fetch of a KIESA detail page (offline map short-circuits). */
+export async function fetchKiesaDetail(url: string, offline?: Record<string, string>, itemId?: string): Promise<string> {
+  if (offline && itemId && offline[itemId] != null) return offline[itemId]
+  return (await safeTolerantGet(url)).body
+}
+
+/** Exported wrapper of the SSRF-gated tolerant GET (for shadow/reconciliation). */
+export async function safeTolerantGetPublic(url: string): Promise<{ status: number; body: string; contentType: string }> {
+  return safeTolerantGet(url)
+}

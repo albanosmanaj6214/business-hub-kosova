@@ -40,3 +40,24 @@ describe('KIESA canonical adapter — deterministic parse (no AI)', () => {
     expect((norm.canonical.payload as any).legacyExternalId).toBe(legacyExternalId(parsed[0].sourceRecordId!))
   })
 })
+
+import { parseKiesaDetail } from './adapter'
+import { readFileSync as _rf } from 'node:fs'
+const detailHtml = _rf(new URL('./fixtures/kiesa-detail.html', import.meta.url), 'utf8')
+
+describe('KIESA detail parser — deterministic, no AI', () => {
+  it('extracts publication date + PDF attachments; leaves deadline/amount/eligibility null', () => {
+    const d = parseKiesaDetail(detailHtml)
+    expect(d.publicationDate).toMatch(/^\d{4}-\d{2}-\d{2}$/) // fixture has dd/mm/yyyy
+    expect(d.attachmentUrls.length).toBeGreaterThan(0)
+    expect(d.attachmentUrls[0]).toMatch(/^https:\/\/kiesa\.rks-gov\.net\/.*\.pdf$/)
+    expect(d.deadline).toBeNull()   // lives in the PDF -> AI-only
+    expect(d.amount).toBeNull()
+    expect(d.eligibility).toBeNull()
+  })
+  it('returns nulls (no throw) for an empty/garbage detail page', () => {
+    const d = parseKiesaDetail('<html><body></body></html>')
+    expect(d.publicationDate).toBeNull()
+    expect(d.attachmentUrls).toEqual([])
+  })
+})
