@@ -548,6 +548,9 @@ model Source {
   attempts      ScrapeAttempt[]
   health        SourceHealth?
   endpoints     SourceEndpoint[]
+  importRuns    ImportRun[]
+  rawSnapshots  RawSnapshot[]
+  citations     SourceCitation[]
 
   @@index([tier, isActive])
   @@index([category])
@@ -581,6 +584,9 @@ model SourceEndpoint {
   updatedAt        DateTime          @updatedAt
 
   source Source @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  importRuns    ImportRun[]
+  rawSnapshots  RawSnapshot[]
+  citations     SourceCitation[]
 
   @@index([sourceId])
 }
@@ -1050,4 +1056,151 @@ model EnergyPrice {
   createdById  String?
   deletedAt    DateTime?
   createdAt    DateTime  @default(now())
+}
+
+// ===========================================================================
+// DATA PHASE 2 — CANONICAL INGESTION CORE (additive; no changes to existing
+// tables beyond virtual back-relations). No live source is migrated here.
+// ===========================================================================
+enum ImportRunStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+  PARTIAL
+  DRY_RUN
+  CANCELLED
+}
+
+enum ImportTrigger {
+  MANUAL
+  SCHEDULED
+  FIXTURE
+  DRY_RUN
+}
+
+enum SnapshotStorageKind {
+  INLINE
+  FILE
+  OBJECT
+}
+
+enum SnapshotRetention {
+  EPHEMERAL
+  STANDARD
+  LONG_TERM
+}
+
+enum CitationReviewStatus {
+  UNREVIEWED
+  IN_REVIEW
+  APPROVED
+  REJECTED
+}
+
+model ImportRun {
+  id                  String          @id @default(cuid())
+  sourceId            String
+  sourceEndpointId    String?
+  trigger             ImportTrigger
+  dryRun              Boolean         @default(false)
+  status              ImportRunStatus @default(PENDING)
+  currentStage        String?
+  adapterName         String
+  adapterVersion      String
+  parserVersion       String?
+  startedAt           DateTime        @default(now())
+  completedAt         DateTime?
+  durationMs          Int?
+  checkpoint          Json?
+  recordsDiscovered   Int             @default(0)
+  recordsFetched      Int             @default(0)
+  recordsParsed       Int             @default(0)
+  recordsNormalized   Int             @default(0)
+  recordsDeduplicated Int             @default(0)
+  recordsValidated    Int             @default(0)
+  recordsRejected     Int             @default(0)
+  recordsSentToReview Int             @default(0)
+  recordsPublished    Int             @default(0)
+  retryCount          Int             @default(0)
+  bytesTransferred    Int             @default(0)
+  errorCode           String?
+  errorSummary        String?
+  stageResults        Json?
+  initiatedBy         String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  source    Source          @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  endpoint  SourceEndpoint? @relation(fields: [sourceEndpointId], references: [id], onDelete: SetNull)
+  snapshots RawSnapshot[]
+  citations SourceCitation[]
+
+  @@index([sourceId, startedAt])
+  @@index([status])
+  @@index([dryRun])
+}
+
+model RawSnapshot {
+  id               String              @id @default(cuid())
+  sourceId         String
+  sourceEndpointId String?
+  importRunId      String
+  requestedUrl     String?
+  datasetId        String?
+  retrievedAt      DateTime
+  httpStatus       Int?
+  contentType      String?
+  contentLength    Int                 @default(0)
+  checksum         String
+  etag             String?
+  lastModified     String?
+  publicationDate  DateTime?
+  adapterVersion   String?
+  parserVersion    String?
+  storageKind      SnapshotStorageKind @default(INLINE)
+  storageRef       String?
+  inlineBody       String?             @db.Text
+  retention        SnapshotRetention   @default(STANDARD)
+  createdAt        DateTime            @default(now())
+
+  source    Source           @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  endpoint  SourceEndpoint?  @relation(fields: [sourceEndpointId], references: [id], onDelete: SetNull)
+  importRun ImportRun        @relation(fields: [importRunId], references: [id], onDelete: Cascade)
+  citations SourceCitation[]
+
+  @@index([sourceId, retrievedAt])
+  @@index([importRunId])
+  @@index([checksum])
+}
+
+model SourceCitation {
+  id                    String               @id @default(cuid())
+  sourceId              String
+  sourceEndpointId      String?
+  importRunId           String?
+  rawSnapshotId         String?
+  entityType            String
+  entityId              String?
+  canonicalUrl          String?
+  datasetId             String?
+  officialId            String?
+  documentTitle         String?
+  pageReference         String?
+  sourcePublicationDate DateTime?
+  retrievedAt           DateTime
+  sourceVersion         String?
+  reviewStatus          CitationReviewStatus @default(UNREVIEWED)
+  reviewer              String?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  source    Source          @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  endpoint  SourceEndpoint? @relation(fields: [sourceEndpointId], references: [id], onDelete: SetNull)
+  importRun ImportRun?      @relation(fields: [importRunId], references: [id], onDelete: SetNull)
+  snapshot  RawSnapshot?    @relation(fields: [rawSnapshotId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([sourceId])
+  @@index([importRunId])
 }
