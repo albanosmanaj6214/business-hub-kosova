@@ -165,21 +165,31 @@ export async function runPipeline(args: RunPipelineArgs): Promise<PipelineResult
     await stage('REVIEW_HANDOFF', counts.validated, async () => {
       for (const d of deduped) {
         if (!d.validation?.ok) continue
+        const st = d.rec.canonical.statistical
         const citation = buildCitation({
           sourceId, sourceEndpointId, importRunId, rawSnapshotId: d.snapshotId ?? null,
           entityType: d.rec.canonical.kind, canonicalUrl: d.rec.canonical.identifiers.canonicalUrl ?? d.rec.canonical.url ?? null,
           officialId: d.rec.canonical.identifiers.officialId ?? null, documentTitle: d.rec.canonical.title ?? null,
           sourcePublicationDate: d.rec.canonical.publicationDate ?? null, retrievedAt: now().toISOString(),
+          ...(st ? {
+            datasetIdentifier: st.dataset.identifier, datasetTitle: st.dataset.title,
+            referencePeriod: st.observation.referencePeriod, unit: st.observation.unitOriginal ?? null,
+            currency: st.observation.currencyOriginal ?? null, measureCode: st.observation.measureCode,
+            measureLabel: st.observation.measureLabel,
+          } : {}),
         })
         reviewHandoff.push({
           fingerprint: d.fingerprint, canonical: d.rec.canonical, validation: d.validation,
           citation: { sourceId, importRunId, rawSnapshotId: d.snapshotId ?? undefined, canonicalUrl: citation.canonicalUrl ?? undefined, retrievedAt: citation.retrievedAt },
         })
         if (options.dryRun) continue
-        const outcome = await store.handoffRecord(importRunId, {
+        const handoffInput = {
           canonical: d.rec.canonical, identity: d.identity, sourceEndpointId, contentHash: d.contentHash,
           snapshotId: d.snapshotId ?? null, citation, validation: d.validation, now,
-        })
+        }
+        const outcome = d.rec.canonical.destination === 'statistic'
+          ? await store.handoffStatistical(importRunId, handoffInput)
+          : await store.handoffRecord(importRunId, handoffInput)
         if (outcome.changeType === 'new') newRecords++
         else if (outcome.changeType === 'unchanged') unchanged++
         else changedVersions++

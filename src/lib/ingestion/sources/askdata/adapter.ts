@@ -8,6 +8,7 @@ import type {
 } from '../../core/contracts'
 import { validateRecord } from '../../core/validation'
 import { checksumOf } from '../../core/snapshot'
+import { observationGrainHash } from '../../core/statistics'
 import { pxwebGet, pxwebPost } from './client'
 import { unflattenJsonStat, isJsonStatDataset, type JsonStatDataset } from './jsonstat'
 import { tableUrl, buildTradeQuery, recentYears, ASKDATA_TRADE_TURNOVER, type AskdataDatasetConfig } from './config'
@@ -74,6 +75,7 @@ export function createAskdataAdapter(opts: AskdataAdapterOptions = {}): Ingestio
       const ds = JSON.parse(fetched.bodyText) as JsonStatDataset
       if (!isJsonStatDataset(ds)) throw new Error('Përgjigje jo-JSON-stat nga ASKdata')
       const updated = ds.updated ?? null
+      const datasetTitle = ds.label ?? cfg.code
       return unflattenJsonStat(ds).map((obs) => {
         const year = obs.dims[cfg.timeDim].code
         const variableCode = obs.dims[cfg.variableDim].code
@@ -81,7 +83,7 @@ export function createAskdataAdapter(opts: AskdataAdapterOptions = {}): Ingestio
           sourceRecordId: `${cfg.code}:${year}:${variableCode}`,
           fields: {
             year, variableCode, indicator: cfg.variableLabels[variableCode] ?? obs.dims[cfg.variableDim].label,
-            value: obs.value, unit: cfg.unit, currency: cfg.currency, country: cfg.country, updated,
+            value: obs.value, unit: cfg.unit, currency: cfg.currency, country: cfg.country, updated, datasetTitle,
           },
           parserVersion: PARSER_VERSION,
         }
@@ -89,7 +91,7 @@ export function createAskdataAdapter(opts: AskdataAdapterOptions = {}): Ingestio
     },
 
     async normalize(item: ParsedItem): Promise<NormalizedRecord> {
-      const f = item.fields as { year: string; variableCode: string; indicator: string; value: number | null; unit: string; currency: string; country: string; updated: string | null }
+      const f = item.fields as { year: string; variableCode: string; indicator: string; value: number | null; unit: string; currency: string; country: string; updated: string | null; datasetTitle: string }
       const warnings: NormalizedRecord['warnings'] = []
       if (f.value == null) warnings.push({ field: 'value', reason: 'vlerë_mungon', confidence: 0.4 })
       return {
@@ -100,6 +102,22 @@ export function createAskdataAdapter(opts: AskdataAdapterOptions = {}): Ingestio
           publicationDate: f.updated ? String(f.updated).slice(0, 10) : undefined,
           identifiers: { officialId: item.sourceRecordId, canonicalUrl: url, sourceRecordId: item.sourceRecordId },
           payload: { year: Number(f.year), indicator: f.indicator, indicatorCode: f.variableCode, value: f.value, unit: f.unit, currency: f.currency, country: f.country },
+          destination: 'statistic',
+          statistical: {
+            dataset: {
+              identifier: cfg.datasetIdentifier, path: cfg.path, title: f.datasetTitle,
+              language: cfg.lang, frequency: cfg.frequency, defaultUnit: cfg.unit, defaultCurrency: cfg.currency,
+              geoCoverage: cfg.country, revisionPolicy: 'ASK yearly revisions', lastPeriod: String(f.year),
+            },
+            observation: {
+              referencePeriod: f.year, referenceYear: Number(f.year), frequency: cfg.frequency,
+              measureCode: f.variableCode, measureLabel: f.indicator,
+              dimensions: { [cfg.timeDim]: { code: f.year, label: f.year }, [cfg.variableDim]: { code: f.variableCode, label: f.indicator } },
+              dimensionHash: observationGrainHash(cfg.datasetIdentifier, f.year, f.variableCode),
+              valueOriginal: f.value, unitOriginal: f.unit, currencyOriginal: f.currency,
+              sourcePublishedAt: f.updated ? String(f.updated).slice(0, 10) : undefined,
+            },
+          },
         },
         original: item.fields,
         warnings,

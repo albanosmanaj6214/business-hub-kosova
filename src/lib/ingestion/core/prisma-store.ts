@@ -6,6 +6,7 @@ import { Prisma } from '@prisma/client'
 import type {
   ImportTrigger, ImportRunStatus, SnapshotStorageKind, SnapshotRetention,
   CitationReviewStatus, OpportunityType, IngestionChangeType, IngestionRecordState,
+  StatisticalDatasetStatus,
 } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import type { PipelineStore, CreateImportRunInput, UpdateImportRunPatch, HandoffInput, HandoffOutcome } from './store'
@@ -105,6 +106,8 @@ export class PrismaPipelineStore implements PipelineStore {
         sourcePublicationDate: c.sourcePublicationDate ? new Date(c.sourcePublicationDate) : null,
         retrievedAt: new Date(c.retrievedAt), sourceVersion: c.sourceVersion ?? null,
         reviewStatus: (c.reviewStatus ?? 'unreviewed').toUpperCase() as CitationReviewStatus, reviewer: c.reviewer ?? null,
+        datasetIdentifier: c.datasetIdentifier ?? null, datasetTitle: c.datasetTitle ?? null, referencePeriod: c.referencePeriod ?? null,
+        unit: c.unit ?? null, currency: c.currency ?? null, measureCode: c.measureCode ?? null, measureLabel: c.measureLabel ?? null,
       },
       select: { id: true },
     })
@@ -221,5 +224,107 @@ export class PrismaPipelineStore implements PipelineStore {
       },
     })
     return { recordId: r.id, version: newVersionNum, changeType: 'changed', duplicateCandidate: false, reviewEntityId: review.id, reviewItemCreated: true }
+  }
+
+  async handoffStatistical(runId: string, input: HandoffInput): Promise<HandoffOutcome> {
+    const run = await prisma.importRun.findUnique({ where: { id: runId }, select: { sourceId: true } })
+    if (!run) throw new Error('ImportRun nuk u gjet')
+    const sourceId = run.sourceId
+    const now = input.now()
+    const stat = input.canonical.statistical!
+    const o = stat.observation
+    const identityHash = input.identity.hash
+
+    const ds = await prisma.statisticalDataset.upsert({
+      where: { sourceId_datasetIdentifier: { sourceId, datasetIdentifier: stat.dataset.identifier } },
+      create: {
+        sourceId, sourceEndpointId: input.sourceEndpointId ?? null, datasetIdentifier: stat.dataset.identifier,
+        datasetPath: stat.dataset.path ?? null, title: stat.dataset.title, description: stat.dataset.description ?? null,
+        methodology: stat.dataset.methodology ?? null, language: stat.dataset.language ?? null, frequency: stat.dataset.frequency ?? null,
+        defaultUnit: stat.dataset.defaultUnit ?? null, defaultCurrency: stat.dataset.defaultCurrency ?? null,
+        geoCoverage: stat.dataset.geoCoverage ?? null, temporalCoverage: stat.dataset.temporalCoverage ?? null,
+        revisionPolicy: stat.dataset.revisionPolicy ?? null, lastPeriod: stat.dataset.lastPeriod ?? null,
+        status: 'DRAFT' as StatisticalDatasetStatus,
+      },
+      update: { lastImportedAt: now, ...(stat.dataset.lastPeriod ? { lastPeriod: stat.dataset.lastPeriod } : {}) },
+      select: { id: true },
+    })
+
+    let rec = await prisma.ingestionRecord.findUnique({ where: { sourceId_identityHash: { sourceId, identityHash } } })
+    const changeType = decideChangeType(rec ? { contentHash: rec.currentContentHash } : null, input.contentHash)
+
+    if (changeType === 'unchanged' && rec) {
+      await prisma.ingestionRecord.update({ where: { id: rec.id }, data: { lastSeenAt: now, latestImportRunId: runId, ...(input.snapshotId ? { latestRawSnapshotId: input.snapshotId } : {}) } })
+      await prisma.statisticalObservation.updateMany({ where: { datasetId: ds.id, dimensionHash: o.dimensionHash }, data: { lastSeenAt: now } })
+      return { recordId: rec.id, version: rec.currentVersion, changeType, duplicateCandidate: false, reviewItemCreated: false }
+    }
+
+    const citation = await this.createCitation(input.citation)
+    const obsData = {
+      datasetId: ds.id, ingestionVersion: 1, sourceCitationId: citation.id, importRunId: runId, rawSnapshotId: input.snapshotId ?? null,
+      referencePeriod: o.referencePeriod, referenceYear: o.referenceYear ?? null, frequency: o.frequency ?? null,
+      measureCode: o.measureCode, measureLabel: o.measureLabel, dimensions: o.dimensions as unknown as Prisma.InputJsonValue,
+      dimensionHash: o.dimensionHash, valueOriginal: o.valueOriginal ?? null, unitOriginal: o.unitOriginal ?? null,
+      currencyOriginal: o.currencyOriginal ?? null, revisionStatus: 'original', qualityStatus: 'ok',
+      retrievedAt: new Date(input.citation.retrievedAt), sourcePublishedAt: o.sourcePublishedAt ? new Date(o.sourcePublishedAt) : null,
+    }
+
+    if (changeType === 'new') {
+      const dupOther = await prisma.ingestionRecord.findFirst({ where: { sourceId, currentContentHash: input.contentHash, NOT: { identityHash } }, select: { id: true } })
+      const duplicateCandidate = !!dupOther
+      try {
+        rec = await prisma.ingestionRecord.create({ data: {
+          sourceId, sourceEndpointId: input.sourceEndpointId ?? null,
+          externalRecordId: input.identity.kind === 'official_id' ? input.identity.value : null,
+          canonicalUrl: input.canonical.identifiers.canonicalUrl ?? input.canonical.url ?? null,
+          identityKind: input.identity.kind, identityHash, currentContentHash: input.contentHash, currentVersion: 1,
+          firstSeenAt: now, lastSeenAt: now, lastChangedAt: now, latestImportRunId: runId, latestRawSnapshotId: input.snapshotId ?? null,
+          latestCitationId: citation.id, reviewEntityType: 'StatisticalObservation', duplicateCandidate, state: 'ACTIVE' as IngestionRecordState,
+        } })
+      } catch (e) {
+        if (isP2002(e)) { rec = await prisma.ingestionRecord.findUnique({ where: { sourceId_identityHash: { sourceId, identityHash } } }); if (rec) return { recordId: rec.id, version: rec.currentVersion, changeType: 'unchanged', duplicateCandidate: false, reviewItemCreated: false } }
+        throw e
+      }
+      let obsId: string
+      try {
+        const obs = await prisma.statisticalObservation.create({ data: { ...obsData, ingestionRecordId: rec!.id }, select: { id: true } })
+        obsId = obs.id
+      } catch (e) {
+        if (isP2002(e)) { const ex = await prisma.statisticalObservation.findFirstOrThrow({ where: { datasetId: ds.id, dimensionHash: o.dimensionHash }, select: { id: true } }); obsId = ex.id }
+        else throw e
+      }
+      try {
+        await prisma.ingestionRecordVersion.create({ data: {
+          ingestionRecordId: rec!.id, version: 1, contentHash: input.contentHash, changeType: 'NEW' as IngestionChangeType,
+          importRunId: runId, rawSnapshotId: input.snapshotId ?? null, sourceCitationId: citation.id,
+          reviewEntityType: 'StatisticalObservation', reviewEntityId: obsId, previousVersionId: null,
+          normalizedSummary: canonicalSummary(input.canonical) as Prisma.InputJsonValue, detectedAt: now,
+        } })
+      } catch (e) { if (!isP2002(e)) throw e }
+      await prisma.ingestionRecord.update({ where: { id: rec!.id }, data: { reviewEntityId: obsId } })
+      return { recordId: rec!.id, version: 1, changeType: 'new', duplicateCandidate, reviewEntityId: obsId, reviewItemCreated: true }
+    }
+
+    // changed
+    const r = rec!
+    const prevVersion = await prisma.ingestionRecordVersion.findFirst({ where: { ingestionRecordId: r.id }, orderBy: { version: 'desc' } })
+    const nv = r.currentVersion + 1
+    const existingObs = await prisma.statisticalObservation.findFirst({ where: { datasetId: ds.id, dimensionHash: o.dimensionHash }, select: { id: true } })
+    await prisma.statisticalObservation.updateMany({ where: { datasetId: ds.id, dimensionHash: o.dimensionHash }, data: { valueOriginal: o.valueOriginal ?? null, revisionStatus: 'revised', lastSeenAt: now, ingestionVersion: nv, importRunId: runId, sourceCitationId: citation.id, ...(input.snapshotId ? { rawSnapshotId: input.snapshotId } : {}) } })
+    const prevSummary = (prevVersion?.normalizedSummary ?? {}) as Record<string, unknown>
+    try {
+      await prisma.ingestionRecordVersion.create({ data: {
+        ingestionRecordId: r.id, version: nv, contentHash: input.contentHash, changeType: 'CHANGED' as IngestionChangeType,
+        importRunId: runId, rawSnapshotId: input.snapshotId ?? null, sourceCitationId: citation.id,
+        reviewEntityType: 'StatisticalObservation', reviewEntityId: existingObs?.id ?? null, previousVersionId: prevVersion?.id ?? null,
+        structuredDiff: structuredDiff(prevSummary, canonicalSummary(input.canonical)) as unknown as Prisma.InputJsonValue,
+        normalizedSummary: canonicalSummary(input.canonical) as Prisma.InputJsonValue, detectedAt: now,
+      } })
+    } catch (e) {
+      if (isP2002(e)) return { recordId: r.id, version: nv, changeType: 'changed', duplicateCandidate: false, reviewEntityId: existingObs?.id ?? null, reviewItemCreated: false }
+      throw e
+    }
+    await prisma.ingestionRecord.updateMany({ where: { id: r.id, currentVersion: r.currentVersion }, data: { currentContentHash: input.contentHash, currentVersion: nv, lastSeenAt: now, lastChangedAt: now, latestImportRunId: runId, latestCitationId: citation.id, ...(input.snapshotId ? { latestRawSnapshotId: input.snapshotId } : {}) } })
+    return { recordId: r.id, version: nv, changeType: 'changed', duplicateCandidate: false, reviewEntityId: existingObs?.id ?? null, reviewItemCreated: true }
   }
 }

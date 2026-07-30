@@ -62,6 +62,7 @@ export interface PipelineStore {
   createSnapshot(rec: SnapshotRecord): Promise<{ id: string }>
   // Version-aware, idempotent review handoff (never publishes/notifies).
   handoffRecord(runId: string, input: HandoffInput): Promise<HandoffOutcome>
+  handoffStatistical(runId: string, input: HandoffInput): Promise<HandoffOutcome>
 }
 
 // --- In-memory rows (mirror the Prisma tables) ---
@@ -112,6 +113,20 @@ export interface ReviewItemRow {
   canonical: CanonicalRecord
   previousReviewId?: string | null
 }
+export interface StatDatasetRow {
+  id: string; sourceId: string; datasetIdentifier: string; datasetPath?: string; title: string
+  frequency?: string; defaultUnit?: string; defaultCurrency?: string; geoCoverage?: string; lastPeriod?: string
+  status: 'DRAFT' | 'ACTIVE' | 'DEPRECATED'; firstImportedAt: string; lastImportedAt: string
+}
+export interface StatObservationRow {
+  id: string; datasetId: string; ingestionRecordId: string; ingestionVersion: number
+  sourceCitationId?: string | null; importRunId?: string | null; rawSnapshotId?: string | null
+  referencePeriod: string; referenceYear?: number; frequency?: string; measureCode: string; measureLabel: string
+  dimensions: Record<string, { code: string; label: string }>; dimensionHash: string
+  valueOriginal: number | null; unitOriginal?: string; currencyOriginal?: string
+  revisionStatus: string; qualityStatus: string; retrievedAt: string; sourcePublishedAt?: string
+  firstSeenAt: string; lastSeenAt: string
+}
 
 export class InMemoryPipelineStore implements PipelineStore {
   runs: Array<CreateImportRunInput & { id: string; patches: UpdateImportRunPatch[] }> = []
@@ -121,6 +136,8 @@ export class InMemoryPipelineStore implements PipelineStore {
   ingestionRecords: IngestionRecordRow[] = []
   versions: Array<Readonly<IngestionVersionRow>> = []
   reviewItems: ReviewItemRow[] = []
+  statisticalDatasets: StatDatasetRow[] = []
+  statisticalObservations: StatObservationRow[] = []
   private seq = 0
   private id(prefix: string): string { this.seq += 1; return `${prefix}_${this.seq}` }
 
@@ -203,6 +220,51 @@ export class InMemoryPipelineStore implements PipelineStore {
     r.latestCitationId = cit.id
     r.reviewEntityId = review.id
     return { recordId: r.id, version: newVersionNum, changeType, duplicateCandidate: false, reviewEntityId: review.id, reviewItemCreated: true }
+  }
+
+  async handoffStatistical(runId: string, input: HandoffInput): Promise<HandoffOutcome> {
+    const run = this.runs.find((r) => r.id === runId)
+    if (!run) throw new Error('ImportRun nuk u gjet')
+    const sourceId = run.sourceId
+    const nowIso = input.now().toISOString()
+    const stat = input.canonical.statistical!
+    const key = input.identity.hash
+    // Dataset upsert (dataset identifier + title are first-class metadata).
+    let ds = this.statisticalDatasets.find((d) => d.sourceId === sourceId && d.datasetIdentifier === stat.dataset.identifier)
+    if (!ds) {
+      ds = { id: this.id('ds'), sourceId, datasetIdentifier: stat.dataset.identifier, datasetPath: stat.dataset.path, title: stat.dataset.title, frequency: stat.dataset.frequency, defaultUnit: stat.dataset.defaultUnit, defaultCurrency: stat.dataset.defaultCurrency, geoCoverage: stat.dataset.geoCoverage, lastPeriod: stat.dataset.lastPeriod, status: 'DRAFT', firstImportedAt: nowIso, lastImportedAt: nowIso }
+      this.statisticalDatasets.push(ds)
+    } else { ds.lastImportedAt = nowIso; if (stat.dataset.lastPeriod) ds.lastPeriod = stat.dataset.lastPeriod }
+    const o = stat.observation
+    const rec = this.ingestionRecords.find((r) => r.sourceId === sourceId && r.identityHash === key)
+    const changeType = decideChangeType(rec ? { contentHash: rec.currentContentHash } : null, input.contentHash)
+    if (changeType === 'unchanged' && rec) {
+      rec.lastSeenAt = nowIso; rec.latestImportRunId = runId; if (input.snapshotId) rec.latestRawSnapshotId = input.snapshotId
+      const ob = this.statisticalObservations.find((x) => x.datasetId === ds!.id && x.dimensionHash === o.dimensionHash)
+      if (ob) ob.lastSeenAt = nowIso
+      return { recordId: rec.id, version: rec.currentVersion, changeType, duplicateCandidate: false, reviewItemCreated: false }
+    }
+    const cit = { ...input.citation, id: this.id('cit') }; this.citations.push(cit)
+    if (changeType === 'new') {
+      const dup = this.ingestionRecords.some((r) => r.sourceId === sourceId && r.identityHash !== key && r.currentContentHash === input.contentHash)
+      const id = this.id('ing')
+      const ob: StatObservationRow = { id: this.id('obs'), datasetId: ds.id, ingestionRecordId: id, ingestionVersion: 1, sourceCitationId: cit.id, importRunId: runId, rawSnapshotId: input.snapshotId ?? null, referencePeriod: o.referencePeriod, referenceYear: o.referenceYear, frequency: o.frequency, measureCode: o.measureCode, measureLabel: o.measureLabel, dimensions: o.dimensions, dimensionHash: o.dimensionHash, valueOriginal: o.valueOriginal, unitOriginal: o.unitOriginal, currencyOriginal: o.currencyOriginal, revisionStatus: 'original', qualityStatus: 'ok', retrievedAt: input.citation.retrievedAt, sourcePublishedAt: o.sourcePublishedAt, firstSeenAt: nowIso, lastSeenAt: nowIso }
+      this.statisticalObservations.push(ob)
+      const version: IngestionVersionRow = { id: this.id('ver'), ingestionRecordId: id, version: 1, contentHash: input.contentHash, changeType, importRunId: runId, rawSnapshotId: input.snapshotId ?? null, sourceCitationId: cit.id, reviewEntityType: 'StatisticalObservation', reviewEntityId: ob.id, previousVersionId: null, normalizedSummary: canonicalSummary(input.canonical), detectedAt: nowIso }
+      this.versions.push(freezeRecord(version))
+      this.ingestionRecords.push({ id, sourceId, sourceEndpointId: input.sourceEndpointId ?? null, externalRecordId: input.identity.kind === 'official_id' ? input.identity.value : null, canonicalUrl: input.canonical.identifiers.canonicalUrl ?? null, identityKind: input.identity.kind, identityHash: key, currentContentHash: input.contentHash, currentVersion: 1, firstSeenAt: nowIso, lastSeenAt: nowIso, lastChangedAt: nowIso, latestImportRunId: runId, latestRawSnapshotId: input.snapshotId ?? null, latestCitationId: cit.id, reviewEntityType: 'StatisticalObservation', reviewEntityId: ob.id, duplicateCandidate: dup, state: 'ACTIVE' })
+      return { recordId: id, version: 1, changeType, duplicateCandidate: dup, reviewEntityId: ob.id, reviewItemCreated: true }
+    }
+    // changed: new version + revise the current observation (previous value kept in version trail)
+    const r = rec!
+    const prevVersion = this.versions.filter((v) => v.ingestionRecordId === r.id).sort((a, b) => b.version - a.version)[0]
+    const nv = r.currentVersion + 1
+    const ob = this.statisticalObservations.find((x) => x.datasetId === ds.id && x.dimensionHash === o.dimensionHash)
+    if (ob) { ob.valueOriginal = o.valueOriginal; ob.revisionStatus = 'revised'; ob.lastSeenAt = nowIso; ob.ingestionVersion = nv; ob.importRunId = runId; ob.sourceCitationId = cit.id; if (input.snapshotId) ob.rawSnapshotId = input.snapshotId }
+    const version: IngestionVersionRow = { id: this.id('ver'), ingestionRecordId: r.id, version: nv, contentHash: input.contentHash, changeType, importRunId: runId, rawSnapshotId: input.snapshotId ?? null, sourceCitationId: cit.id, reviewEntityType: 'StatisticalObservation', reviewEntityId: ob?.id ?? null, previousVersionId: prevVersion?.id ?? null, structuredDiff: structuredDiff(prevVersion?.normalizedSummary, canonicalSummary(input.canonical)), normalizedSummary: canonicalSummary(input.canonical), detectedAt: nowIso }
+    this.versions.push(freezeRecord(version))
+    r.currentContentHash = input.contentHash; r.currentVersion = nv; r.lastSeenAt = nowIso; r.lastChangedAt = nowIso; r.latestImportRunId = runId; r.latestCitationId = cit.id; if (input.snapshotId) r.latestRawSnapshotId = input.snapshotId
+    return { recordId: r.id, version: nv, changeType, duplicateCandidate: false, reviewEntityId: ob?.id ?? null, reviewItemCreated: true }
   }
 
   // Explicit immutability guards (no real update path exists).

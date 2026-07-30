@@ -552,6 +552,7 @@ model Source {
   rawSnapshots  RawSnapshot[]
   citations     SourceCitation[]
   ingestionRecords IngestionRecord[]
+  statisticalDatasets StatisticalDataset[]
 
   @@index([tier, isActive])
   @@index([category])
@@ -589,6 +590,7 @@ model SourceEndpoint {
   rawSnapshots  RawSnapshot[]
   citations     SourceCitation[]
   ingestionRecords IngestionRecord[]
+  statisticalDatasets StatisticalDataset[]
 
   @@index([sourceId])
 }
@@ -1203,6 +1205,13 @@ model SourceCitation {
   sourceVersion         String?
   reviewStatus          CitationReviewStatus @default(UNREVIEWED)
   reviewer              String?
+  datasetIdentifier     String?
+  datasetTitle          String?
+  referencePeriod       String?
+  unit                  String?
+  currency              String?
+  measureCode           String?
+  measureLabel          String?
   createdAt             DateTime             @default(now())
   updatedAt             DateTime             @updatedAt
 
@@ -1284,5 +1293,88 @@ model IngestionRecordVersion {
   record IngestionRecord @relation(fields: [ingestionRecordId], references: [id], onDelete: Cascade)
 
   @@unique([ingestionRecordId, version])
+  @@index([ingestionRecordId])
+}
+
+// ===========================================================================
+// DATA PHASE 4 — STATISTICAL DATA LAYER (additive). ASKdata writes here, not to
+// Opportunity. Numeric values stored EXACT (Decimal), never as formatted strings.
+// ===========================================================================
+enum StatisticalDatasetStatus {
+  DRAFT
+  ACTIVE
+  DEPRECATED
+}
+
+model StatisticalDataset {
+  id                    String                   @id @default(cuid())
+  sourceId              String
+  sourceEndpointId      String?
+  datasetIdentifier     String
+  datasetPath           String?
+  title                 String
+  description           String?
+  methodology           String?
+  language              String?
+  frequency             String?
+  classificationSystem  String?
+  classificationVersion String?
+  defaultUnit           String?
+  defaultCurrency       String?
+  geoCoverage           String?
+  temporalCoverage      String?
+  releaseSchedule       String?
+  revisionPolicy        String?
+  lastPeriod            String?
+  status                StatisticalDatasetStatus @default(DRAFT)
+  firstImportedAt       DateTime                 @default(now())
+  lastImportedAt        DateTime                 @default(now())
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+
+  source       Source                   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  endpoint     SourceEndpoint?          @relation(fields: [sourceEndpointId], references: [id], onDelete: SetNull)
+  observations StatisticalObservation[]
+
+  @@unique([sourceId, datasetIdentifier])
+  @@index([sourceId])
+}
+
+model StatisticalObservation {
+  id                 String    @id @default(cuid())
+  datasetId          String
+  ingestionRecordId  String?
+  ingestionVersion   Int?
+  sourceCitationId   String?
+  importRunId        String?
+  rawSnapshotId      String?
+  referencePeriod    String
+  referenceYear      Int?
+  frequency          String?
+  measureCode        String
+  measureLabel       String
+  dimensions         Json
+  dimensionHash      String
+  valueOriginal      Decimal?  @db.Decimal(30, 6)
+  unitOriginal       String?
+  currencyOriginal   String?
+  valueNormalized    Decimal?  @db.Decimal(30, 6)
+  unitNormalized     String?
+  currencyNormalized String?
+  estimateStatus     String?
+  revisionStatus     String    @default("original")
+  confidentiality    String?
+  qualityStatus      String    @default("ok")
+  retrievedAt        DateTime
+  sourcePublishedAt  DateTime?
+  firstSeenAt        DateTime  @default(now())
+  lastSeenAt         DateTime  @default(now())
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  dataset StatisticalDataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@unique([datasetId, dimensionHash])
+  @@index([datasetId, referenceYear])
   @@index([ingestionRecordId])
 }

@@ -45,7 +45,8 @@ describe('ASKdata isolated LIVE proof', () => {
     expect(await prisma.ingestionRecord.count({ where: { sourceId } })).toBe(9)
     expect(await prisma.rawSnapshot.count({ where: { sourceId } })).toBe(1) // one immutable live snapshot
     expect(await prisma.sourceCitation.count({ where: { sourceId } })).toBe(9)
-    expect(await prisma.opportunity.count({ where: { sourceId } })).toBe(9)
+    expect(await prisma.opportunity.count({ where: { sourceId } })).toBe(0) // Phase 4: ASKdata routes to the statistics layer, not Opportunity
+    expect(await prisma.statisticalObservation.count({ where: { dataset: { sourceId } } })).toBe(9)
     // the snapshot really contains the live JSON-stat payload
     const snap = await prisma.rawSnapshot.findFirstOrThrow({ where: { sourceId } })
     expect(snap.inlineBody).toContain('Kosovo Agency of Statistics')

@@ -18,6 +18,14 @@ export interface CitationInput {
   sourceVersion?: string | null
   reviewStatus?: CitationReviewStatus
   reviewer?: string | null
+  // First-class statistical metadata (nullable; populated for statistical sources).
+  datasetIdentifier?: string | null
+  datasetTitle?: string | null
+  referencePeriod?: string | null
+  unit?: string | null
+  currency?: string | null
+  measureCode?: string | null
+  measureLabel?: string | null
 }
 
 export function buildCitation(input: CitationInput): CitationInput {

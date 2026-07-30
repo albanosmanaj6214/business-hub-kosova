@@ -63,6 +63,50 @@ export interface CanonicalRecord {
     canonicalUrl?: string
   }
   payload: Record<string, unknown>
+  // Typed handoff routing: 'statistic' records go to the statistics store,
+  // everything else (default) goes to the Opportunity review handoff.
+  destination?: 'opportunity' | 'statistic'
+  statistical?: StatisticalDescriptor
+}
+
+export interface StatisticalDatasetDescriptor {
+  identifier: string
+  path?: string
+  title: string
+  description?: string
+  methodology?: string
+  language?: string
+  frequency?: string
+  classificationSystem?: string
+  classificationVersion?: string
+  defaultUnit?: string
+  defaultCurrency?: string
+  geoCoverage?: string
+  temporalCoverage?: string
+  releaseSchedule?: string
+  revisionPolicy?: string
+  lastPeriod?: string
+}
+
+export interface StatisticalObservationDescriptor {
+  referencePeriod: string
+  referenceYear?: number
+  frequency?: string
+  measureCode: string
+  measureLabel: string
+  dimensions: Record<string, { code: string; label: string }>
+  dimensionHash: string
+  valueOriginal: number | null
+  unitOriginal?: string
+  currencyOriginal?: string
+  estimateStatus?: string
+  confidentiality?: string
+  sourcePublishedAt?: string
+}
+
+export interface StatisticalDescriptor {
+  dataset: StatisticalDatasetDescriptor
+  observation: StatisticalObservationDescriptor
 }
 
 export interface NormalizationWarning {

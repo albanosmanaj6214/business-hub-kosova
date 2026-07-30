@@ -14,6 +14,8 @@ export interface AskdataDatasetConfig {
   country: string
   officialDomain: string
   institution: string
+  datasetIdentifier: string
+  frequency: string
 }
 
 export const ASKDATA_TRADE_TURNOVER: AskdataDatasetConfig = {
@@ -28,6 +30,8 @@ export const ASKDATA_TRADE_TURNOVER: AskdataDatasetConfig = {
   country: 'XK',
   officialDomain: 'askdata.rks-gov.net',
   institution: 'Kosovo Agency of Statistics (ASK)',
+  datasetIdentifier: 'tab08.px',
+  frequency: 'yearly',
 }
 
 /** Build the table URL, encoding each path segment (keeps spaces safe). */
