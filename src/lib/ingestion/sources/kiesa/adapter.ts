@@ -10,6 +10,7 @@ import * as https from 'node:https'
 import { assertSafeUrl } from '../../safe-url'
 import { validateRecord } from '../../core/validation'
 import { classifyKiesaTitle } from '@/lib/scrapers/kiesa'
+import { classifyAttachmentRole, type AttachmentRole } from '../../attachments/role'
 import type {
   IngestionAdapter, AdapterContext, ConnectionResult, DiscoveredRef, FetchResult,
   ParsedItem, NormalizedRecord, ValidationOutcome, Checkpoint, HealthReport,
@@ -40,6 +41,27 @@ async function safeTolerantGet(rawUrl: string): Promise<{ status: number; body: 
       const chunks: Buffer[] = []
       res.on('data', (c) => chunks.push(Buffer.from(c)))
       res.on('end', () => resolve({ status: res.statusCode ?? 0, body: Buffer.concat(chunks).toString('utf8'), contentType: String(res.headers['content-type'] ?? '') }))
+    })
+    req.on('timeout', () => req.destroy(new Error('timeout')))
+    req.on('error', reject)
+  })
+}
+
+// Binary-safe SSRF-gated GET for OFFICIAL ATTACHMENT files (.docx/.pdf/.xlsx/...).
+// Returns raw bytes with a hard size cap so a hostile or oversized attachment cannot
+// exhaust memory. TLS verification stays on; assertSafeUrl re-gates the URL first.
+async function safeTolerantGetBinary(rawUrl: string, maxBytes = 30 * 1024 * 1024): Promise<{ status: number; buffer: Buffer; contentType: string }> {
+  const url = await assertSafeUrl(rawUrl)
+  return new Promise((resolve, reject) => {
+    const req = https.get(url.toString(), { headers: { 'User-Agent': USER_AGENT, Accept: '*/*' }, timeout: 30000, insecureHTTPParser: true }, (res) => {
+      const chunks: Buffer[] = []
+      let total = 0
+      res.on('data', (c) => {
+        total += c.length
+        if (total > maxBytes) { req.destroy(new Error('attachment exceeds size cap')); return }
+        chunks.push(Buffer.from(c))
+      })
+      res.on('end', () => resolve({ status: res.statusCode ?? 0, buffer: Buffer.concat(chunks), contentType: String(res.headers['content-type'] ?? '') }))
     })
     req.on('timeout', () => req.destroy(new Error('timeout')))
     req.on('error', reject)
@@ -136,7 +158,8 @@ export function createKiesaAdapter(opts: KiesaAdapterOptions = {}): IngestionAda
 export interface KiesaDetailFields {
   publicationDate: string | null // ISO date, only when unambiguous (dd/mm/yyyy)
   location: string | null        // e.g. "Prishtinë" preceding the date
-  attachmentUrls: string[]       // official PDF documents
+  attachmentUrls: string[]       // ALL official attachment URLs (any format, not only PDF)
+  attachments: Array<{ url: string; ext: string | null; label: string; role: AttachmentRole }>
   bodyText: string | null        // raw official summary text (not interpreted)
   // Substantive fields (deadline, amount, eligibility) live inside the PDF and are
   // NOT deterministically available here — left null (AI-only; see the scorecard).
@@ -168,14 +191,26 @@ export function parseKiesaDetail(html: string): KiesaDetailFields {
   if (lm) { location = lm[1]; publicationDate = toIsoDate(lm[2], lm[3], lm[4]) }
   else { const dm = text.match(DATE_RE); if (dm) publicationDate = toIsoDate(dm[1], dm[2], dm[3]) }
 
+  // ALL official downloadable attachments (KIESA frequently posts .doc/.docx/.xlsx,
+  // not only PDF). The main call is NOT assumed to be the first link — role is inferred
+  // from the anchor label + filename.
+  const attachments: KiesaDetailFields['attachments'] = []
   const attachmentUrls: string[] = []
-  $('a[href$=".pdf"], a[href*=".pdf?"]').each((_, a) => {
-    const href = $(a).attr('href')
-    if (href) { const u = absoluteUrl(href); if (!attachmentUrls.includes(u)) attachmentUrls.push(u) }
+  $('a[href]').each((_, a) => {
+    const href = $(a).attr('href') ?? ''
+    // Match by document EXTENSION only (KIESA stores media as <GUID>.<ext>). This
+    // deliberately EXCLUDES image/screenshot links under the same /desk/inc/media/ path.
+    if (!/\.(docx?|pdf|xlsx?|pptx?|zip)(?:$|[?#])/i.test(href)) return
+    const url = absoluteUrl(href)
+    if (attachmentUrls.includes(url)) return
+    const label = $(a).text().replace(/\s+/g, ' ').trim()
+    const ext = (url.split('?')[0].match(/\.([a-z0-9]{2,5})$/i)?.[1] ?? '').toLowerCase() || null
+    attachmentUrls.push(url)
+    attachments.push({ url, ext, label, role: classifyAttachmentRole(label, url) })
   })
 
   const bodyText = summary ? summary.slice(0, 1000) : null
-  return { publicationDate, location, attachmentUrls, bodyText, deadline: null, amount: null, eligibility: null }
+  return { publicationDate, location, attachmentUrls, attachments, bodyText, deadline: null, amount: null, eligibility: null }
 }
 
 export interface EnrichedKiesaItem {
@@ -194,4 +229,11 @@ export async function fetchKiesaDetail(url: string, offline?: Record<string, str
 /** Exported wrapper of the SSRF-gated tolerant GET (for shadow/reconciliation). */
 export async function safeTolerantGetPublic(url: string): Promise<{ status: number; body: string; contentType: string }> {
   return safeTolerantGet(url)
+}
+
+/** Binary-safe SSRF-gated fetch of an official attachment. An offline map (url -> bytes)
+ *  short-circuits network access so shadow/tests stay bounded and deterministic. */
+export async function fetchKiesaAttachment(url: string, offline?: Record<string, Buffer>): Promise<{ status: number; buffer: Buffer; contentType: string }> {
+  if (offline && offline[url] != null) return { status: 200, buffer: offline[url], contentType: '' }
+  return safeTolerantGetBinary(url)
 }
