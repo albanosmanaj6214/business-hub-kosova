@@ -43,6 +43,8 @@ export async function POST(req: Request) {
       address,
       activityType,
       employeeCount,
+      turnoverBand,
+      certifications,
       interests,
       role,
       countryOfOperation,
@@ -186,6 +188,7 @@ export async function POST(req: Request) {
           activityType: roleValue === 'DIASPORA' ? null : activityType,
           sectors: roleValue === 'DIASPORA' ? [] : normalisedSectors,
           employeeCount: roleValue === 'DIASPORA' ? null : employeeCount,
+          turnoverBand: (roleValue === 'KOSOVO_BUSINESS' || roleValue === 'STARTUP') && ['UNDER_2M', 'FROM_2M_TO_10M', 'OVER_10M'].includes(turnoverBand) ? turnoverBand : null,
           municipality: roleValue === 'DIASPORA' ? null : (typeof municipality === 'string' && municipality.trim() ? municipality.trim() : null),
           address: roleValue === 'DIASPORA' ? null : (typeof address === 'string' && address.trim() ? address.trim() : null),
           femaleOwnership: typeof femaleOwnership === 'boolean' ? femaleOwnership : null,
@@ -196,6 +199,24 @@ export async function POST(req: Request) {
           interests: interests || [],
         },
       })
+
+
+      // Certifikimet e shenuara ne regjistrim (tick + vit opsional). Kodet e panjohura
+      // injorohen; skadenca vendoset me vone nga profili.
+      if (Array.isArray(certifications) && certifications.length) {
+        const codes = certifications.map((c: any) => c?.code).filter((c: unknown): c is string => typeof c === 'string').slice(0, 60)
+        const found = await prisma.certification.findMany({ where: { code: { in: codes }, isActive: true }, select: { id: true, code: true } })
+        const idByCode = new Map(found.map((f) => [f.code, f.id]))
+        const rows = certifications
+          .filter((c: any) => idByCode.has(c?.code))
+          .map((c: any) => ({
+            companyId: company.id,
+            certificationId: idByCode.get(c.code) as string,
+            obtainedYear: Number.isInteger(c?.obtainedYear) && c.obtainedYear >= 1950 && c.obtainedYear <= 2100 ? c.obtainedYear : null,
+            validUntil: typeof c?.validUntil === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(c.validUntil) ? new Date(c.validUntil + 'T00:00:00Z') : null,
+          }))
+        if (rows.length) await prisma.companyCertification.createMany({ data: rows, skipDuplicates: true })
+      }
 
       if (roleValue === 'STARTUP') {
         await prisma.startupProfile.create({

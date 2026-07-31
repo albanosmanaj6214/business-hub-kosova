@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { CompanyProfileEditor } from '@/components/dashboard/CompanyProfileEditor'
 import { ContactInbox } from '@/components/dashboard/ContactInbox'
+import { CompanyCertifications } from '@/components/dashboard/CompanyCertifications'
 import { Card, CardContent } from '@/components/ui/card'
 import { UserX } from 'lucide-react'
 
@@ -79,6 +80,7 @@ export default async function CompanyProfilePage() {
       </div>
       <ContactInbox />
       <CompanyProfileEditor initial={JSON.parse(JSON.stringify(company))} />
+      {company.roleType !== 'DIASPORA' && <CompanyCertifications sectors={company.sectors ?? []} />}
     </div>
   )
 }

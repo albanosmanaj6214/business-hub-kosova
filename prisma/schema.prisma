@@ -707,9 +707,9 @@ model Company {
   coverImageUrl    String?
   // Produktet/lendet qe biznesi kerkon te bleje (tekst i lire). Ushqen matcher-in
   // vendor (4a/4c) dhe ofertat e diaspores; bosh = pa sinjal blerjeje.
-  productsSought   String[]  @default([])
-  shortDescription String? @db.Text
-  longDescription  String? @db.Text
+  productsSought   String[] @default([])
+  shortDescription String?  @db.Text
+  longDescription  String?  @db.Text
 
   // Kontroll i shiküshmërisë + approval
   visibilityLevel VisibilityLevel @default(PRIVATE)
@@ -725,6 +725,14 @@ model Company {
   // Interesat / lookingFor si string arrays (§1.3, §2). Vlerat: buyer, investor,
   // distributor, importer, partner, service_provider, export/import, industrial_parks etj.
   interests String[] @default([])
+
+  // Brezi i qarkullimit vjetor (vet-deklaruar). Perdoret bashke me employeeCount
+  // per gate-imin e modulit Energjia (>=50 punetore OSE qarkullim >10M EUR) dhe
+  // per kategorizim NVM. Null = nuk ka deklaruar.
+  turnoverBand TurnoverBand?
+
+  // Certifikimet e biznesit (tick/toggle nga katalogu sipas sektorit).
+  certifications CompanyCertification[]
 
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
@@ -911,7 +919,7 @@ model ArbkTemplate {
 // jashte tabelave Company/Offering, qe query-t te mos i terheqin kurre bytes-at.
 model MediaAsset {
   id        String   @id @default(cuid())
-  kind      String   // 'COMPANY_LOGO' | 'OFFERING_IMAGE'
+  kind      String // 'COMPANY_LOGO' | 'OFFERING_IMAGE'
   refId     String
   mime      String
   data      Bytes
@@ -921,7 +929,6 @@ model MediaAsset {
   @@unique([kind, refId])
   @@index([refId])
 }
-
 
 // Njoftimet e Tregut te Energjise (KOSTT/KESCO/KEK/ZRRE). Shfaqen te modulit
 // per bizneset 50+ punetore; ofertat mund te targetohen te prodhuesit.
@@ -941,7 +948,6 @@ model EnergyNotice {
   updatedAt    DateTime  @updatedAt
 }
 
-
 // Çmimet e tregut te energjise (ALPEX/HUPX + oferta furnizuesish). I fut admini,
 // i verifikuar; shfaqen te moduli me trend + lidhje live te bursa.
 model EnergyPrice {
@@ -957,4 +963,65 @@ model EnergyPrice {
   createdById  String?
   deletedAt    DateTime?
   createdAt    DateTime  @default(now())
+}
+
+// ── Certifikimet (katalogu sipas sektorit + certifikimet e kompanise) ─────────
+
+// Brezi i qarkullimit vjetor — brez, jo shifer e sakte (me pak nderhyres).
+enum TurnoverBand {
+  UNDER_2M
+  FROM_2M_TO_10M
+  OVER_10M
+}
+
+// Lloji i certifikimit — pasqyron legjenden e katalogut te miratuar.
+enum CertificationKind {
+  BASE // nder-sektorial (ISO 9001 etj.)
+  KS_MANDATORY // parakusht ligjor ne Kosove (AUV, AKPPM, ZRRE, MMPHI, MINT...)
+  EU_MANDATORY // kusht per qasje ne tregun e BE-se sipas produktit (CE, REACH...)
+  FOOD_SAFETY // siguri ushqimore (HACCP, ISO 22000...)
+  ENVIRONMENT // mjedis / qendrueshmeri (FSC, GOTS, organik...)
+  QUALITY // cilesi / kualifikim (IFS, BRCGS, IATF, SOC 2...)
+  SOCIAL // social / etike (BSCI, Fairtrade...)
+  SECTORAL // sektorial (Halal, TISAX, GI...)
+}
+
+// Nje hyrje e katalogut te certifikimeve. Seed-ohet nga katalogu i miratuar v2;
+// sectors mban slug-et e sektoreve ku eshte relevant (bosh + isCore=true = te gjithe).
+model Certification {
+  id        String            @id @default(cuid())
+  code      String            @unique
+  name      String
+  kind      CertificationKind
+  whySq     String?           @db.Text
+  sectors   String[]          @default([])
+  isCore    Boolean           @default(false)
+  sortOrder Int               @default(0)
+  isActive  Boolean           @default(true)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  companies CompanyCertification[]
+
+  @@index([isActive])
+}
+
+// Certifikimi qe nje kompani deklaron se e ka: viti i marrjes + skadenca.
+// validUntil ushqen kujtuesit e rinovimit dhe greenlight-in e tregjeve.
+model CompanyCertification {
+  id              String    @id @default(cuid())
+  companyId       String
+  certificationId String
+  obtainedYear    Int?
+  validUntil      DateTime?
+  note            String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  company       Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  certification Certification @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, certificationId])
+  @@index([validUntil])
+  @@index([certificationId])
 }

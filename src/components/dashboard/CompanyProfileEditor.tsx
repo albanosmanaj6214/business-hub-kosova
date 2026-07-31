@@ -94,6 +94,7 @@ export function CompanyProfileEditor({ initial }: Props) {
     sectorsOfInterest: initial.diasporaProfile?.sectorsOfInterest ?? [],
     productsSought: initial.diasporaProfile?.productsSought ?? [],
     companyProductsSought: initial.productsSought ?? [],
+    turnoverBand: initial.turnoverBand ?? '',
     productsOffered: initial.diasporaProfile?.productsOffered ?? [],
     purposeSummary: initial.diasporaProfile?.purposeSummary ?? '',
     investmentBudget: initial.diasporaProfile?.investmentBudget ?? '',
@@ -160,6 +161,7 @@ export function CompanyProfileEditor({ initial }: Props) {
         body: JSON.stringify({
           ...form,
           sectors: initial.sectors?.length > 0 ? undefined : form.sectors,
+          turnoverBand: form.turnoverBand === '' ? null : form.turnoverBand,
           startupProfile: undefined,
           diasporaProfile: undefined,
           submitForReview,
@@ -318,6 +320,23 @@ export function CompanyProfileEditor({ initial }: Props) {
                 <option key={b} value={b}>{EMPLOYEE_COUNT_LABEL[b].sq}</option>
               ))}
             </select>
+          </div>
+        )}
+
+        {!isDiaspora && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Qarkullimi vjetor (brez)</label>
+            <select
+              value={form.turnoverBand || ''}
+              onChange={(e) => setForm({ ...form, turnoverBand: e.target.value })}
+              className="flex h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2E86C1]"
+            >
+              <option value="">Nuk dua ta deklaroj</option>
+              <option value="UNDER_2M">Nën 2 milionë €</option>
+              <option value="FROM_2M_TO_10M">2 – 10 milionë €</option>
+              <option value="OVER_10M">Mbi 10 milionë €</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1">Përdoret për module si Energjia dhe kategorizimin NVM. Nuk shfaqet publikisht.</p>
           </div>
         )}
       </Section>

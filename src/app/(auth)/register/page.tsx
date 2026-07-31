@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Loader2, MailCheck, Building2, Rocket, Compass, User as UserIcon } from 'lucide-react'
 import { Wordmark } from '@/components/brand/Wordmark'
 import { SectorPicker } from '@/components/sectors/SectorPicker'
+import { CertificationPicker, type CertItem } from '@/components/certifications/CertificationPicker'
 import { ActivityPicker } from '@/components/sectors/ActivityPicker'
 import { EMPLOYEE_COUNT_BUCKETS, EMPLOYEE_COUNT_LABEL, isEmployeeCount, activityNeedsSector } from '@/lib/employee-count'
 
@@ -49,6 +50,8 @@ export default function RegisterPage() {
     activityType: '',
     employeeCount: '',
     sectors: [] as string[],
+    turnoverBand: '',
+    certifications: [] as CertItem[],
     municipality: '',
     address: '',
     interests: [] as string[],
@@ -115,6 +118,8 @@ export default function RegisterPage() {
           activityType: form.activityType,
           employeeCount: form.employeeCount,
           sectors: activityNeedsSector(form.activityType) ? form.sectors : [],
+          turnoverBand: form.turnoverBand || null,
+          certifications: form.certifications,
           municipality: form.municipality,
           address: form.address,
           countryOfOperation: form.countryOfOperation,
@@ -402,6 +407,34 @@ export default function RegisterPage() {
                 onChange={(next) => setForm({ ...form, sectors: next })}
                 activityType={form.activityType}
               />
+            )}
+
+            {form.role !== 'INDIVIDUAL' && form.role !== 'DIASPORA' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Qarkullimi vjetor (brez)</label>
+                <select
+                  value={form.turnoverBand}
+                  onChange={(e) => setForm({ ...form, turnoverBand: e.target.value })}
+                  className="flex h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#2E86C1] focus:border-transparent"
+                >
+                  <option value="">Nuk dua ta deklaroj</option>
+                  <option value="UNDER_2M">Nën 2 milionë €</option>
+                  <option value="FROM_2M_TO_10M">2 – 10 milionë €</option>
+                  <option value="OVER_10M">Mbi 10 milionë €</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">Ndihmon te modulet si Energjia. Nuk shfaqet publikisht.</p>
+              </div>
+            )}
+
+            {form.role !== 'INDIVIDUAL' && form.role !== 'DIASPORA' && form.sectors.length > 0 && (
+              <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
+                <p className="text-sm font-semibold text-gray-900 mb-3">Certifikimet e biznesit</p>
+                <CertificationPicker
+                  sectors={form.sectors}
+                  value={form.certifications}
+                  onChange={(next) => setForm({ ...form, certifications: next })}
+                />
+              </div>
             )}
 
             {form.role !== 'INDIVIDUAL' && form.role !== 'DIASPORA' && (
