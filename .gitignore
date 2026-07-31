@@ -9,3 +9,4 @@ scripts/backups/
 _*.mjs
 _*.js
 _*.ts
+.next.bak/
