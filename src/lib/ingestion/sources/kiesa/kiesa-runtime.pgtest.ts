@@ -58,15 +58,18 @@ describe('KIESA shadow — listing + detail snapshots, deterministic fields, no 
 })
 
 describe('KIESA field-level reconciliation — read-only vs legacy', () => {
-  it('classifies fields (publicationDate=canonical_improvement, deadline/amount=legacy_only or exact)', async () => {
-    const r = await runKiesaShadow(sourceId, { offlineListing: listing, offlineDetails, maxDetails: 5 })
+  it('compares deterministic fields, reports coverage + human review, stays read-only', async () => {
+    const r = await runKiesaShadow(sourceId, { offlineListing: listing, offlineDetails, maxDetails: 5, extractFields: true })
     myRuns.push(r.importRunId)
     const oppBefore = await prisma.opportunity.count({ where: { sourceId } })
     const recon = await reconcileKiesaFields(sourceId, r.enriched)
     expect(recon.canonicalCount).toBe(r.enriched.length)
-    // publicationDate is deterministically added by canonical
-    expect(recon.fieldSummary.publicationDate?.canonical_improvement ?? 0).toBeGreaterThan(0)
-    // read-only
+    expect(recon.fieldSummary.deadline).toBeDefined()
+    expect(typeof recon.coverageByFormat).toBe('object')
+    expect(typeof recon.fieldsStillUnavailable).toBe('object')
+    expect(Array.isArray(recon.recordsNeedingHumanReview)).toBe(true)
+    expect(Array.isArray(recon.futureAiOcrCandidates)).toBe(true)
+    // read-only — no legacy domain record was created or modified
     expect(await prisma.opportunity.count({ where: { sourceId } })).toBe(oppBefore)
   })
 })

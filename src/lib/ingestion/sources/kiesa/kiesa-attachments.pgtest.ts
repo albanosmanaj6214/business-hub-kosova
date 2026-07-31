@@ -82,6 +82,23 @@ describe('KIESA shadow — official attachment ingestion (deterministic, no doma
     // the legacy .doc is safely NOT parsed (0 extracted chars, but still snapshotted)
     expect(r.attachments.find((a) => a.ext === 'doc')!.extractedChars).toBe(0)
 
+    // DETERMINISTIC fields extracted end-to-end (no AI/OCR); HTML has top precedence
+    const fx = r.enriched[0].fields!
+    expect(fx.deadline.value).toBe('2026-09-15')       // labelled "Afati i aplikimit"
+    expect(fx.deadline.confidence).toBe('EXACT')
+    expect(fx.award.value).toBe(25000)                  // per-applicant maximum, NOT the 500,000 programme budget
+    expect(fx.award.amountType).toBe('maximum_award')
+    expect(fx.amounts.some((a) => a.amountType === 'total_programme_budget' && a.value === 500000)).toBe(true)
+    expect(fx.amounts.some((a) => a.isPercent && a.amountType === 'co_financing_percentage')).toBe(true)
+    expect(fx.eligibilityText.value).toContain('NMVM')
+    expect(fx.requiredDocuments.length).toBeGreaterThanOrEqual(3)
+    expect(fx.applicationChannels.some((c) => c.type === 'email')).toBe(true)
+    expect(r.itemsWithDeterministicFields).toBe(1)
+
+    // DUPLICATE PROVENANCE: identical bytes under two URLs in one item are never collapsed
+    expect(r.duplicateProvenance.length).toBeGreaterThanOrEqual(1)
+    expect(r.duplicateProvenance[0].occurrences.length).toBeGreaterThanOrEqual(2)
+
     // ZERO domain records — shadow only
     expect(r.createdDomainRecords).toBe(0)
     expect(await prisma.opportunity.count({ where: { sourceId } })).toBe(oppBefore)
