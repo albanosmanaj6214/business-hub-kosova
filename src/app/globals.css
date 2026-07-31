@@ -2,14 +2,101 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+  KBH design tokens (Phase 1).
+  Semantic CSS variables consumed through Tailwind (see tailwind.config.ts).
+  Brand stays navy / cobalt; neutrals carry a slight navy bias so they read as
+  chosen, not defaulted. Dark theme is intentionally deferred: tokens are the
+  single source of truth so a dark palette can be added later without touching
+  components.
+*/
 :root {
+  /* Backwards-compatible base (body) */
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Brand */
+  --brand-navy: #1b4f72;
+  --brand-navy-hover: #154360;
+  --brand-cobalt: #2e86c1;
+  --brand-cobalt-hover: #2874a6;
+
+  /* Surfaces + neutrals (slight navy bias) */
+  --color-bg: #f4f7fa;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-sunken: #eef2f6;
+  --color-border: #dde5ec;
+  --color-border-strong: #c6d2dc;
+
+  /* Text */
+  --color-text: #14212b;
+  --color-text-muted: #55636f;
+  --color-text-subtle: #7c8b97;
+  --color-text-inverse: #ffffff;
+
+  /* Actions */
+  --color-primary: var(--brand-navy);
+  --color-primary-hover: var(--brand-navy-hover);
+  --color-primary-fg: #ffffff;
+  --color-primary-soft: #e8eef3;
+  --color-link: var(--brand-cobalt);
+  --color-link-hover: var(--brand-cobalt-hover);
+
+  /* Status: solid / hover / soft-bg / ink-text / border */
+  --color-success: #1c8a56;
+  --color-success-hover: #157048;
+  --color-success-soft: #e6f4ec;
+  --color-success-ink: #145c3a;
+  --color-success-border: #bfe3cc;
+
+  --color-warning: #b4740e;
+  --color-warning-hover: #965f0a;
+  --color-warning-soft: #fbf0da;
+  --color-warning-ink: #7a4e08;
+  --color-warning-border: #ebd8a8;
+
+  --color-danger: #c43d2e;
+  --color-danger-hover: #a12f23;
+  --color-danger-soft: #fbe7e3;
+  --color-danger-ink: #8f281d;
+  --color-danger-border: #f0c4bc;
+
+  --color-info: #2e86c1;
+  --color-info-soft: #e6f1f9;
+  --color-info-ink: #1b4f72;
+  --color-info-border: #bedcef;
+
+  /* Focus */
+  --color-focus: #2e86c1;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
+}
+
+@layer base {
+  /*
+    Baseline visible focus for keyboard users across every interactive element
+    (Phase 0 found focus-visible used only once). Pointer clicks stay clean;
+    only keyboard focus shows the ring.
+  */
+  :where(a, button, [role='button'], input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
 }
 
 @layer utilities {

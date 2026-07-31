@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio'
 import { prisma } from '@/lib/prisma'
+import { normalizeText } from '@/lib/text/normalize'
 
 // Burimet RSS te lajmeve (reale, te verifikuara). Kategori "Ekonomi" ku ekziston,
 // qe lajmet te jene sa me relevante per bizneset. Asgje s'u shkon bizneseve direkt:
@@ -23,19 +24,12 @@ export interface NewsItemInput {
 
 // Heq tag-et HTML nga teksti i nje pershkrimi RSS (qe shpesh permban <p>, <a>, entitete).
 export function stripHtml(html: string): string {
-  return html
+  // Strip tags, then decode entities + strip invisible chars via the shared util.
+  const noTags = html
     .replace(/<script[\s\S]*?<\/script>/gi, ' ')
     .replace(/<style[\s\S]*?<\/style>/gi, ' ')
     .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&#8217;|&#39;/g, '’')
-    .replace(/&#8211;|&#8212;/g, '-')
-    .replace(/&#8220;|&#8221;/g, '"')
-    .replace(/&hellip;/g, '...')
-    .replace(/\s+/g, ' ')
-    .trim()
+  return normalizeText(noTags)
 }
 
 // Parser i paster (pa rrjet, pa DB) qe te testohet ne izolim. Punon per RSS (<item>)
