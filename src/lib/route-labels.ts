@@ -23,6 +23,8 @@ const SEGMENT_LABELS: Record<string, string> = {
   materiale: 'Materiale',
   energji: 'Tregu i Energjisë',
   arbk: 'Regjistrimi dhe ndryshimet',
+  kipa: 'Prona industriale',
+  'siguria-ne-pune': 'Siguria në punë',
   tatime: 'Tatimet dhe deklarimet',
   dogana: 'Dogana dhe dokumentet',
   auv: 'Siguria e ushqimit',

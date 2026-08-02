@@ -76,8 +76,8 @@ describe('navigationForRole — journey-based IA', () => {
   // --- Procedures: concise single labels, no visible subtitle line ---
   it('Procedurat use concise single labels with institutions only in aria-label', () => {
     const proc = section('KOSOVO_BUSINESS', 'Procedurat & pajtueshmëria')!.items
-    expect(proc.map((i) => i.href)).toEqual(['/dashboard/arbk', '/dashboard/tatime', '/dashboard/dogana', '/dashboard/auv', '/dashboard/energji'])
-    expect(proc.map((i) => i.name)).toEqual(['Regjistrimi i biznesit', 'Tatimet', 'Dogana', 'Siguria e ushqimit', 'Tregu i Energjisë'])
+    expect(proc.map((i) => i.href)).toEqual(['/dashboard/arbk', '/dashboard/tatime', '/dashboard/dogana', '/dashboard/auv', '/dashboard/kipa', '/dashboard/siguria-ne-pune', '/dashboard/energji'])
+    expect(proc.map((i) => i.name)).toEqual(['Regjistrimi i biznesit', 'Tatimet', 'Dogana', 'Siguria e ushqimit', 'Prona industriale', 'Siguria në punë', 'Tregu i Energjisë'])
     // No two-line subtitle field is present on any procedure item.
     expect(proc.every((i) => !('subtitle' in i) && !('title' in i))).toBe(true)
     // Institution remains available via the accessible full label.

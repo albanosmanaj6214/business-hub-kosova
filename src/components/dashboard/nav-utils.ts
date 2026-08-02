@@ -11,11 +11,12 @@ export function buildFilterCtx(
   role: string | undefined,
   employeeCount: string | null | undefined,
   entitledSectors: string[] | undefined,
+  turnoverBand?: string | null,
 ): NavFilterCtx {
   const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN'
   return {
     isAdmin,
-    energyOk: isEnergyEligible(employeeCount) || isAdmin,
+    energyOk: isEnergyEligible(employeeCount, turnoverBand) || isAdmin,
     userSectors: entitledSectors ?? [],
   }
 }

@@ -5,8 +5,17 @@
 
 export const ENERGY_ELIGIBLE_BUCKETS: readonly string[] = ['LARGE_50_249', 'XLARGE_250_PLUS']
 
-export function isEnergyEligible(employeeCount: string | null | undefined): boolean {
-  return !!employeeCount && ENERGY_ELIGIBLE_BUCKETS.includes(employeeCount)
+// Ne tregun e hapur te energjise ne Kosove hyjne DY kategori biznesesh: ata me 50+
+// punetore OSE ata me qarkullim vjetor mbi 10M EUR. Mjafton NJERI kriter. Brezi i
+// qarkullimit vjen nga Company.turnoverBand (vet-deklaruar ne regjistrim/profil).
+export const ENERGY_ELIGIBLE_TURNOVER: readonly string[] = ['OVER_10M']
+
+export function isEnergyEligible(
+  employeeCount: string | null | undefined,
+  turnoverBand?: string | null,
+): boolean {
+  if (!!employeeCount && ENERGY_ELIGIBLE_BUCKETS.includes(employeeCount)) return true
+  return !!turnoverBand && ENERGY_ELIGIBLE_TURNOVER.includes(turnoverBand)
 }
 
 // Aktivitetet që trajtohen si "prodhues" për ofertat e drejtpërdrejta.

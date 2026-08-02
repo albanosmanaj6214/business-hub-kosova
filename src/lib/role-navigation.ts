@@ -46,6 +46,8 @@ const ARBK: NavItem = { name: 'Regjistrimi i biznesit', ariaLabel: 'Regjistrimi 
 const ATK: NavItem = { name: 'Tatimet', ariaLabel: 'Tatimet — ATK', href: '/dashboard/tatime', icon: Receipt }
 const DOGANA: NavItem = { name: 'Dogana', ariaLabel: 'Dogana e Kosovës', href: '/dashboard/dogana', icon: FileCheck }
 // AUV: i kushtëzuar nga sektori (ushqim/bujqësi/blegtori/përpunim ushqimor); adminët e shohin gjithmonë.
+const KIPA: NavItem = { name: 'Prona industriale', ariaLabel: 'Prona industriale — KIPA (marka, patenta, dizajni)', href: '/dashboard/kipa', icon: FileText }
+const SIGURIA: NavItem = { name: 'Siguria në punë', ariaLabel: 'Siguria dhe shëndeti në punë — Inspektorati i Punës', href: '/dashboard/siguria-ne-pune', icon: ShieldCheck }
 const AUV: NavItem = { name: 'Siguria e ushqimit', ariaLabel: 'Siguria e ushqimit — AUV', href: '/dashboard/auv', icon: Leaf, forSectors: ['ushqim-dhe-pije', 'bujqesi-blegtori'] }
 // Tregu i Energjisë: vetëm biznese të kualifikuara (50+ punonjës) dhe adminët.
 const ENERGY: NavItem = { name: 'Tregu i Energjisë', href: '/dashboard/energji', icon: Zap, energyOnly: true }
@@ -74,7 +76,7 @@ const KOSOVO_BUSINESS: NavSection[] = [
   { label: 'Mundësi', items: [FINANCE, FAIRS] },
   { label: 'Tregu & partnerët', items: [MATCH, NETWORK, RFQ] },
   { label: 'Eksporti', items: EKSPORTI_ITEMS },
-  { label: 'Procedurat & pajtueshmëria', items: [ARBK, ATK, DOGANA, AUV, ENERGY] },
+  { label: 'Procedurat & pajtueshmëria', items: [ARBK, ATK, DOGANA, AUV, KIPA, SIGURIA, ENERGY] },
   { label: 'Mbështetje', items: [NEWS, NOTIF, CONSULT] },
 ]
 
@@ -90,7 +92,7 @@ const STARTUP: NavSection[] = [
   ]},
   { label: 'Mundësi', items: [FINANCE, FAIRS] },
   { label: 'Tregu & partnerët', items: [MATCH, NETWORK, RFQ] },
-  { label: 'Procedurat & pajtueshmëria', items: [ARBK, ATK, DOGANA, AUV] },
+  { label: 'Procedurat & pajtueshmëria', items: [ARBK, ATK, DOGANA, AUV, KIPA, SIGURIA] },
   { label: 'Mbështetje', items: [NOTIF, CONSULT] },
 ]
 
@@ -110,7 +112,7 @@ const DIASPORA: NavSection[] = [
     FAIRS,
   ]},
   { label: 'Tregu & partnerët', items: [MATCH, NETWORK, RFQ] },
-  { label: 'Procedurat & pajtueshmëria', items: [ARBK, ATK, DOGANA, AUV] },
+  { label: 'Procedurat & pajtueshmëria', items: [ARBK, ATK, DOGANA, AUV, KIPA, SIGURIA] },
   { label: 'Mbështetje', items: [NEWS, NOTIF, CONSULT] },
 ]
 
@@ -121,7 +123,7 @@ const INDIVIDUAL: NavSection[] = [
   { label: 'Kryesore', items: [
     { name: 'Përmbledhja', href: '/dashboard', icon: LayoutDashboard },
   ]},
-  { label: 'Procedurat & pajtueshmëria', items: [ARBK, ATK, DOGANA, AUV] },
+  { label: 'Procedurat & pajtueshmëria', items: [ARBK, ATK, DOGANA, AUV, KIPA, SIGURIA] },
   { label: 'Mbështetje', items: [NEWS, NOTIF, CONSULT] },
 ]
 

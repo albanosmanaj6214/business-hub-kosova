@@ -49,7 +49,7 @@ export async function loadDashboardData(opts: { userId?: string; role: DashRole;
       ? prisma.company.findUnique({
           where: { ownerUserId: userId },
           select: {
-            id: true, name: true, roleType: true, profileStatus: true, activityType: true, sectors: true,
+            id: true, name: true, roleType: true, profileStatus: true, activityType: true, sectors: true, turnoverBand: true,
             municipality: true, logoUrl: true, shortDescription: true, email: true, phone: true, website: true, contactPerson: true,
             diasporaProfile: { select: { countryOfOperation: true, city: true, subRoles: true, productsSought: true, sectorsOfInterest: true } },
             startupProfile: { select: { stage: true, needs: true, intendedLegalForm: true } },
@@ -63,7 +63,7 @@ export async function loadDashboardData(opts: { userId?: string; role: DashRole;
 
   const bp = profileRaw ?? { activityType: null, entitledSectors: [] as string[], femaleOwnership: null }
   const sectors = bp.entitledSectors
-  const energyOk = isEnergyEligible(opts.employeeCount) || isAdmin
+  const energyOk = isEnergyEligible(opts.employeeCount, company?.turnoverBand) || isAdmin
   const companyLite = company as CompanyLite | null
   const commercialRole = resolveCommercialRole(role, bp.activityType, companyLite?.diasporaProfile?.subRoles ?? [])
 

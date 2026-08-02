@@ -13,6 +13,8 @@ import { arbkTemplateLabel } from '@/lib/arbk-templates'
 export const dynamic = 'force-dynamic'
 
 import { fullAccessForSession } from '@/lib/guide-access'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 
 const LAST_VERIFIED = '2026-06-15'
@@ -587,6 +589,22 @@ export default async function ARBKGuidePage() {
   const fullAccess = await fullAccessForSession()
   const uploaded = await prisma.arbkTemplate.findMany({ select: { key: true } })
   const availableTemplates = new Set(uploaded.map((t) => t.key))
+
+  // Biznes tashme i regjistruar (KOSOVO_BUSINESS, ose STARTUP i regjistruar)?
+  // Per ta, seksioni "si hapet biznesi" s'ka kuptim si kryesor: u shfaqen NDRYSHIMET
+  // te parat dhe procedurat e regjistrimit palosen me poshte.
+  const session = await getServerSession(authOptions)
+  const uid = (session?.user as { id?: string } | undefined)?.id
+  const own = uid
+    ? await prisma.company.findUnique({
+        where: { ownerUserId: uid },
+        select: { roleType: true, startupProfile: { select: { stage: true } } },
+      })
+    : null
+  const isRegisteredBusiness =
+    own?.roleType === 'KOSOVO_BUSINESS' ||
+    (own?.roleType === 'STARTUP' &&
+      ['REGISTERED_NO_REVENUE', 'EARLY_REVENUE', 'GROWING'].includes(own?.startupProfile?.stage ?? ''))
   return (
     <div className="space-y-6">
       <div className="space-y-4">
@@ -730,6 +748,8 @@ export default async function ARBKGuidePage() {
         </Card>
       </section>
 
+      {/* Bizneset e regjistruara shohin NDRYSHIMET te parat; hapja palosen. */}
+      {!isRegisteredBusiness && (
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold text-gray-900">Regjistrimi i biznesit — 6 forma ligjore</h2>
@@ -744,6 +764,7 @@ export default async function ARBKGuidePage() {
           {REGISTRIME.map((p, i) => fullAccess || i < 2 ? <ProcedureCard key={p.title} p={p} available={availableTemplates} /> : <LockedCard key={p.title} title={p.title} summary={p.intro} />)}
         </div>
       </section>
+      )}
 
       <section>
         <div className="flex items-center justify-between mb-3">
@@ -759,6 +780,30 @@ export default async function ARBKGuidePage() {
           {NDRYSHIMET.map((p, i) => fullAccess || i < 2 ? <ProcedureCard key={p.title} p={p} available={availableTemplates} /> : <LockedCard key={p.title} title={p.title} summary={p.intro} />)}
         </div>
       </section>
+
+      {isRegisteredBusiness && (
+        <details className="rounded-xl border border-gray-200 bg-white px-5 py-4">
+          <summary className="cursor-pointer text-sm font-semibold text-gray-900">
+            Procedurat e hapjes së një biznesi të ri (6 forma ligjore) — biznesi yt është tashmë i regjistruar; hapi këtë vetëm nëse planifikon subjekt të ri
+          </summary>
+          <div className="mt-4">
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold text-gray-900">Regjistrimi i biznesit — 6 forma ligjore</h2>
+          <span className="text-xs text-gray-500">{REGISTRIME.length} procedura</span>
+        </div>
+        <p className="text-sm text-gray-600 mb-4 max-w-3xl leading-relaxed">
+          Zgjidhja e formës ligjore është vendimi më i rëndësishëm në fillim. Ndikon në atë se sa
+          përgjigjesh personalisht, sa taksa paguan, dhe sa lehtë mund të tërheqësh investime më vonë.
+          Ja gjashtë format kryesore, të renditura nga më e thjeshta te më e komplikuara.
+        </p>
+        <div className="space-y-2">
+          {REGISTRIME.map((p, i) => fullAccess || i < 2 ? <ProcedureCard key={p.title} p={p} available={availableTemplates} /> : <LockedCard key={p.title} title={p.title} summary={p.intro} />)}
+        </div>
+      </section>
+          </div>
+        </details>
+      )}
 
       <section>
         <h2 className="text-lg font-semibold text-gray-900 mb-3">NACE Codes — klasifikimi i aktivitetit</h2>

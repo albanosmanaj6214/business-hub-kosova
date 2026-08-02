@@ -17,13 +17,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   // Server-side data for the shell badges: real unread count + profile completion.
   const [company, unreadCount] = await Promise.all([
-    prisma.company.findUnique({ where: { ownerUserId: userId }, select: COMPLETION_SELECT }),
+    prisma.company.findUnique({ where: { ownerUserId: userId }, select: { ...COMPLETION_SELECT, turnoverBand: true } }),
     prisma.notification.count({ where: { userId, isRead: false } }),
   ])
   const profilePct = company ? profileCompletion(company) : null
 
   return (
-    <DashboardShell unreadCount={unreadCount} profilePct={profilePct}>
+    <DashboardShell unreadCount={unreadCount} profilePct={profilePct} turnoverBand={company?.turnoverBand ?? null}>
       {children}
     </DashboardShell>
   )

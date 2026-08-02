@@ -23,7 +23,8 @@ export default async function EnergyMarketPage() {
   if (!u?.id) redirect('/login')
 
   const isAdmin = u.role === 'ADMIN' || u.role === 'SUPER_ADMIN'
-  const eligible = isEnergyEligible(u.employeeCount) || isAdmin
+  const ownCompany = await prisma.company.findUnique({ where: { ownerUserId: u.id }, select: { turnoverBand: true } })
+  const eligible = isEnergyEligible(u.employeeCount, ownCompany?.turnoverBand) || isAdmin
 
   // Jo i kualifikuar: mesazh miqësor, jo 404. Moduli hapet automatikisht kur zgjerohet.
   if (!eligible) {

@@ -26,9 +26,10 @@ interface Props {
   children: React.ReactNode
   unreadCount?: number
   profilePct?: number | null
+  turnoverBand?: string | null
 }
 
-export function DashboardShell({ children, unreadCount = 0, profilePct = null }: Props) {
+export function DashboardShell({ children, unreadCount = 0, profilePct = null, turnoverBand = null }: Props) {
   const pathname = usePathname()
   const { data: session } = useSession()
   const user = session?.user as
@@ -39,7 +40,7 @@ export function DashboardShell({ children, unreadCount = 0, profilePct = null }:
   const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN'
   const roleLabel = (role && ROLE_LABELS[role]) || 'Përdorues'
 
-  const ctx = buildFilterCtx(role, user?.employeeCount, user?.entitledSectors)
+  const ctx = buildFilterCtx(role, user?.employeeCount, user?.entitledSectors, turnoverBand)
   const sections = filterSections(navigationForRole(role), ctx)
 
   const [collapsed, setCollapsed] = useState(false)
