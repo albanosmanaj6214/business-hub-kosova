@@ -56,6 +56,7 @@ const ENERGY: NavItem = { name: 'Tregu i Energjisë', href: '/dashboard/energji'
 // të zgjerueshëm. "Eksporti" është destinacion normal i klikueshëm. Rrugët ruhen.
 const EKSPORTI_ITEMS: NavItem[] = [
   { name: 'Eksporti', href: '/dashboard/eksporti', icon: BookOpen },
+  { name: 'Atlasi i tregjeve', href: '/dashboard/atlasi', icon: Compass },
   { name: 'Tregjet', href: '/dashboard/guides', icon: Globe },
   { name: 'HS Code', href: '/dashboard/terma/hs-code', icon: Barcode },
   { name: 'Certifikimet', href: '/dashboard/certifikime', icon: ShieldCheck },

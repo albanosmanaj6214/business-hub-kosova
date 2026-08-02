@@ -1025,3 +1025,47 @@ model CompanyCertification {
   @@index([validUntil])
   @@index([certificationId])
 }
+
+// ── Atlasi i Eksportit: te dhena tregu 100% te cituara ────────────────────────
+// RREGULLI I KREDIBILITETIT: cdo shifer ruhet me vitin, burimin, dataset-in dhe
+// daten e marrjes, dhe SHFAQET me to. Nje treg publikohet vetem kur eshte
+// VERIFIED; pa te dhena te verifikuara faqja thote "ne verifikim" — kurre placeholder.
+
+enum MarketDataStatus {
+  PENDING_VERIFICATION
+  VERIFIED
+}
+
+// Profili statik i nje tregu (fakte jo-numerike te verifikueshme publikisht).
+model MarketProfile {
+  id              String           @id @default(cuid())
+  countryCode     String           @unique // ISO 3166-1 alpha-2; lidhet me ExportGuide.countryCode
+  status          MarketDataStatus @default(PENDING_VERIFICATION)
+  tradeAgreement  String? // p.sh. 'CEFTA', 'MSA me BE-ne' — me burim
+  agreementSource String? // burimi i marreveshjes (URL zyrtare)
+  currency        String?
+  notes           String?          @db.Text
+  verifiedAt      DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+// Nje vlere statistikore e nje tregu. sectorSlug '' = statistike e pergjithshme
+// (popullsia, GDP); ndryshe slug-u i sektorit (importet e sektorit).
+model MarketStat {
+  id            String   @id @default(cuid())
+  countryCode   String
+  kind          String // 'POPULATION' | 'GDP_PER_CAPITA' | 'SECTOR_IMPORTS'
+  sectorSlug    String   @default("")
+  value         Decimal  @db.Decimal(20, 4)
+  unit          String // 'persons' | 'EUR' | 'EUR_M'
+  year          Int
+  sourceName    String // 'Eurostat' | 'UN Comtrade' | 'World Bank'
+  sourceDataset String // kodi i dataset-it, p.sh. 'tps00001'
+  sourceUrl     String?
+  retrievedAt   DateTime // data e marrjes — shfaqet si "kontrolluar me ..."
+  createdAt     DateTime @default(now())
+
+  @@unique([countryCode, kind, sectorSlug, year, sourceDataset])
+  @@index([countryCode, kind])
+}

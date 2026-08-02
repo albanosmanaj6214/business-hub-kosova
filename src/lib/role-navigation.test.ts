@@ -11,6 +11,7 @@ const hrefsIn = (role: string, label: string) => (section(role, label)?.items ??
 
 const EXPORT_HREFS = [
   '/dashboard/eksporti',
+  '/dashboard/atlasi',
   '/dashboard/guides',
   '/dashboard/terma/hs-code',
   '/dashboard/certifikime',
@@ -32,10 +33,10 @@ describe('navigationForRole — journey-based IA', () => {
   })
 
   // --- Export is a FLAT section (no expandable parent, no "Përmbledhja") ---
-  it('Eksporti is a flat section with six direct destinations in order', () => {
+  it('Eksporti is a flat section with seven direct destinations in order', () => {
     const items = section('KOSOVO_BUSINESS', 'Eksporti')!.items
     expect(items.map((i) => i.name)).toEqual([
-      'Eksporti', 'Tregjet', 'HS Code', 'Certifikimet', 'Termet e eksportit', 'Transporti',
+      'Eksporti', 'Atlasi i tregjeve', 'Tregjet', 'HS Code', 'Certifikimet', 'Termet e eksportit', 'Transporti',
     ])
     expect(items.map((i) => i.href)).toEqual(EXPORT_HREFS)
   })
@@ -112,7 +113,7 @@ describe('navigationForRole — journey-based IA', () => {
     const flat = flattenNav(navigationForRole('KOSOVO_BUSINESS'))
     expect(flat.every((i) => i.href?.startsWith('/dashboard'))).toBe(true)
     const hrefs = flat.map((i) => i.href)
-    for (const h of ['/dashboard/eksporti', '/dashboard/guides', '/dashboard/terma', '/dashboard/terma/hs-code', '/dashboard/eksporti/transporti', '/dashboard/arbk', '/dashboard/auv', '/dashboard/directory']) {
+    for (const h of ['/dashboard/eksporti', '/dashboard/atlasi', '/dashboard/guides', '/dashboard/terma', '/dashboard/terma/hs-code', '/dashboard/eksporti/transporti', '/dashboard/arbk', '/dashboard/auv', '/dashboard/directory']) {
       expect(hrefs).toContain(h)
     }
   })

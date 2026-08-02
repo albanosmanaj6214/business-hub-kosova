@@ -22,6 +22,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   fairs: 'Panaire dhe ngjarje',
   materiale: 'Materiale',
   energji: 'Tregu i Energjisë',
+  atlasi: 'Atlasi i tregjeve',
   arbk: 'Regjistrimi dhe ndryshimet',
   kipa: 'Prona industriale',
   'siguria-ne-pune': 'Siguria në punë',
