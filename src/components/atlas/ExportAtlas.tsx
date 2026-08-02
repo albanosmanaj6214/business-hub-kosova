@@ -40,7 +40,9 @@ export function ExportAtlas({ guides, stats, sectorStats, fairs, fullAccess, def
 }) {
   const [selected, setSelected] = useState<string | null>('DE')
   const [view, setView] = useState<'europe' | 'world'>('europe')
-  const [sector, setSector] = useState<string>(GOODS_SECTORS.has(defaultSector) ? defaultSector : '')
+  // Sektori vjen AUTOMATIKISHT nga profili i biznesit — perdoruesi s'zgjedh sektor,
+  // vetem shtete. Sherbimet/pa-sektor -> ngjyrosje sipas fuqise blerese (GDP).
+  const sector = GOODS_SECTORS.has(defaultSector) ? defaultSector : ''
   const [euroVB, setEuroVB] = useState<string | null>(null)
   const euroRef = useRef<SVGGElement | null>(null)
 
@@ -112,38 +114,24 @@ export function ExportAtlas({ guides, stats, sectorStats, fairs, fullAccess, def
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Atlasi i Eksportit</h1>
         <p className="text-gray-500 mt-1 max-w-3xl">
-          {guides.length} tregje me udhëzues — kliko një shtet dhe informatat i sheh anash. Zgjidh
-          sektorin: harta ringjyroset sipas importeve reale të atij sektori (Eurostat Comext). Vendet
+          {guides.length} tregje me udhëzues — kliko një shtet dhe informatat i sheh anash. Vendet
           gri kanë të dhëna në verifikim — s&apos;shfaqim asnjë shifër të paverifikuar.
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-1.5">
-        <button
-          type="button"
-          onClick={() => setSector('')}
-          className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition ${sector === '' ? 'bg-[#1B4F72] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-[#2E86C1]'}`}
-        >
-          Fuqia blerëse
-        </button>
-        {SECTORS.map((s) => (
-          <button
-            key={s.slug}
-            type="button"
-            onClick={() => setSector(s.slug)}
-            title={GOODS_SECTORS.has(s.slug) ? `Importet e sektorit: ${s.sq}` : `${s.sq} — sektor shërbimesh, matet ndryshe (së shpejti)`}
-            className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition ${sector === s.slug ? 'bg-[#1B4F72] text-white' : GOODS_SECTORS.has(s.slug) ? 'bg-white border border-gray-200 text-gray-600 hover:border-[#2E86C1]' : 'bg-gray-50 border border-dashed border-gray-200 text-gray-400'}`}
-          >
-            {s.sq}
-          </button>
-        ))}
-      </div>
-      {sector !== '' && !goodsSector && (
-        <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-          {sectorDef?.sq} është sektor shërbimesh — nuk matet me importe mallrash. Statistikat e
-          shërbimeve vijnë në fazë të ardhshme; harta tregon fuqinë blerëse të përgjithshme.
+      {goodsSector ? (
+        <p className="text-sm text-gray-600 -mt-3">
+          Harta është e personalizuar automatikisht për sektorin tënd:{' '}
+          <span className="font-semibold text-[#1B4F72]">{sectorDef?.sq}</span> — ngjyrat tregojnë sa
+          importon çdo treg nga sektori yt (Eurostat Comext).
         </p>
-      )}
+      ) : defaultSector ? (
+        <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 -mt-3 max-w-3xl">
+          Sektori yt ({SECTORS.find((s) => s.slug === defaultSector)?.sq ?? defaultSector}) është sektor
+          shërbimesh dhe nuk matet me importe mallrash — harta tregon fuqinë blerëse të përgjithshme.
+          Statistikat e shërbimeve vijnë në fazë të ardhshme.
+        </p>
+      ) : null}
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-5 items-start">
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
