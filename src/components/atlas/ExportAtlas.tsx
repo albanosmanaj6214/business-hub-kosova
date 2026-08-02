@@ -1,16 +1,20 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import NextLink from 'next/link'
+import dynamic from 'next/dynamic'
 import { Lock, ExternalLink, CalendarDays, TrendingUp, TrendingDown } from 'lucide-react'
 import { SECTORS } from '@/lib/sectors'
-import { WORLD_PATHS, WORLD_VIEWBOX } from './world-paths'
 
-// Atlasi i Eksportit — hartë gjeografike reale + filtri sipas sektorit (Faza 1b).
-// Ngjyrosja: pa sektor = GDP/banor (Eurostat); me sektor mallrash = importet REALE të
-// atij sektori (Eurostat Comext, Harta 1 e miratuar sektor→CN). Sektorët e shërbimeve
-// nuk maten me importe mallrash — shënohet hapur. Vend/sektor pa të dhëna = "në
-// verifikim", kurrë vlerë e improvizuar.
+// Atlasi i Eksportit — hartë Leaflet + OpenStreetMap (zoom/pan i lirë, si KTC), me
+// poligonet e 66 tregjeve të ngjyrosura sipas të dhënave REALE. Sektori vjen
+// AUTOMATIKISHT nga profili i biznesit; përdoruesi zgjedh vetëm shtete. Vend/sektor pa
+// të dhëna të verifikuara = "në verifikim" — kurrë vlerë e improvizuar.
+
+const AtlasLeafletMap = dynamic(() => import('./AtlasLeafletMap').then((m) => m.AtlasLeafletMap), {
+  ssr: false,
+  loading: () => <div className="w-full rounded-xl bg-gray-100 animate-pulse" style={{ height: 'min(72vh, 640px)', minHeight: '440px' }} />,
+})
 
 export interface AtlasGuide { id: string; country: string; countryCode: string; title: string }
 export interface AtlasStat {
@@ -24,13 +28,10 @@ export interface AtlasSectorStat {
 }
 export interface AtlasFair { name: string; country: string; startDate: string }
 
-const EUROPE = new Set(['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IS','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE','CH','NO','GB','TR','RS','MK','ME','AL','BA','MD','XK'])
-// Sektorët që maten me importe mallrash (Harta 1 e miratuar). Të tjerët = shërbime.
 const GOODS_SECTORS = new Set(['ushqim-dhe-pije','bujqesi-blegtori','tekstil-konfeksion','lekure-kepuce','druri-mobilje','leter-paketim','plastika-goma','kimi-kozmetike','farmaceutike-mjekesore','metale-makineri','pajisje-elektrike','ndertim-materiale','artizanat-kreative'])
-const TIER_FILL = ['#DBEAFE', '#93C5FD', '#3B82F6', '#1B4F72']
-const NO_DATA_FILL = '#E5E7EB'
+const TIER_FILL = ['#BFDBFE', '#60A5FA', '#2563EB', '#1B4F72']
+const NO_DATA_FILL = '#D1D5DB'
 
-const flag = (c: string) => String.fromCodePoint(...Array.from(c).map((ch) => 127397 + ch.charCodeAt(0)))
 const fmtNum = (v: number) => v >= 1_000_000 ? (v / 1_000_000).toFixed(1) + ' M' : v.toLocaleString('sq-AL')
 const fmtEur = (v: number) => v >= 1e9 ? '€' + (v / 1e9).toFixed(1) + ' mld' : v >= 1e6 ? '€' + (v / 1e6).toFixed(0) + ' mln' : '€' + Math.round(v).toLocaleString('sq-AL')
 
@@ -39,12 +40,7 @@ export function ExportAtlas({ guides, stats, sectorStats, fairs, fullAccess, def
   fullAccess: boolean; defaultSector?: string
 }) {
   const [selected, setSelected] = useState<string | null>('DE')
-  const [view, setView] = useState<'europe' | 'world'>('europe')
-  // Sektori vjen AUTOMATIKISHT nga profili i biznesit — perdoruesi s'zgjedh sektor,
-  // vetem shtete. Sherbimet/pa-sektor -> ngjyrosje sipas fuqise blerese (GDP).
   const sector = GOODS_SECTORS.has(defaultSector) ? defaultSector : ''
-  const [euroVB, setEuroVB] = useState<string | null>(null)
-  const euroRef = useRef<SVGGElement | null>(null)
 
   const guideByCode = useMemo(() => new Map(guides.map((g) => [g.countryCode, g])), [guides])
   const statBy = useMemo(() => {
@@ -68,7 +64,7 @@ export function ExportAtlas({ guides, stats, sectorStats, fairs, fullAccess, def
     }
   }, [stats, statBy])
 
-  const goodsSector = sector !== '' && GOODS_SECTORS.has(sector)
+  const goodsSector = sector !== ''
   const sectorTier = useMemo(() => {
     if (!goodsSector) return () => -1
     const vals = sectorStats.filter((s) => s.sector === sector).map((s) => s.latestValue).sort((a, b) => a - b)
@@ -80,26 +76,16 @@ export function ExportAtlas({ guides, stats, sectorStats, fairs, fullAccess, def
     }
   }, [goodsSector, sector, sectorStats, secBy])
 
-  useEffect(() => {
-    if (euroRef.current && !euroVB) {
-      try {
-        const b = euroRef.current.getBBox()
-        setEuroVB(`${b.x - 25} ${b.y - 25} ${b.width + 50} ${b.height + 50}`)
-      } catch { /* para mount-it */ }
+  const colorFor = useMemo(() => {
+    return (code: string): string => {
+      const t = goodsSector ? sectorTier(code) : gdpTier(code)
+      return t === -1 ? NO_DATA_FILL : TIER_FILL[t]
     }
-  }, [euroVB])
+  }, [goodsSector, sectorTier, gdpTier])
 
-  const codes = useMemo(() => {
-    const cs = Object.keys(WORLD_PATHS).filter((c) => c === 'XK' || guideByCode.has(c))
-    return cs.sort((a, b) => (a === 'XK' ? 1 : b === 'XK' ? -1 : a.localeCompare(b)))
+  const nameFor = useMemo(() => {
+    return (code: string): string => code === 'XK' ? 'Kosova (shtëpia)' : guideByCode.get(code)?.country ?? code
   }, [guideByCode])
-  const visible = view === 'europe' ? codes.filter((c) => EUROPE.has(c)) : codes
-
-  function fillFor(code: string): string {
-    if (code === 'XK') return '#FFFFFF'
-    const t = goodsSector ? sectorTier(code) : gdpTier(code)
-    return t === -1 ? NO_DATA_FILL : TIER_FILL[t]
-  }
 
   const sel = selected ? guideByCode.get(selected) : null
   const pop = selected ? statBy.get(`${selected}|POPULATION`) : null
@@ -110,23 +96,23 @@ export function ExportAtlas({ guides, stats, sectorStats, fairs, fullAccess, def
   const trendPct = selSec && selSec.baseValue ? ((selSec.latestValue - selSec.baseValue) / selSec.baseValue) * 100 : null
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Atlasi i Eksportit</h1>
         <p className="text-gray-500 mt-1 max-w-3xl">
-          {guides.length} tregje me udhëzues — kliko një shtet dhe informatat i sheh anash. Vendet
-          gri kanë të dhëna në verifikim — s&apos;shfaqim asnjë shifër të paverifikuar.
+          {guides.length} tregje me udhëzues — zmadho, lëviz dhe kliko një shtet; informatat i sheh
+          anash. Vendet gri kanë të dhëna në verifikim — s&apos;shfaqim asnjë shifër të paverifikuar.
         </p>
       </div>
 
       {goodsSector ? (
-        <p className="text-sm text-gray-600 -mt-3">
+        <p className="text-sm text-gray-600 -mt-2">
           Harta është e personalizuar automatikisht për sektorin tënd:{' '}
           <span className="font-semibold text-[#1B4F72]">{sectorDef?.sq}</span> — ngjyrat tregojnë sa
           importon çdo treg nga sektori yt (Eurostat Comext).
         </p>
       ) : defaultSector ? (
-        <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 -mt-3 max-w-3xl">
+        <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 -mt-2 max-w-3xl">
           Sektori yt ({SECTORS.find((s) => s.slug === defaultSector)?.sq ?? defaultSector}) është sektor
           shërbimesh dhe nuk matet me importe mallrash — harta tregon fuqinë blerëse të përgjithshme.
           Statistikat e shërbimeve vijnë në fazë të ardhshme.
@@ -134,64 +120,12 @@ export function ExportAtlas({ guides, stats, sectorStats, fairs, fullAccess, def
       ) : null}
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-5 items-start">
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-3">
-            {(['europe', 'world'] as const).map((v) => (
-              <button
-                key={v}
-                type="button"
-                onClick={() => setView(v)}
-                className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${view === v ? 'bg-[#1B4F72] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-              >
-                {v === 'europe' ? 'Evropa' : 'Bota'}
-              </button>
-            ))}
-            <span className="ml-auto text-[11px] text-gray-400 hidden sm:block">
-              {goodsSector ? `Ngjyra: importet e "${sectorDef?.sq}" (Comext)` : 'Ngjyra: GDP/banor (Eurostat)'}
-            </span>
-          </div>
-
-          <svg
-            viewBox={view === 'europe' && euroVB ? euroVB : WORLD_VIEWBOX}
-            className="w-full h-auto rounded-xl"
-            style={{ background: '#F0F6FB', maxHeight: '540px' }}
-            role="img"
-            aria-label="Harta e tregjeve të eksportit"
-          >
-            <g ref={euroRef} opacity={0} pointerEvents="none">
-              {codes.filter((c) => EUROPE.has(c)).map((c) => (
-                <path key={`m-${c}`} d={WORLD_PATHS[c]} />
-              ))}
-            </g>
-            {visible.map((code) => {
-              const g = guideByCode.get(code)
-              const name = code === 'XK' ? 'Kosova (shtëpia)' : g?.country ?? code
-              const isSel = selected === code
-              return (
-                <path
-                  key={code}
-                  d={WORLD_PATHS[code]}
-                  fill={fillFor(code)}
-                  stroke={code === 'XK' ? '#E11D48' : isSel ? '#2E86C1' : '#FFFFFF'}
-                  strokeWidth={code === 'XK' ? 1.6 : isSel ? 2.2 : 0.7}
-                  strokeDasharray={code === 'XK' ? '3 2' : undefined}
-                  className={code === 'XK' ? '' : 'cursor-pointer transition-opacity hover:opacity-80 focus:outline-none'}
-                  tabIndex={code === 'XK' ? -1 : 0}
-                  role={code === 'XK' ? undefined : 'button'}
-                  aria-label={name}
-                  onClick={() => code !== 'XK' && setSelected(code)}
-                  onKeyDown={(e) => { if (code !== 'XK' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); setSelected(code) } }}
-                >
-                  <title>{name}</title>
-                </path>
-              )
-            })}
-          </svg>
-
-          <div className="flex flex-wrap gap-4 mt-3 text-[11.5px] text-gray-500">
+        <div className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm">
+          <AtlasLeafletMap colorFor={colorFor} selected={selected} onSelect={setSelected} nameFor={nameFor} />
+          <div className="flex flex-wrap gap-4 mt-3 px-1 text-[11.5px] text-gray-500">
             <span><i className="inline-block w-3 h-3 rounded align-[-1px] mr-1" style={{ background: '#1B4F72' }} />{goodsSector ? 'Importe të larta' : 'Fuqi blerëse e lartë'}</span>
-            <span><i className="inline-block w-3 h-3 rounded align-[-1px] mr-1" style={{ background: '#DBEAFE', border: '1px solid #93C5FD' }} />Më të ulëta</span>
-            <span><i className="inline-block w-3 h-3 rounded align-[-1px] mr-1" style={{ background: '#E5E7EB' }} />Të dhëna në verifikim</span>
+            <span><i className="inline-block w-3 h-3 rounded align-[-1px] mr-1" style={{ background: '#BFDBFE', border: '1px solid #60A5FA' }} />Më të ulëta</span>
+            <span><i className="inline-block w-3 h-3 rounded align-[-1px] mr-1" style={{ background: '#D1D5DB' }} />Të dhëna në verifikim</span>
             <span><i className="inline-block w-3 h-3 rounded align-[-1px] mr-1" style={{ border: '1.5px dashed #E11D48' }} />Kosova</span>
           </div>
         </div>
@@ -201,7 +135,7 @@ export function ExportAtlas({ guides, stats, sectorStats, fairs, fullAccess, def
             <p className="text-sm text-gray-500 text-center py-10">← Kliko një shtet në hartë</p>
           ) : !fullAccess ? (
             <div className="text-center py-8">
-              <span className="text-4xl">{flag(sel.countryCode)}</span>
+              <span className="inline-flex h-10 w-14 items-center justify-center rounded-md bg-[#1B4F72] text-white text-base font-black">{sel.countryCode}</span>
               <h2 className="text-lg font-bold text-gray-900 mt-2">{sel.country}</h2>
               <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-5">
                 <Lock className="h-6 w-6 text-gray-400 mx-auto mb-2" />
@@ -215,7 +149,7 @@ export function ExportAtlas({ guides, stats, sectorStats, fairs, fullAccess, def
           ) : (
             <div>
               <div className="flex items-center gap-2.5 mb-1">
-                <span className="text-3xl leading-none">{flag(sel.countryCode)}</span>
+                <span className="inline-flex h-8 w-11 flex-none items-center justify-center rounded-md bg-[#1B4F72] text-white text-sm font-black">{sel.countryCode}</span>
                 <h2 className="text-xl font-bold text-gray-900">{sel.country}</h2>
               </div>
 
@@ -288,8 +222,8 @@ export function ExportAtlas({ guides, stats, sectorStats, fairs, fullAccess, def
       <p className="text-xs text-gray-400 border-t border-gray-100 pt-3">
         Burimet: Eurostat (tps00001 — popullsia; tec00001 — GDP/banor) dhe Eurostat Comext (DS-045409 —
         importet vjetore sipas kapitujve CN, hartëzimi sektor→CN i miratuar). Çdo shifër shfaqet me vitin
-        dhe datën e marrjes. Harta: BlankMap-World6, Wikimedia Commons (domen publik). Tregjet pa të
-        dhëna të verifikuara nuk marrin vlerësime të improvizuara.
+        dhe datën e marrjes. Harta: © OpenStreetMap contributors; kufijtë: Natural Earth (domen publik).
+        Tregjet pa të dhëna të verifikuara nuk marrin vlerësime të improvizuara.
       </p>
     </div>
   )

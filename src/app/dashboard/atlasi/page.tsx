@@ -16,7 +16,7 @@ export default async function AtlasiPage() {
 
   const fullAccess = await fullAccessForSession()
 
-  const [guides, statsRaw, sectorRaw, fairsRaw, ownCompany] = await Promise.all([
+  const [guides, statsRaw, sectorRaw, fairsRaw, ownCompany, ownUser] = await Promise.all([
     prisma.exportGuide.findMany({ select: { id: true, country: true, countryCode: true, titleSq: true, title: true } }),
     prisma.marketStat.findMany({
       where: { kind: { in: ['POPULATION', 'GDP_PER_CAPITA'] }, sectorSlug: '' },
@@ -33,6 +33,7 @@ export default async function AtlasiPage() {
       take: 300,
     }),
     prisma.company.findUnique({ where: { ownerUserId: userId }, select: { sectors: true } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { sectors: true } }),
   ])
 
   // Statistika më e re për (vend, lloj)
@@ -89,7 +90,7 @@ export default async function AtlasiPage() {
       sectorStats={sectorStats}
       fairs={fairs}
       fullAccess={fullAccess}
-      defaultSector={(ownCompany?.sectors ?? [])[0] ?? ''}
+      defaultSector={(ownCompany?.sectors ?? [])[0] ?? (ownUser?.sectors ?? [])[0] ?? ''}
     />
   )
 }
