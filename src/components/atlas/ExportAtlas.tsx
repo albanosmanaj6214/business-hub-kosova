@@ -1,13 +1,14 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import NextLink from 'next/link'
 import { Lock, ExternalLink, CalendarDays, MapPin } from 'lucide-react'
+import { WORLD_PATHS, WORLD_VIEWBOX } from './world-paths'
 
-// Atlasi i Eksportit (Faza 1, klient). Harta tile e 66 tregjeve me udhëzues; ngjyrosja
-// sipas GDP/banor (të dhëna REALE Eurostat, të cituara nën çdo shifër). Tregjet pa të
-// dhëna të verifikuara: "në verifikim" — kurrë vlera placeholder. Faza 1b shton importet
-// sipas sektorit (pas miratimit të hartës sektor→CN) dhe greenlight-in e certifikimeve.
+// Atlasi i Eksportit — HARTË GJEOGRAFIKE REALE (path-e vendesh nga BlankMap-World6,
+// Wikimedia Commons, public domain). Klik mbi shtet → statistikat/informatat në panelin
+// anësor. Ngjyrosja: GDP/banor REAL nga Eurostat (i cituar nën çdo shifër); vendet pa të
+// dhëna të verifikuara = gri "në verifikim" — kurrë vlera placeholder.
 
 export interface AtlasGuide { id: string; country: string; countryCode: string; title: string }
 export interface AtlasStat {
@@ -16,21 +17,10 @@ export interface AtlasStat {
 }
 export interface AtlasFair { name: string; country: string; startDate: string }
 
-// Rrjeti i Evropës (kol, rresht) — vetëm vendet me udhëzues + Kosova (shtëpia).
-const EU_GRID: Record<string, [number, number]> = {
-  IS: [0, 0], NO: [3, 0], SE: [4, 0], FI: [5, 0], EE: [6, 1], IE: [0, 2], GB: [1, 2], DK: [3, 1],
-  LV: [6, 2], LT: [5, 2], NL: [2, 2], DE: [3, 2], PL: [4, 2], BE: [2, 3], LU: [2, 4], CZ: [4, 3],
-  SK: [5, 3], FR: [1, 4], CH: [3, 4], AT: [4, 4], HU: [5, 4], MD: [7, 3], PT: [0, 6], ES: [1, 6],
-  IT: [3, 5], SI: [4, 5], HR: [5, 5], RO: [7, 4], BA: [5, 6], RS: [6, 5], BG: [7, 5], ME: [5, 7],
-  XK: [6, 6], MK: [6, 7], AL: [5, 8], GR: [6, 8], MT: [3, 8], CY: [8, 8], TR: [8, 6],
-}
-const REGIONS: Array<[string, string[]]> = [
-  ['Amerika', ['US', 'CA', 'MX', 'BR', 'AR', 'CL']],
-  ['Lindja e Mesme', ['AE', 'SA', 'QA', 'KW', 'IL']],
-  ['Azia', ['CN', 'JP', 'KR', 'IN', 'ID', 'MY', 'SG', 'TH', 'VN']],
-  ['Afrika', ['EG', 'MA', 'NG', 'GH', 'KE', 'ZA']],
-  ['Oqeania', ['AU', 'NZ']],
-]
+const EUROPE = new Set(['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IS','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE','CH','NO','GB','TR','RS','MK','ME','AL','BA','MD','XK'])
+const TIER_FILL = ['#DBEAFE', '#93C5FD', '#3B82F6', '#1B4F72']
+const NO_DATA_FILL = '#E5E7EB'
+
 const flag = (c: string) => String.fromCodePoint(...Array.from(c).map((ch) => 127397 + ch.charCodeAt(0)))
 const fmtNum = (v: number) => v >= 1_000_000 ? (v / 1_000_000).toFixed(1) + ' M' : v.toLocaleString('sq-AL')
 
@@ -38,6 +28,9 @@ export function ExportAtlas({ guides, stats, fairs, fullAccess }: {
   guides: AtlasGuide[]; stats: AtlasStat[]; fairs: AtlasFair[]; fullAccess: boolean
 }) {
   const [selected, setSelected] = useState<string | null>('DE')
+  const [view, setView] = useState<'europe' | 'world'>('europe')
+  const [euroVB, setEuroVB] = useState<string | null>(null)
+  const euroRef = useRef<SVGGElement | null>(null)
 
   const guideByCode = useMemo(() => new Map(guides.map((g) => [g.countryCode, g])), [guides])
   const statBy = useMemo(() => {
@@ -46,42 +39,38 @@ export function ExportAtlas({ guides, stats, fairs, fullAccess }: {
     return m
   }, [stats])
 
-  // Kuantilet e GDP/banor (vetëm mbi të dhëna reale) → intensiteti i ngjyrës.
   const gdpTier = useMemo(() => {
     const vals = stats.filter((s) => s.kind === 'GDP_PER_CAPITA').map((s) => s.value).sort((a, b) => a - b)
     return (code: string): number => {
       const s = statBy.get(`${code}|GDP_PER_CAPITA`)
-      if (!s || !vals.length) return -1 // pa të dhëna → "në verifikim"
+      if (!s || !vals.length) return -1
       const idx = vals.findIndex((v) => v >= s.value)
       return Math.min(3, Math.floor(((idx === -1 ? vals.length - 1 : idx) / vals.length) * 4))
     }
   }, [stats, statBy])
 
-  const TIER_CLS = ['bg-blue-50 border-blue-200 text-blue-900', 'bg-blue-100 border-blue-300 text-blue-900', 'bg-blue-200 border-blue-400 text-blue-950', 'bg-[#1B4F72] border-[#1B4F72] text-white']
+  // ViewBox i Evropës: llogaritet një herë nga gjeometria reale e grupit evropian.
+  useEffect(() => {
+    if (euroRef.current && !euroVB) {
+      try {
+        const b = euroRef.current.getBBox()
+        setEuroVB(`${b.x - 25} ${b.y - 25} ${b.width + 50} ${b.height + 50}`)
+      } catch { /* getBBox s'punon para mount-it të plotë */ }
+    }
+  }, [euroVB])
 
-  function tileCls(code: string): string {
-    if (code === 'XK') return 'border-2 border-dashed border-rose-400 text-rose-600 bg-white cursor-default'
+  // Kodet me udhëzues + Kosova; XK vizatohet e fundit (mbi Serbinë).
+  const codes = useMemo(() => {
+    const cs = Object.keys(WORLD_PATHS).filter((c) => c === 'XK' || guideByCode.has(c))
+    return cs.sort((a, b) => (a === 'XK' ? 1 : b === 'XK' ? -1 : a.localeCompare(b)))
+  }, [guideByCode])
+
+  const visible = view === 'europe' ? codes.filter((c) => EUROPE.has(c)) : codes
+
+  function fillFor(code: string): string {
+    if (code === 'XK') return '#FFFFFF'
     const t = gdpTier(code)
-    const base = t === -1 ? 'bg-gray-100 border-gray-200 text-gray-400' : TIER_CLS[t]
-    return `${base} cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${selected === code ? 'ring-2 ring-[#2E86C1] ring-offset-1' : ''}`
-  }
-
-  function Tile({ code }: { code: string }) {
-    const g = guideByCode.get(code)
-    const name = code === 'XK' ? 'Kosova' : g?.country ?? code
-    return (
-      <button
-        type="button"
-        title={name}
-        aria-label={name}
-        disabled={code === 'XK'}
-        onClick={() => code !== 'XK' && setSelected(code)}
-        className={`aspect-square rounded-lg border flex flex-col items-center justify-center text-[11px] font-bold transition ${tileCls(code)}`}
-      >
-        <span className="text-base leading-none">{code === 'XK' ? '★' : flag(code)}</span>
-        <span className="text-[8.5px] font-semibold opacity-80">{code === 'XK' ? 'Kosova' : code}</span>
-      </button>
-    )
+    return t === -1 ? NO_DATA_FILL : TIER_FILL[t]
   }
 
   const sel = selected ? guideByCode.get(selected) : null
@@ -89,52 +78,82 @@ export function ExportAtlas({ guides, stats, fairs, fullAccess }: {
   const gdp = selected ? statBy.get(`${selected}|GDP_PER_CAPITA`) : null
   const selFairs = sel ? fairs.filter((f) => f.country.toLowerCase() === sel.country.toLowerCase()).slice(0, 3) : []
 
-  const maxRow = Math.max(...Object.values(EU_GRID).map(([, y]) => y))
-  const euroCells: Array<string | null> = []
-  const posMap = new Map(Object.entries(EU_GRID).map(([c, [x, y]]) => [`${y}-${x}`, c]))
-  for (let y = 0; y <= maxRow; y++) for (let x = 0; x < 9; x++) euroCells.push(posMap.get(`${y}-${x}`) ?? null)
-
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Atlasi i Eksportit</h1>
         <p className="text-gray-500 mt-1 max-w-3xl">
-          {guides.length} tregje me udhëzues, me një klik. Ngjyra tregon fuqinë blerëse (GDP për banor,
-          Eurostat). Tregjet gri janë me të dhëna në verifikim — aty shfaqim vetëm udhëzuesin, kurrë
-          shifra të paverifikuara. Importet sipas sektorit dhe greenlight-i i certifikimeve vijnë në
-          fazën e radhës.
+          {guides.length} tregje me udhëzues — kliko një shtet në hartë dhe informatat i sheh anash.
+          Ngjyra tregon fuqinë blerëse (GDP për banor, Eurostat). Vendet gri kanë të dhëna në
+          verifikim — aty s&apos;shfaqim asnjë shifër të paverifikuar.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-5 items-start">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm overflow-x-auto">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2">Evropa</p>
-          <div className="grid grid-cols-9 gap-1.5 min-w-[520px]">
-            {euroCells.map((c, i) => c ? <Tile key={c} code={c} /> : <div key={`sp-${i}`} />)}
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            {(['europe', 'world'] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setView(v)}
+                className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${view === v ? 'bg-[#1B4F72] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              >
+                {v === 'europe' ? 'Evropa' : 'Bota'}
+              </button>
+            ))}
+            <span className="ml-auto text-[11px] text-gray-400 hidden sm:block">Harta: Wikimedia Commons (domen publik)</span>
           </div>
-          {REGIONS.map(([label, codes]) => {
-            const present = codes.filter((c) => guideByCode.has(c))
-            if (!present.length) return null
-            return (
-              <div key={label} className="mt-4">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2">{label}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {present.map((c) => <div key={c} className="w-14"><Tile code={c} /></div>)}
-                </div>
-              </div>
-            )
-          })}
-          <div className="flex flex-wrap gap-4 mt-4 text-[11.5px] text-gray-500">
-            <span><i className="inline-block w-3 h-3 rounded bg-[#1B4F72] align-[-1px] mr-1" />Fuqi blerëse e lartë</span>
-            <span><i className="inline-block w-3 h-3 rounded bg-blue-100 border border-blue-300 align-[-1px] mr-1" />Më e ulët</span>
-            <span><i className="inline-block w-3 h-3 rounded bg-gray-100 border border-gray-200 align-[-1px] mr-1" />Të dhëna në verifikim</span>
-            <span><i className="inline-block w-3 h-3 rounded border-2 border-dashed border-rose-400 align-[-1px] mr-1" />Kosova</span>
+
+          <svg
+            viewBox={view === 'europe' && euroVB ? euroVB : WORLD_VIEWBOX}
+            className="w-full h-auto rounded-xl"
+            style={{ background: '#F0F6FB', maxHeight: '540px' }}
+            role="img"
+            aria-label="Harta e tregjeve të eksportit"
+          >
+            {/* Grup i fshehur i plotë evropian — vetëm për llogaritjen e viewBox-it */}
+            <g ref={euroRef} opacity={0} pointerEvents="none">
+              {codes.filter((c) => EUROPE.has(c)).map((c) => (
+                <path key={`m-${c}`} d={WORLD_PATHS[c]} />
+              ))}
+            </g>
+            {visible.map((code) => {
+              const g = guideByCode.get(code)
+              const name = code === 'XK' ? 'Kosova (shtëpia)' : g?.country ?? code
+              const isSel = selected === code
+              return (
+                <path
+                  key={code}
+                  d={WORLD_PATHS[code]}
+                  fill={fillFor(code)}
+                  stroke={code === 'XK' ? '#E11D48' : isSel ? '#2E86C1' : '#FFFFFF'}
+                  strokeWidth={code === 'XK' ? 1.6 : isSel ? 2.2 : 0.7}
+                  strokeDasharray={code === 'XK' ? '3 2' : undefined}
+                  className={code === 'XK' ? '' : 'cursor-pointer transition-opacity hover:opacity-80 focus:outline-none'}
+                  tabIndex={code === 'XK' ? -1 : 0}
+                  role={code === 'XK' ? undefined : 'button'}
+                  aria-label={name}
+                  onClick={() => code !== 'XK' && setSelected(code)}
+                  onKeyDown={(e) => { if (code !== 'XK' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); setSelected(code) } }}
+                >
+                  <title>{name}</title>
+                </path>
+              )
+            })}
+          </svg>
+
+          <div className="flex flex-wrap gap-4 mt-3 text-[11.5px] text-gray-500">
+            <span><i className="inline-block w-3 h-3 rounded align-[-1px] mr-1" style={{ background: '#1B4F72' }} />Fuqi blerëse e lartë</span>
+            <span><i className="inline-block w-3 h-3 rounded align-[-1px] mr-1" style={{ background: '#DBEAFE', border: '1px solid #93C5FD' }} />Më e ulët</span>
+            <span><i className="inline-block w-3 h-3 rounded align-[-1px] mr-1" style={{ background: '#E5E7EB' }} />Të dhëna në verifikim</span>
+            <span><i className="inline-block w-3 h-3 rounded align-[-1px] mr-1" style={{ border: '1.5px dashed #E11D48' }} />Kosova</span>
           </div>
         </div>
 
         <aside className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:sticky lg:top-4">
           {!sel ? (
-            <p className="text-sm text-gray-500 text-center py-10">← Kliko një treg</p>
+            <p className="text-sm text-gray-500 text-center py-10">← Kliko një shtet në hartë</p>
           ) : !fullAccess ? (
             <div className="text-center py-8">
               <span className="text-4xl">{flag(sel.countryCode)}</span>
@@ -209,8 +228,8 @@ export function ExportAtlas({ guides, stats, fairs, fullAccess }: {
 
       <p className="text-xs text-gray-400 border-t border-gray-100 pt-3">
         Burimet: Eurostat (tps00001 — popullsia; tec00001 — GDP për banor, çmime aktuale). Çdo shifër
-        shfaqet me vitin e saj dhe datën e marrjes. Tregjet pa të dhëna të verifikuara nuk marrin
-        vlerësime të improvizuara.
+        shfaqet me vitin e saj dhe datën e marrjes. Harta: BlankMap-World6, Wikimedia Commons (domen
+        publik). Tregjet pa të dhëna të verifikuara nuk marrin vlerësime të improvizuara.
       </p>
     </div>
   )
