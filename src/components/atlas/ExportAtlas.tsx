@@ -180,7 +180,7 @@ export function ExportAtlas({ guides, stats, sectorStats, fairs, fullAccess, def
                 requirements={requirements}
                 myCerts={myCerts}
                 myGroups={myGroups}
-                isFoodSector={defaultSector === 'ushqim-dhe-pije' || defaultSector === 'bujqesi-blegtori'}
+                isFoodSector={GOODS_SECTORS.has(defaultSector)}
               />
 
               <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mt-4 mb-2">Fakte zyrtare</p>
