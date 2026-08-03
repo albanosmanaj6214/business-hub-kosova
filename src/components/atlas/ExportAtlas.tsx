@@ -5,6 +5,7 @@ import NextLink from 'next/link'
 import dynamic from 'next/dynamic'
 import { Lock, ExternalLink, CalendarDays, TrendingUp, TrendingDown } from 'lucide-react'
 import { SECTORS } from '@/lib/sectors'
+import { MarketRequirements, type MarketReq } from './MarketRequirements'
 
 // Atlasi i Eksportit — hartë Leaflet + OpenStreetMap (zoom/pan i lirë, si KTC), me
 // poligonet e 66 tregjeve të ngjyrosura sipas të dhënave REALE. Sektori vjen
@@ -35,9 +36,10 @@ const NO_DATA_FILL = '#D1D5DB'
 const fmtNum = (v: number) => v >= 1_000_000 ? (v / 1_000_000).toFixed(1) + ' M' : v.toLocaleString('sq-AL')
 const fmtEur = (v: number) => v >= 1e9 ? '€' + (v / 1e9).toFixed(1) + ' mld' : v >= 1e6 ? '€' + (v / 1e6).toFixed(0) + ' mln' : '€' + Math.round(v).toLocaleString('sq-AL')
 
-export function ExportAtlas({ guides, stats, sectorStats, fairs, fullAccess, defaultSector = '' }: {
+export function ExportAtlas({ guides, stats, sectorStats, fairs, fullAccess, defaultSector = '', requirements = [], myCerts = [], myGroups = [] }: {
   guides: AtlasGuide[]; stats: AtlasStat[]; sectorStats: AtlasSectorStat[]; fairs: AtlasFair[]
   fullAccess: boolean; defaultSector?: string
+  requirements?: MarketReq[]; myCerts?: string[]; myGroups?: string[]
 }) {
   const [selected, setSelected] = useState<string | null>('DE')
   const sector = GOODS_SECTORS.has(defaultSector) ? defaultSector : ''
@@ -172,6 +174,14 @@ export function ExportAtlas({ guides, stats, sectorStats, fairs, fullAccess, def
                   </div>
                 )
               )}
+
+              <MarketRequirements
+                countryCode={sel.countryCode}
+                requirements={requirements}
+                myCerts={myCerts}
+                myGroups={myGroups}
+                isFoodSector={defaultSector === 'ushqim-dhe-pije' || defaultSector === 'bujqesi-blegtori'}
+              />
 
               <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mt-4 mb-2">Fakte zyrtare</p>
               {pop || gdp ? (

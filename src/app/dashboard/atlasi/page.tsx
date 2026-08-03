@@ -16,7 +16,7 @@ export default async function AtlasiPage() {
 
   const fullAccess = await fullAccessForSession()
 
-  const [guides, statsRaw, sectorRaw, fairsRaw, ownCompany, ownUser] = await Promise.all([
+  const [guides, statsRaw, sectorRaw, fairsRaw, ownCompany, ownUser, myCertRows, reqRows] = await Promise.all([
     prisma.exportGuide.findMany({ select: { id: true, country: true, countryCode: true, titleSq: true, title: true } }),
     prisma.marketStat.findMany({
       where: { kind: { in: ['POPULATION', 'GDP_PER_CAPITA'] }, sectorSlug: '' },
@@ -32,8 +32,20 @@ export default async function AtlasiPage() {
       orderBy: { startDate: 'asc' },
       take: 300,
     }),
-    prisma.company.findUnique({ where: { ownerUserId: userId }, select: { sectors: true } }),
+    prisma.company.findUnique({ where: { ownerUserId: userId }, select: { sectors: true, productGroups: true } }),
     prisma.user.findUnique({ where: { id: userId }, select: { sectors: true } }),
+    prisma.companyCertification.findMany({
+      where: { company: { ownerUserId: userId } },
+      select: { certification: { select: { code: true } } },
+    }),
+    prisma.marketRequirement.findMany({
+      where: { status: 'VERIFIED' },
+      select: {
+        marketGroup: true, productGroup: true, requirementType: true, certificationCode: true,
+        titleSq: true, detailSq: true, legalActName: true, legalActUrl: true, unlockPathSq: true,
+        verifiedAt: true, sortOrder: true,
+      },
+    }),
   ])
 
   // Statistika më e re për (vend, lloj)
@@ -91,6 +103,9 @@ export default async function AtlasiPage() {
       fairs={fairs}
       fullAccess={fullAccess}
       defaultSector={(ownCompany?.sectors ?? [])[0] ?? (ownUser?.sectors ?? [])[0] ?? ''}
+      requirements={reqRows.map((r) => ({ ...r, verifiedAt: r.verifiedAt ? r.verifiedAt.toISOString().slice(0, 10) : null }))}
+      myCerts={myCertRows.map((c) => c.certification.code)}
+      myGroups={ownCompany?.productGroups ?? []}
     />
   )
 }

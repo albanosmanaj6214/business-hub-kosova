@@ -49,6 +49,7 @@ const BaseBody = z.object({
   visibilityLevel: z.preprocess(emptyToUndef, z.enum(['PRIVATE', 'MEMBERS', 'PUBLIC']).optional()),
   interests: z.array(z.string().max(60)).optional(),
   turnoverBand: z.preprocess(emptyToUndef, z.enum(['UNDER_2M', 'FROM_2M_TO_10M', 'OVER_10M']).optional().nullable()),
+  productGroups: z.array(z.string().max(60)).optional(),
   // Kur useri klikon "Dorëzo për shqyrtim", statusi kalon nga DRAFT në PENDING.
   submitForReview: z.boolean().optional(),
   // Nga StartupProfile:
@@ -136,6 +137,7 @@ export async function PATCH(req: Request) {
     visibilityLevel: d.visibilityLevel,
     interests: d.interests,
     turnoverBand: d.turnoverBand === undefined ? undefined : d.turnoverBand,
+    productGroups: d.productGroups,
     productsSought: d.companyProductsSought,
     profileStatus: nextProfileStatus,
   }

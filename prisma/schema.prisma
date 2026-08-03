@@ -734,6 +734,10 @@ model Company {
   // Certifikimet e biznesit (tick/toggle nga katalogu sipas sektorit).
   certifications CompanyCertification[]
 
+  // Grupet e produkteve qe prodhon biznesi (baza e personalizimit te greenlight-it;
+  // vala 1: grupet e ushqimit). Slug-et nga src/lib/product-groups.ts.
+  productGroups String[] @default([])
+
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   offerings       Offering[]
@@ -1068,4 +1072,33 @@ model MarketStat {
 
   @@unique([countryCode, kind, sectorSlug, year, sourceDataset])
   @@index([countryCode, kind])
+}
+
+// ── Greenlight: kerkesat e verifikuara te tregjeve (Faza 1b-B) ────────────────
+// RREGULLI "0 GABIME": nje rregull shfaqet VETEM me status=VERIFIED, me aktin ligjor
+// (emri + URL zyrtar) dhe daten e verifikimit. DRAFT = ne pritje verifikimi, i padukshem.
+// requirementType: BLOCKED (tregu i mbyllur me ligj — p.sh. produktet shtazore ne BE,
+// Reg. (BE) 2021/405) | MANDATORY (certifikim/kusht ligjor per hyrje) |
+// BUYER_EXPECTED (standard de-facto i blerësve — paralajmerim, jo bllok) |
+// PROCEDURAL (regjistrim/procedure — checklist, jo greenlight).
+model MarketRequirement {
+  id                String    @id @default(cuid())
+  marketGroup       String // 'EU_EFTA' | 'UK' | 'US_CA' | 'GULF_HALAL' | 'CEFTA' | 'OTHER'
+  productGroup      String // slug i grupit te produktit
+  requirementType   String
+  certificationCode String? // Certification.code kur kerkesa eshte certifikim i katalogut
+  titleSq           String
+  detailSq          String?   @db.Text
+  legalActName      String?
+  legalActUrl       String?
+  unlockPathSq      String?   @db.Text
+  status            String    @default("DRAFT")
+  verifiedAt        DateTime?
+  sortOrder         Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([marketGroup, productGroup, requirementType, titleSq])
+  @@index([marketGroup, status])
+  @@index([productGroup])
 }
