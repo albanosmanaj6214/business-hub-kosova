@@ -27,11 +27,14 @@ export const SECTOR_CHAPTERS = {
 }
 const ALL_CHAPTERS = [...new Set(Object.values(SECTOR_CHAPTERS).flat())].sort()
 
-const COUNTRIES = [
+const DEFAULT_COUNTRIES = [
   'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE',
   'CH','NO','IS','TR','RS','MK','ME','AL','BA','MD',
 ]
-const GEO = (c) => (c === 'GR' ? 'EL' : c)
+// ONLY=GR,IT ... per ri-ekzekutim te pjesshem
+const COUNTRIES = process.env.ONLY ? process.env.ONLY.split(',') : DEFAULT_COUNTRIES
+// Comext perdor kodet ISO direkt (GR, jo EL — verifikuar 2026-08-03)
+const GEO = (c) => c
 
 // Dekoder gjenerik JSON-stat: index i sheshte -> koordinatat e dimensioneve (row-major)
 function decode(j) {

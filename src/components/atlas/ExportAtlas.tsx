@@ -195,7 +195,7 @@ export function ExportAtlas({ guides, stats, sectorStats, fairs, fullAccess, def
                   )}
                   {gdp && (
                     <div className="rounded-lg border border-gray-200 bg-gray-50/60 px-3 py-2">
-                      <p className="text-base font-bold text-gray-900 tabular-nums">€{gdp.value.toLocaleString('sq-AL')}</p>
+                      <p className="text-base font-bold text-gray-900 tabular-nums">{gdp.unit === 'USD' ? '$' : '€'}{gdp.value.toLocaleString('sq-AL')}</p>
                       <p className="text-[10px] uppercase font-semibold text-gray-400">GDP / banor</p>
                       <p className="text-[10px] text-gray-400 mt-0.5">{gdp.sourceName} {gdp.year} · {gdp.sourceDataset} · kontrolluar {gdp.retrievedAt}</p>
                     </div>

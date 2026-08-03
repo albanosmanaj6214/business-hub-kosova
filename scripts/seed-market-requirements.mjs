@@ -74,11 +74,11 @@ RULES.push(['EU_EFTA', 'fruta-perime-fresketa', 'BUYER_EXPECTED', 'globalgap',
   'GlobalG.A.P. — pasaporta e supermarketeve', null, null, null, null, 'VERIFIED', 12])
 RULES.push(['EU_EFTA', 'kerpudha-pylli', 'BUYER_EXPECTED', 'fairwild',
   'FairWild — për mbledhjen e egër', null, null, null, null, 'VERIFIED', 12])
-// DRAFT (i padukshëm derisa të verifikohet aplikueshmëria për Kosovën)
+// VERIFIKUAR 2026-08-03: Kosova ESHTE ne listen e vendeve te prekura te rregullores
 RULES.push(['EU_EFTA', 'kerpudha-pylli', 'MANDATORY', null,
-  'Kontrolli i radioaktivitetit për produkte të egra',
-  'Disa origjina kërkojnë certifikatë radioaktiviteti për kërpudha/manaferra të egra pas-Çernobil. A vlen për Kosovën: NË VERIFIKIM.',
-  'Rregullorja (BE) 2020/1158', LEX('32020R1158'), null, 'DRAFT', 6])
+  'Kontrolli i radioaktivitetit për kërpudha/manaferra të egra',
+  'Kosova është shprehimisht në fushëveprimin e rregullores pas-Çernobil: kërpudhat e egra dhe manaferrat (Vaccinium) i nënshtrohen kufijve të Cs-137 (600 Bq/kg; 370 për qumësht/ushqim fëmijësh) dhe kontrollit në hyrje të BE-së.',
+  'Rregullorja Zbatuese (BE) 2020/1158', LEX('02020R1158-20240207'), null, 'VERIFIED', 6])
 
 // ── UK ───────────────────────────────────────────────────────────────────────
 for (const g of PLANT_FOOD) {
@@ -99,12 +99,23 @@ for (const g of PLANT_FOOD) {
 }
 
 // ── Gjiri / halal ────────────────────────────────────────────────────────────
-for (const g of ALL_FOOD) {
+for (const g of ANIMAL_GROUPS) {
   RULES.push(['GULF_HALAL', g, 'MANDATORY', 'halal',
-    'Certifikimi Halal',
-    'Për këto tregje certifikimi halal është kusht hyrjeje për shumicën e produkteve ushqimore; organi certifikues duhet të njihet nga autoritetet e vendit të destinacionit.',
+    'Certifikimi Halal — i detyrueshëm për produktet me përmbajtje shtazore',
+    'Organi certifikues duhet të njihet nga autoritetet e vendit të destinacionit; verifiko njohjen për vendin konkret.',
     null, null, null, 'VERIFIED', 1])
-  RULES.push(['GULF_HALAL', g, 'MANDATORY', 'haccp', 'HACCP — sistemi i sigurisë ushqimore', null, null, null, null, 'VERIFIED', 2])
+}
+for (const g of PLANT_FOOD) {
+  RULES.push(['GULF_HALAL', g, 'BUYER_EXPECTED', 'halal',
+    'Certifikimi Halal — kërkohet gjerësisht nga importuesit',
+    'Për produktet bimore shpesh s\'është detyrim ligjor, por importuesit dhe zinxhirët e kërkojnë gjerësisht; verifiko për produktin dhe vendin konkret.',
+    null, null, null, 'VERIFIED', 9])
+}
+for (const g of ALL_FOOD) {
+  RULES.push(['GULF_HALAL', g, 'MANDATORY', 'haccp',
+    'HACCP — sistemi i sigurisë ushqimore',
+    'Regjimet e importit ushqimor të vendeve të Gjirit (standardet GSO) kërkojnë sisteme sigurie të bazuara në HACCP; verifiko kërkesat e vendit konkret.',
+    null, null, null, 'VERIFIED', 2])
 }
 
 // ── CEFTA ────────────────────────────────────────────────────────────────────
