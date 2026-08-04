@@ -25,7 +25,7 @@ export interface AtlasStat {
 export interface AtlasSectorStat {
   countryCode: string; sector: string; latestYear: number; latestValue: number
   baseYear: number | null; baseValue: number | null
-  sourceName: string; sourceDataset: string; retrievedAt: string
+  sourceName: string; sourceDataset: string; retrievedAt: string; unit?: string
 }
 export interface AtlasFair { name: string; country: string; startDate: string }
 
@@ -34,7 +34,10 @@ const TIER_FILL = ['#BFDBFE', '#60A5FA', '#2563EB', '#1B4F72']
 const NO_DATA_FILL = '#D1D5DB'
 
 const fmtNum = (v: number) => v >= 1_000_000 ? (v / 1_000_000).toFixed(1) + ' M' : v.toLocaleString('sq-AL')
-const fmtEur = (v: number) => v >= 1e9 ? '€' + (v / 1e9).toFixed(1) + ' mld' : v >= 1e6 ? '€' + (v / 1e6).toFixed(0) + ' mln' : '€' + Math.round(v).toLocaleString('sq-AL')
+const fmtMoney = (v: number, unit?: string) => {
+  const s = unit === 'USD' ? '$' : '€'
+  return v >= 1e9 ? s + (v / 1e9).toFixed(1) + ' mld' : v >= 1e6 ? s + (v / 1e6).toFixed(0) + ' mln' : s + Math.round(v).toLocaleString('sq-AL')
+}
 
 export function ExportAtlas({ guides, stats, sectorStats, fairs, fullAccess, defaultSector = '', requirements = [], myCerts = [], myGroups = [] }: {
   guides: AtlasGuide[]; stats: AtlasStat[]; sectorStats: AtlasSectorStat[]; fairs: AtlasFair[]
@@ -159,7 +162,7 @@ export function ExportAtlas({ guides, stats, sectorStats, fairs, fullAccess, def
                 selSec ? (
                   <div className="rounded-xl border border-blue-200 bg-blue-50/70 px-4 py-3 mt-3">
                     <p className="text-[10.5px] uppercase font-bold tracking-wider text-blue-800/70">Importet: {sectorDef?.sq}</p>
-                    <p className="text-xl font-bold text-[#1B4F72] tabular-nums">{fmtEur(selSec.latestValue)} <span className="text-xs font-semibold text-gray-500">në vit ({selSec.latestYear})</span></p>
+                    <p className="text-xl font-bold text-[#1B4F72] tabular-nums">{fmtMoney(selSec.latestValue, selSec.unit)} <span className="text-xs font-semibold text-gray-500">në vit ({selSec.latestYear})</span></p>
                     {trendPct != null && (
                       <p className={`text-xs font-bold flex items-center gap-1 ${trendPct >= 0 ? 'text-green-700' : 'text-rose-700'}`}>
                         {trendPct >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}

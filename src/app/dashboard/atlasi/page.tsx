@@ -24,7 +24,7 @@ export default async function AtlasiPage() {
     }),
     prisma.marketStat.findMany({
       where: { kind: 'SECTOR_IMPORTS' },
-      select: { countryCode: true, sectorSlug: true, value: true, year: true, sourceName: true, sourceDataset: true, retrievedAt: true },
+      select: { countryCode: true, sectorSlug: true, value: true, unit: true, year: true, sourceName: true, sourceDataset: true, retrievedAt: true },
     }),
     prisma.tradeFair.findMany({
       where: { startDate: { gte: new Date() } },
@@ -64,10 +64,10 @@ export default async function AtlasiPage() {
 
   // Importet sektoriale: viti më i ri me vlerë + baza (viti më i vjetër në dritaren
   // 5-vjeçare) për trendin — reduktohet në server që payload-i të mbetet i vogël.
-  const bySec = new Map<string, { years: Map<number, number>; retrievedAt: string; sourceName: string; sourceDataset: string }>()
+  const bySec = new Map<string, { years: Map<number, number>; retrievedAt: string; sourceName: string; sourceDataset: string; unit: string }>()
   for (const s of sectorRaw) {
     const k = `${s.countryCode}|${s.sectorSlug}`
-    const e = bySec.get(k) ?? { years: new Map<number, number>(), retrievedAt: s.retrievedAt.toISOString().slice(0, 10), sourceName: s.sourceName, sourceDataset: s.sourceDataset }
+    const e = bySec.get(k) ?? { years: new Map<number, number>(), retrievedAt: s.retrievedAt.toISOString().slice(0, 10), sourceName: s.sourceName, sourceDataset: s.sourceDataset, unit: s.unit }
     e.years.set(s.year, Number(s.value))
     bySec.set(k, e)
   }
@@ -83,7 +83,7 @@ export default async function AtlasiPage() {
     sectorStats.push({
       countryCode, sector, latestYear, latestValue,
       baseYear, baseValue: baseYear != null ? (e.years.get(baseYear) as number) : null,
-      sourceName: e.sourceName, sourceDataset: e.sourceDataset, retrievedAt: e.retrievedAt,
+      sourceName: e.sourceName, sourceDataset: e.sourceDataset, retrievedAt: e.retrievedAt, unit: e.unit,
     })
   }
 
