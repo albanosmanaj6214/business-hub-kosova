@@ -266,9 +266,23 @@ RULES.push(['EU_EFTA', 'zejtari', 'BUYER_EXPECTED', 'gi-origin', 'Tregues gjeogr
 RULES.push(['EU_EFTA', 'zejtari', 'BUYER_EXPECTED', 'ip-trademark-kipa', 'Mbrojtja IP: marke & dizajn (KIPA)', null, null, null, null, W2_VERIFIED, 11])
 // DRAFT (te padukshme deri ne verifikim): lodrat (2009/48 + rregullorja e re), Ecodesign
 // (2009/125), detergjentet (648/2004), barnat (2001/83)
-RULES.push(['EU_EFTA', 'lodra', 'MANDATORY', null, 'Siguria e lodrave (CE)', 'Ne verifikim: Direktiva 2009/48 dhe rregullorja e re e lodrave.', 'Direktiva 2009/48/KE', null, null, 'DRAFT', 1])
-RULES.push(['EU_EFTA', 'pajisje-shtepiake', 'MANDATORY', null, 'Ecodesign + etiketa energjetike', 'Ne verifikim: kuadri Ecodesign.', 'Direktiva 2009/125/KE', null, null, 'DRAFT', 5])
-RULES.push(['EU_EFTA', 'barna', 'PROCEDURAL', null, 'Autorizimi i tregtimit ne BE', 'Ne verifikim: kuadri 2001/83/KE.', 'Direktiva 2001/83/KE', null, null, 'DRAFT', 1])
+// VERIFIKUAR 2026-08-03 (titujt + datat e tranzicionit)
+RULES.push(['EU_EFTA', 'lodra', 'MANDATORY', null,
+  'Siguria e lodrave — shenja CE',
+  'Lodrat kerkojne konformitet CE sipas Direktives 2009/48/KE. Kalim i verifikuar: Rregullorja e re (BE) 2025/2509 (publikuar 12.2025) e zevendeson gradualisht — lodrat sipas direktives aktuale pranohen deri me 1 gusht 2030.',
+  'Direktiva 2009/48/KE per sigurine e lodrave', LEX('32009L0048'), null, 'VERIFIED', 1])
+RULES.push(['EU_EFTA', 'pajisje-shtepiake', 'MANDATORY', null,
+  'Ecodesign dhe etiketa energjetike',
+  'Kuadri i ri ESPR (ne fuqi nga 18.07.2024) zevendeson Direktiven 2009/125; masat ekzistuese per pajisje shtepiake mbeten te zbatueshme.',
+  'Rregullorja (BE) 2024/1781 (ESPR)', LEX('32024R1781'), null, 'VERIFIED', 5])
+RULES.push(['EU_EFTA', 'ndricim', 'MANDATORY', null,
+  'Ecodesign dhe etiketa energjetike',
+  'Kuadri i ri ESPR (ne fuqi nga 18.07.2024) zevendeson Direktiven 2009/125; masat ekzistuese per ndricim mbeten te zbatueshme.',
+  'Rregullorja (BE) 2024/1781 (ESPR)', LEX('32024R1781'), null, 'VERIFIED', 5])
+RULES.push(['EU_EFTA', 'barna', 'PROCEDURAL', null,
+  'Autorizimi i tregtimit te barnave ne BE',
+  'Barnat kerkojne autorizim tregtimi (kombetar ose i centralizuar permes EMA-s) para vendosjes ne treg, sipas kodit te BE-se per barnat.',
+  'Direktiva 2001/83/KE (kodi i barnave per perdorim njerezor)', LEX('32001L0083'), null, 'VERIFIED', 1])
 
 async function main() {
   let created = 0, updated = 0
