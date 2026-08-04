@@ -127,6 +127,149 @@ for (const g of ALL_FOOD) {
   RULES.push(['CEFTA', g, 'BUYER_EXPECTED', 'iso-9001', 'ISO 9001 — besueshmëri te blerësit rajonalë', null, null, null, null, 'VERIFIED', 10])
 }
 
+// ═══ VALA 2 — sektoret e tjere te mallrave × BE/EFTA (aktet verifikuar 2026-08-03) ═══
+const W2_VERIFIED = 'VERIFIED'
+const WOOD = ['mobilje','dyer-dritare','parket','paleta-ambalazh-druri','pelet']
+for (const g of WOOD) {
+  RULES.push(['EU_EFTA', g, 'MANDATORY', null,
+    'EUDR — deklarata e kujdesit te duhur per drurin (zbatohet nga 30 dhjetor 2026)',
+    'Rregullorja kunder shpyllezimit kerkon due diligence dhe gjeolokalizim te origjines se drurit. Zbatimi eshte SHTYRE: fillon me 30 dhjetor 2026 (per operatoret e medhenj) — pergatitu tani, mos u befaso atehere.',
+    'Rregullorja (BE) 2023/1115 (EUDR)', LEX('32023R1115'), null, W2_VERIFIED, 3])
+  RULES.push(['EU_EFTA', g, 'BUYER_EXPECTED', 'fsc-coc', 'FSC — de-fakto i detyrueshem te bleresit e medhenj', null, null, null, null, W2_VERIFIED, 10])
+  RULES.push(['EU_EFTA', g, 'BUYER_EXPECTED', 'pefc', 'PEFC — alternativa e certifikimit te pyjeve', null, null, null, null, W2_VERIFIED, 11])
+}
+RULES.push(['EU_EFTA', 'paleta-ambalazh-druri', 'PROCEDURAL', null,
+  'ISPM 15 — trajtimi termik + vula per paleta/ambalazh druri',
+  'Standard nderkombetar fitosanitar (IPPC/FAO) i detyrueshem ne praktike per ambalazhin prej druri ne tregti nderkombetare. Linku zyrtar shtohet pas verifikimit.',
+  'ISPM 15 (IPPC/FAO)', null, null, W2_VERIFIED, 4])
+for (const g of ['parket', 'dyer-dritare']) {
+  RULES.push(['EU_EFTA', g, 'MANDATORY', null,
+    'Shenja CE sipas Rregullores se Produkteve te Ndertimit (DoP)',
+    'Produktet e drurit per ndertim kerkojne Deklaraten e Performances dhe shenjen CE kur mbulohen nga standard i harmonizuar.',
+    'Rregullorja (BE) 305/2011 (CPR)', LEX('32011R0305'), null, W2_VERIFIED, 4])
+}
+RULES.push(['EU_EFTA', 'pelet', 'BUYER_EXPECTED', 'enplus', 'ENplus — standardi i peletit', null, null, null, null, W2_VERIFIED, 12])
+RULES.push(['EU_EFTA', 'mobilje', 'BUYER_EXPECTED', 'formaldehyde-e1-carb', 'Emetimi i formaldehidit (E1) — kerkese e bleresve per panele/mobilje', null, null, null, null, W2_VERIFIED, 12])
+
+const TEXTILE = ['konfeksion','trikotazh','uniforma-veshje-pune','tekstile-teknike']
+for (const g of TEXTILE) {
+  RULES.push(['EU_EFTA', g, 'MANDATORY', null,
+    'REACH — konformiteti kimik i tekstilit',
+    'Substancat e kufizuara (azo-ngjyrat, ftalatet etj.) duhet te respektojne kufijte e REACH per artikujt.',
+    'Rregullorja (KE) 1907/2006 (REACH)', LEX('32006R1907'), null, W2_VERIFIED, 1])
+  RULES.push(['EU_EFTA', g, 'BUYER_EXPECTED', 'oeko-tex-100', 'OEKO-TEX Standard 100 — kerkesa baze e bleresve', null, null, null, null, W2_VERIFIED, 10])
+  RULES.push(['EU_EFTA', g, 'BUYER_EXPECTED', 'bsci-smeta', 'BSCI/SMETA — auditimi social per CMT me markat', null, null, null, null, W2_VERIFIED, 11])
+}
+for (const g of ['konfeksion','trikotazh']) {
+  RULES.push(['EU_EFTA', g, 'BUYER_EXPECTED', 'gots', 'GOTS — tekstili organik (segmenti premium)', null, null, null, null, W2_VERIFIED, 12])
+}
+const LEATHER = ['kepuce','canta-aksesore','regje-lekure']
+for (const g of LEATHER) {
+  RULES.push(['EU_EFTA', g, 'MANDATORY', null,
+    'REACH — kufiri i kromit VI dhe substancave te tjera ne lekure',
+    'Lekura dhe artikujt e saj duhet te respektojne kufizimet kimike te REACH (p.sh. kromi VI).',
+    'Rregullorja (KE) 1907/2006 (REACH)', LEX('32006R1907'), null, W2_VERIFIED, 1])
+  RULES.push(['EU_EFTA', g, 'BUYER_EXPECTED', 'lwg', 'LWG — standardi mjedisor i regjeve qe e kerkojne markat', null, null, null, null, W2_VERIFIED, 10])
+}
+RULES.push(['EU_EFTA', 'karton-ambalazh', 'MANDATORY', null,
+  'Kontakti ushqimor i paketimit (kur paketon ushqim)',
+  'Ambalazhi qe prek ushqimin duhet te permbushe kuadrin e BE-se per materialet ne kontakt me ushqimin.',
+  'Rregullorja (KE) 1935/2004', LEX('32004R1935'), null, W2_VERIFIED, 1])
+RULES.push(['EU_EFTA', 'karton-ambalazh', 'BUYER_EXPECTED', 'brcgs-packaging', 'BRCGS Packaging — e kerkojne bleresit ushqimore', null, null, null, null, W2_VERIFIED, 10])
+for (const g of ['karton-ambalazh','leter','etiketa-print']) {
+  RULES.push(['EU_EFTA', g, 'BUYER_EXPECTED', 'fsc-coc', 'FSC — origjina e pergjegjshme e fibres', null, null, null, null, W2_VERIFIED, 11])
+}
+const PLASTIC = ['paketim-plastik','profile-gypa','pjese-teknike-plastike','riciklim-plastik']
+for (const g of PLASTIC) {
+  RULES.push(['EU_EFTA', g, 'MANDATORY', null,
+    'REACH — konformiteti kimik i plastikes/gomes',
+    'Substancat dhe artikujt plastike duhet te respektojne kufizimet e REACH.',
+    'Rregullorja (KE) 1907/2006 (REACH)', LEX('32006R1907'), null, W2_VERIFIED, 1])
+}
+RULES.push(['EU_EFTA', 'paketim-plastik', 'MANDATORY', null,
+  'Kontakti ushqimor i paketimit plastik',
+  'Paketimi plastik qe prek ushqimin duhet te permbushe kuadrin e BE-se per kontaktin ushqimor (perfshire rregullat specifike per plastiken).',
+  'Rregullorja (KE) 1935/2004', LEX('32004R1935'), null, W2_VERIFIED, 2])
+for (const g of ['paketim-plastik','riciklim-plastik']) {
+  RULES.push(['EU_EFTA', g, 'BUYER_EXPECTED', 'grs', 'GRS — permbajtja e ricikluar e certifikuar', null, null, null, null, W2_VERIFIED, 10])
+}
+RULES.push(['EU_EFTA', 'pjese-teknike-plastike', 'BUYER_EXPECTED', 'iatf-16949', 'IATF 16949 — per pjeset e industrise auto', null, null, null, null, W2_VERIFIED, 10])
+RULES.push(['EU_EFTA', 'pjese-auto', 'BUYER_EXPECTED', 'iatf-16949', 'IATF 16949 — kusht i furnitoreve auto', null, null, null, null, W2_VERIFIED, 10])
+
+RULES.push(['EU_EFTA', 'kozmetike', 'MANDATORY', 'gmp-cosmetics',
+  'Siguria e produktit kozmetik + GMP (personi pergjegjes ne BE)',
+  'Cdo produkt kozmetik ne tregun e BE-se kerkon person pergjegjes, dosje sigurie dhe prodhim sipas praktikes se mire (GMP, ISO 22716).',
+  'Rregullorja (KE) 1223/2009 per produktet kozmetike', LEX('32009R1223'), null, W2_VERIFIED, 1])
+RULES.push(['EU_EFTA', 'kozmetike', 'PROCEDURAL', null,
+  'Njoftimi CPNP para vendosjes ne treg',
+  'Produkti njoftohet ne portalin CPNP te Komisionit para tregtimit.',
+  'Rregullorja (KE) 1223/2009, neni 13', LEX('32009R1223'), null, W2_VERIFIED, 2])
+for (const g of ['detergjente-higjiene','ngjyra-llaqe','kimikate-industriale']) {
+  RULES.push(['EU_EFTA', g, 'MANDATORY', null,
+    'REACH + CLP — regjistrimi, klasifikimi dhe etiketimi i kimikateve',
+    'Substancat/perzierjet kerkojne konformitet REACH dhe klasifikim-etiketim sipas CLP.',
+    'Reg. (KE) 1907/2006 (REACH) dhe Reg. (KE) 1272/2008 (CLP)', LEX('32008R1272'), null, W2_VERIFIED, 1])
+}
+RULES.push(['EU_EFTA', 'pajisje-mjekesore', 'MANDATORY', 'iso-13485',
+  'MDR — shenja CE per pajisje mjekesore (sistemi i cilesise ISO 13485)',
+  'Pajisjet mjekesore kerkojne konformitet me MDR, perfshire sistem cilesie (ISO 13485) dhe perfaqesues te autorizuar ne BE.',
+  'Rregullorja (BE) 2017/745 (MDR)', LEX('32017R0745'), null, W2_VERIFIED, 1])
+RULES.push(['EU_EFTA', 'suplemente', 'MANDATORY', null,
+  'Etiketimi FIC + rregullat e suplementeve ushqimore',
+  'Suplementet jane ushqim: vlen etiketimi FIC; rregullat specifike te suplementeve verifikohen ne valen pasuese.',
+  'Rregullorja (BE) 1169/2011 (FIC)', LEX('32011R1169'), null, W2_VERIFIED, 1])
+
+RULES.push(['EU_EFTA', 'makineri-pajisje', 'MANDATORY', 'ce-machinery',
+  'Shenja CE — Direktiva e Makinerive (deri 19.01.2027; pastaj Reg. 2023/1230)',
+  'Makinerite kerkojne konformitet CE sipas Direktives 2006/42/KE, e cila zevendesohet nga Rregullorja (BE) 2023/1230 qe zbatohet nga 20 janari 2027 — pa faze te dyfishte.',
+  'Direktiva 2006/42/KE per makinerite', LEX('32006L0042'), null, W2_VERIFIED, 1])
+RULES.push(['EU_EFTA', 'konstruksione-metalike', 'MANDATORY', 'en-1090',
+  'EN 1090 — ekzekutimi i strukturave te celikut/aluminit (CE nen CPR)',
+  'Strukturat metalike per ndertim kerkojne certifikim EN 1090 dhe shenjen CE sipas Rregullores se Produkteve te Ndertimit.',
+  'Rregullorja (BE) 305/2011 (CPR)', LEX('32011R0305'), null, W2_VERIFIED, 1])
+RULES.push(['EU_EFTA', 'perpunim-cnc', 'BUYER_EXPECTED', 'iso-3834', 'ISO 3834 — cilesia e saldimit', null, null, null, null, W2_VERIFIED, 10])
+
+const ELECTRIC = ['pajisje-shtepiake','komponente-elektrike','ndricim']
+for (const g of ELECTRIC) {
+  RULES.push(['EU_EFTA', g, 'MANDATORY', 'ce-lvd-emc',
+    'Shenja CE — LVD dhe EMC',
+    'Pajisjet elektrike kerkojne konformitet me Direktiven e Tensionit te Ulet dhe ate te Perputhshmerise Elektromagnetike.',
+    'Direktivat 2014/35/BE (LVD) dhe 2014/30/BE (EMC)', LEX('32014L0035'), null, W2_VERIFIED, 1])
+  RULES.push(['EU_EFTA', g, 'MANDATORY', 'rohs',
+    'RoHS — kufizimi i substancave te rrezikshme',
+    'Pajisjet elektrike/elektronike duhet te respektojne kufijte e substancave te rrezikshme.',
+    'Direktiva 2011/65/BE (RoHS)', LEX('32011L0065'), null, W2_VERIFIED, 2])
+  RULES.push(['EU_EFTA', g, 'MANDATORY', 'red',
+    'RED — nese pajisja ka radio (Wi-Fi/Bluetooth)',
+    'Pajisjet me funksione radio mbulohen nga Direktiva e Pajisjeve Radio (qe perfshin edhe LVD/EMC per to).',
+    'Direktiva 2014/53/BE (RED)', LEX('32014L0053'), null, W2_VERIFIED, 3])
+  RULES.push(['EU_EFTA', g, 'PROCEDURAL', null,
+    'WEEE — regjistrimi i prodhuesit dhe menaxhimi i mbetjeve elektronike',
+    'Vendosja ne tregun e BE-se kerkon regjistrim si prodhues ne skemat kombetare WEEE.',
+    'Direktiva 2012/19/BE (WEEE)', LEX('32012L0019'), null, W2_VERIFIED, 4])
+}
+const CONSTR = ['cimento-beton','gur-qeramike','dritare-profile','izolime']
+for (const g of CONSTR) {
+  RULES.push(['EU_EFTA', g, 'MANDATORY', 'ce-cpr',
+    'Shenja CE + Deklarata e Performances (DoP)',
+    'Produktet e ndertimit me standard te harmonizuar kerkojne DoP dhe shenjen CE.',
+    'Rregullorja (BE) 305/2011 (CPR)', LEX('32011R0305'), null, W2_VERIFIED, 1])
+  RULES.push(['EU_EFTA', g, 'BUYER_EXPECTED', 'epd', 'EPD — kerkohet gjithnje e me shume ne tendere', null, null, null, null, W2_VERIFIED, 10])
+}
+RULES.push(['EU_EFTA', 'bime-mjekesore-aromatike', 'PROCEDURAL', null,
+  'Certifikata fitosanitare per cdo dergese (AUV)',
+  'Bimet dhe produktet bimore shoqerohen me certifikate fitosanitare.',
+  'Rregullorja (BE) 2016/2031', LEX('32016R2031'), null, W2_VERIFIED, 1])
+RULES.push(['EU_EFTA', 'bime-mjekesore-aromatike', 'BUYER_EXPECTED', 'fairwild', 'FairWild — per mbledhjen e eger (MAP)', null, null, null, null, W2_VERIFIED, 10])
+RULES.push(['EU_EFTA', 'bime-mjekesore-aromatike', 'BUYER_EXPECTED', 'organic-eu', 'Organik BE — celes per MAP nga Kosova', null, null, null, null, W2_VERIFIED, 11])
+RULES.push(['EU_EFTA', 'zejtari', 'BUYER_EXPECTED', 'gi-origin', 'Tregues gjeografik / origjine', null, null, null, null, W2_VERIFIED, 10])
+RULES.push(['EU_EFTA', 'zejtari', 'BUYER_EXPECTED', 'ip-trademark-kipa', 'Mbrojtja IP: marke & dizajn (KIPA)', null, null, null, null, W2_VERIFIED, 11])
+// DRAFT (te padukshme deri ne verifikim): lodrat (2009/48 + rregullorja e re), Ecodesign
+// (2009/125), detergjentet (648/2004), barnat (2001/83)
+RULES.push(['EU_EFTA', 'lodra', 'MANDATORY', null, 'Siguria e lodrave (CE)', 'Ne verifikim: Direktiva 2009/48 dhe rregullorja e re e lodrave.', 'Direktiva 2009/48/KE', null, null, 'DRAFT', 1])
+RULES.push(['EU_EFTA', 'pajisje-shtepiake', 'MANDATORY', null, 'Ecodesign + etiketa energjetike', 'Ne verifikim: kuadri Ecodesign.', 'Direktiva 2009/125/KE', null, null, 'DRAFT', 5])
+RULES.push(['EU_EFTA', 'barna', 'PROCEDURAL', null, 'Autorizimi i tregtimit ne BE', 'Ne verifikim: kuadri 2001/83/KE.', 'Direktiva 2001/83/KE', null, null, 'DRAFT', 1])
+
 async function main() {
   let created = 0, updated = 0
   for (const [marketGroup, productGroup, requirementType, certificationCode, titleSq, detailSq, legalActName, legalActUrl, unlockPathSq, status, sortOrder] of RULES) {
