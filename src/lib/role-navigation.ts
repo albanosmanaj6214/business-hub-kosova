@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Search, Calendar, BookOpen, Bell, Building2, Users, Handshake,
   Landmark, Receipt, Truck, User as UserIcon, Compass, Rocket, Zap, MessageSquare,
-  Newspaper, ShieldCheck, Globe, Barcode, FileText, FileCheck, Leaf,
+  Newspaper, ShieldCheck, Globe, Barcode, FileText, FileCheck, Leaf, Shield,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -128,13 +128,18 @@ const INDIVIDUAL: NavSection[] = [
   { label: 'Mbështetje', items: [NEWS, NOTIF, CONSULT] },
 ]
 
+// Dera e panelit te administrimit. Middleware-i e mbron /admin (vetem ADMIN/SUPER_ADMIN),
+// por pa ky link adminet duhej ta shkruanin URL-in me dore — s'kishte asnje derë ne UI.
+const ADMIN_PANEL: NavItem = { name: 'Paneli i administrimit', ariaLabel: 'Paneli i administrimit', href: '/admin', icon: Shield }
+const ADMIN_SECTION: NavSection = { label: 'Administrimi', items: [ADMIN_PANEL] }
+
 const NAV_BY_ROLE: Record<string, NavSection[]> = {
   KOSOVO_BUSINESS,
   STARTUP,
   DIASPORA,
   INDIVIDUAL,
-  ADMIN: KOSOVO_BUSINESS,
-  SUPER_ADMIN: KOSOVO_BUSINESS,
+  ADMIN: [...KOSOVO_BUSINESS, ADMIN_SECTION],
+  SUPER_ADMIN: [...KOSOVO_BUSINESS, ADMIN_SECTION],
   USER: KOSOVO_BUSINESS,
 }
 
