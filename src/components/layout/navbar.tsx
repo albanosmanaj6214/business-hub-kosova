@@ -23,7 +23,7 @@ export function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center space-x-6">
-            <Link href="/#features" className="text-gray-600 hover:text-[#1B4F72] transition-colors">
+            <Link href="/#cka-ofron" className="text-gray-600 hover:text-[#1B4F72] transition-colors">
               {t('nav.services')}
             </Link>
             <Link href="/pricing" className="text-gray-600 hover:text-[#1B4F72] transition-colors">
@@ -70,7 +70,7 @@ export function Navbar() {
       {isOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white">
           <div className="px-4 py-3 space-y-2">
-            <Link href="/#features" className="block py-2 text-gray-600" onClick={() => setIsOpen(false)}>
+            <Link href="/#cka-ofron" className="block py-2 text-gray-600" onClick={() => setIsOpen(false)}>
               {t('nav.services')}
             </Link>
             <Link href="/pricing" className="block py-2 text-gray-600" onClick={() => setIsOpen(false)}>
