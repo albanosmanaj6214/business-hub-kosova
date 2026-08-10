@@ -1,0 +1,84 @@
+name: CI
+
+# Kontroll cilesie mbi branch-in e VERTETE te prodhimit. Workflow-i i meparshem
+# `deploy.yml` aktivizohej nga `main` (qe nuk perdoret) dhe thirrte nje skript qe
+# ndertonte brenda direktorise se gjalle — cka thyen procesin PM2 ne prodhim.
+# Publikimi behet me dore sipas DEPLOY.md; ketu vetem verifikohet kodi.
+on:
+  push:
+    branches: [platform-v5-wave-2-roles-and-profiles, main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Instalo varesite
+        run: pnpm install --frozen-lockfile
+
+      - name: Gjenero Prisma Client
+        run: pnpm prisma generate
+
+      - name: Kontrolli i tipave
+        run: npx tsc --noEmit
+
+      - name: Testet
+        run: pnpm test
+
+      - name: Lint
+        run: pnpm lint
+
+      # Build-i kerkon nje DATABASE_URL te vlefshem sintaksisht sepse disa route
+      # e instancojne Prisma Client gjate mbledhjes se te dhenave te faqes.
+      # Nuk lidhet me asnje baze reale.
+      - name: Build
+        run: pnpm build
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+          NEXTAUTH_URL: http://localhost:3000
+          NEXTAUTH_SECRET: ci-only-not-a-real-secret
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+  migrimet:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # Rojtari kryesor: zinxhiri i migrimeve duhet te luhet nga zeroja.
+      # Deri me 2026-08-10 kjo deshtonte — 10 tabela ishin aplikuar me `db push`
+      # pa file migrimi, dhe nje mjedis i ri dilte i mangët.
+      - name: Rikrijim i skemes nga zeroja
+        run: pnpm prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci

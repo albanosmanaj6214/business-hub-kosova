@@ -90,7 +90,10 @@ export async function sendVerificationEmail(to: string, token: string): Promise<
   const subject = 'Aktivizo llogarinë në Kosova Business Hub'
 
   if (!resend) {
-    // Dev/staging fallback — log the URL so it can be copied from PM2 output.
+    // Pa transport, email-i NUK dergohet. Kthejme ok:false — me pare kthehej
+    // ok:true dhe regjistrimi raportonte sukses ndersa asnje email nuk ikte,
+    // deshtim i heshtur me te keq sesa nje gabim i dukshem.
+    // URL-ja shtypet ne log qe zhvillimi lokal te vazhdoje pa Resend.
     // eslint-disable-next-line no-console
     console.warn(
       `[email] RESEND_API_KEY not set. Verification email NOT sent.\n` +
@@ -98,7 +101,11 @@ export async function sendVerificationEmail(to: string, token: string): Promise<
         `        Subject: ${subject}\n` +
         `        URL: ${verifyUrl}`
     )
-    return { ok: true, provider: 'console' }
+    return {
+      ok: false,
+      provider: 'console',
+      error: 'Transporti i email-it nuk eshte konfiguruar (RESEND_API_KEY mungon).',
+    }
   }
 
   try {
@@ -179,9 +186,14 @@ export async function sendNewsEmail(to: string, n: NewsEmail): Promise<SendResul
   const subject = `Lajm i ri: ${n.title}`.slice(0, 120)
 
   if (!resend) {
+    // Njesoj si te verifikimi: pa transport => ok:false, jo sukses i shtirur.
     // eslint-disable-next-line no-console
     console.warn(`[email] RESEND_API_KEY not set. News email NOT sent.\n        To: ${to}\n        Subject: ${subject}`)
-    return { ok: true, provider: 'console' }
+    return {
+      ok: false,
+      provider: 'console',
+      error: 'Transporti i email-it nuk eshte konfiguruar (RESEND_API_KEY mungon).',
+    }
   }
 
   try {

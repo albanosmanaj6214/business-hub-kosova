@@ -251,9 +251,15 @@ export async function POST(req: Request) {
 
     const sendResult = await sendVerificationEmail(user.email, token)
 
+    // Llogaria krijohet gjithsesi, por mesazhi nuk guxon te thote "kontrollo
+    // email-in" kur email-i nuk iku — perndryshe perdoruesi pret pafundesisht.
+    const message = sendResult.ok
+      ? 'Regjistrimi u krye me sukses. Kontrollo email-in për aktivizimin e llogarisë.'
+      : 'Llogaria u krijua, por email-i i aktivizimit nuk mund të dërgohej. Kontakto administratorin ose provo "Dërgo përsëri" më vonë.'
+
     return NextResponse.json(
       {
-        message: 'Regjistrimi u krye me sukses. Kontrollo email-in për aktivizimin e llogarisë.',
+        message,
         userId: user.id,
         email: user.email,
         emailProvider: sendResult.provider,

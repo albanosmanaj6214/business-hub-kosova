@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+    // Pa `target` TypeScript bie ne ES5 dhe refuzon iterimin e matchAll().
+    // Next 14 transpilon me SWC, prandaj kjo prek vetem kontrollin e tipave.
+    "target": "ES2020",
     "lib": [
       "dom",
       "dom.iterable",
@@ -34,7 +37,6 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
-    "scripts/**"
+    "node_modules"
   ]
 }
