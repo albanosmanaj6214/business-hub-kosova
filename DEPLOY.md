@@ -177,6 +177,6 @@ Emri i cookie-t varet nga skema e `NEXTAUTH_URL`. Meqë në prodhim është `htt
 ## Kredencialet
 
 - `.env` i prodhimit nuk është në git. Shabllonin e ke te `.env.example`.
-- Autentikimi me GitHub përdor `/root/.git-credentials` (chmod 600) + `credential.helper=store`. Token-i **nuk** është më i futur në URL-në e remote-it.
-- Një çelës SSH deploy është gati te `/root/.ssh/kbh_deploy_ed25519` për kalimin nga token te deploy key.
+- Autentikimi me GitHub bëhet me **SSH deploy key**, jo me token. Çelësi: `/root/.ssh/kbh_deploy_ed25519`, i regjistruar në repo si deploy key me të drejtë shkrimi (id `159859489`). Konfigurimi te `/root/.ssh/config`, remote-i është `git@github.com:...`.
+- **Asnjë Personal Access Token nuk ndodhet më në server.** `/root/.git-credentials` u fshi dhe `credential.helper` u hoq. PAT-i i vjetër mbetet i vlefshëm në GitHub derisa pronari ta revokojë manualisht (Settings → Developer settings → Tokens); serveri nuk e përdor më.
 - Kopjet e vjetra të `.env` ruhen te `/root/env-backups/` me chmod 600, jashtë repos.

@@ -18,7 +18,7 @@ Rekomandimet e §14 u zbatuan në të njëjtën ditë. Prodhimi: `ba8992a`.
 
 | # | Rekomandimi | Statusi |
 |---|---|---|
-| 1 | Token GitHub jashtë `.git/config` | **U krye pjesërisht.** Token-i u zhvendos në `/root/.git-credentials` (chmod 600) me `credential.helper=store`; `.git/config` është pastruar dhe të 20 worktree-t ndanin të njëjtin git-dir, pra s'kishte kopje. Një SSH deploy key është gati te `/root/.ssh/kbh_deploy_ed25519`. **Rrotullimi i vërtetë kërkon ndërhyrjen e pronarit në GitHub.** |
+| 1 | Token GitHub jashtë `.git/config` | **U krye.** Git-i tani autentikohet me **SSH deploy key** (`/root/.ssh/kbh_deploy_ed25519`, i shtuar në repo me të drejtë shkrimi përmes API-t). Remote-i u kalua në `git@github.com:...`, `/root/.git-credentials` u fshi dhe `credential.helper` u hoq: **asnjë PAT nuk ndodhet më në server** (verifikuar me kërkim në të gjithë file-sistemin). Fetch, push dhe `auto-push.sh` u provuan dhe punojnë. Mbetet vetëm **revokimi i PAT-it të vjetër në GitHub** — nuk ka API për ta fshirë një token klasik, duhet një klik i pronarit. |
 | 2 | Turnstile + imitimi i përdoruesit | **Gjysma u krye.** `DEV_IMPERSONATION_ENABLED=false`; `/api/dev/impersonate` kthen 404. Turnstile pret çelësa realë të Cloudflare-it nga pronari. |
 | 3 | Dështimi i heshtur i emailit | **U krye.** `email.ts` kthen `ok:false` me arsye kur transporti mungon; regjistrimi nuk i thotë më përdoruesit të kontrollojë një inbox bosh. `RESEND_API_KEY` pret pronarin. |
 | 4 | Drifti i skemës | **U krye.** Shih korrigjimin më poshtë. |
@@ -54,7 +54,7 @@ Të 7 burimet aktive tani kanë **0 dështime radhazi** dhe sukses të datës 20
 
 | Çështja | Kush e zhbllokon |
 |---|---|
-| Rrotullimi i token-it GitHub | Pronari (GitHub → Deploy keys ose PAT i ri) |
+| Revokimi i PAT-it të vjetër | Pronari (GitHub → Settings → Developer settings → Tokens). Serveri nuk e përdor më; token-i thjesht duhet çaktivizuar. |
 | Çelësat realë të Turnstile | Pronari (Cloudflare → Turnstile) |
 | `RESEND_API_KEY` + verifikim domeni | Pronari (Resend) |
 | Vetëm 1 grant aktiv | Punë burimesh: burime të reja ose ringjallje e atyre ekzistuese |
