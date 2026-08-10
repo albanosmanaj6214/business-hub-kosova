@@ -150,6 +150,8 @@ Skriptat gjenden në `ops/` në këtë repo dhe instalohen në `/usr/local/bin/`
 
 ### Kujdes me auto-push
 
+Log-u i auto-push: `/var/log/auto-push.log` (shkruan vetëm kur ka çka të bëjë; heshtja do të thotë pemë e pastër).
+
 `auto-push.sh` bën `git add -A`. Çdo file pranë kodit futet në commit brenda gjysmë ore. Ka shkaktuar dy incidente: `.next.prev/` (228 MB, GitHub e refuzoi push-in) dhe `.env.bak-*` me sekretet e prodhimit (u kap para se të arrinte në origin). `.gitignore` tani mbulon `.env*` dhe `.next.*/`. Përpara se të krijosh çdo file pranë kodit, verifiko me `touch <file> && git status --porcelain`.
 
 ---
