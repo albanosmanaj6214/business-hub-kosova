@@ -10,3 +10,4 @@ _*.mjs
 _*.js
 _*.ts
 .next.bak/
+.next.*/
