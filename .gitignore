@@ -1,7 +1,5 @@
 node_modules/
 .next/
-.env
-.env.local
 *.tsbuildinfo
 next-env.d.ts
 .pm2/
@@ -11,3 +9,10 @@ _*.js
 _*.ts
 .next.bak/
 .next.*/
+
+# Cdo variant i .env-it — perfshire kopjet .env.bak-<timestamp> qe krijohen
+# gjate ndryshimeve. Timer-i auto-push ben `git add -A`, prandaj modeli duhet
+# te jete i plote: me 2026-08-10 nje kopje me sekretet e prodhimit u commit-ua
+# (u hoq para se te arrinte ne GitHub).
+.env*
+!.env.example
