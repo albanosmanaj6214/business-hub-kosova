@@ -12,6 +12,58 @@ të serverit të prodhimit. Aty ku diçka nuk mund të verifikohej, është shë
 
 ---
 
+## 0. STATUSI I ZBATIMIT (përditësuar 2026-08-10, pas raportit)
+
+Rekomandimet e §14 u zbatuan në të njëjtën ditë. Prodhimi: `ba8992a`.
+
+| # | Rekomandimi | Statusi |
+|---|---|---|
+| 1 | Token GitHub jashtë `.git/config` | **U krye pjesërisht.** Token-i u zhvendos në `/root/.git-credentials` (chmod 600) me `credential.helper=store`; `.git/config` është pastruar dhe të 20 worktree-t ndanin të njëjtin git-dir, pra s'kishte kopje. Një SSH deploy key është gati te `/root/.ssh/kbh_deploy_ed25519`. **Rrotullimi i vërtetë kërkon ndërhyrjen e pronarit në GitHub.** |
+| 2 | Turnstile + imitimi i përdoruesit | **Gjysma u krye.** `DEV_IMPERSONATION_ENABLED=false`; `/api/dev/impersonate` kthen 404. Turnstile pret çelësa realë të Cloudflare-it nga pronari. |
+| 3 | Dështimi i heshtur i emailit | **U krye.** `email.ts` kthen `ok:false` me arsye kur transporti mungon; regjistrimi nuk i thotë më përdoruesit të kontrollojë një inbox bosh. `RESEND_API_KEY` pret pronarin. |
+| 4 | Drifti i skemës | **U krye.** Shih korrigjimin më poshtë. |
+| 5 | Backup dhe restore | **U krye.** Dump 888 KB, restore në bazë të veçantë, të 12 tabelat përputhen, Prisma Client lexon pa gabim. Procedura te [DEPLOY.md](DEPLOY.md). Automatizimi i backup-it mbetet i pabërë. |
+| 6 | `.env.example`, README, DEPLOY.md, skriptat | **U krye.** Plus `ops/` me katër skriptat që jetonin vetëm në `/usr/local/bin/`. |
+| 7 | Freskia e përmbajtjes | **U krye pjesërisht.** ATK u rregullua (shih më poshtë), OEK u çaktivizua, `gemini_synthesize` u hoq nga të gjitha burimet, u shtua alarm ditor. **Numri i granteve aktive mbetet 1** — kjo kërkon punë burimesh, jo kod. |
+| 8 | Ora dhe `retrievedAt` | **U krye.** Të shtatë dataset-et u rifreskuan; të gjitha mbajnë `retrievedAt = 2026-08-10`. |
+| 9 | Pastrimi i degëve | **U krye.** 20 worktree → 2. Çdo degë u arkivua si tag `archive/<dega>` dhe u shty në GitHub. Disku: 57% → 18%. |
+| 10 | Teste dhe CI | **U krye.** 114 → 162 teste. `scripts/` nën TypeScript (0 gabime). `deploy.yml` mashtrues u zëvendësua me `ci.yml`. |
+
+### Korrigjim i rëndësishëm i §5 (K4)
+
+Raporti origjinal e përshkroi driftin si "një migrim i regjistruar por i munguar". **Realiteti ishte më i rëndë.**
+
+Migrimi `wave2_roles_and_company` **fshin** kolona që i krijon `add_segment_axes`. Meqë ky i fundit mungonte nga branch-i i prodhimit, `prisma migrate deploy` mbi një bazë të re **dështonte me P3018** — zinxhiri nuk luhej fare.
+
+Përveç kësaj, **10 tabela** (`Offering`, `OfferRequest`, `OfferResponse`, `ProductCategory`, `AuditLog`, `ContactRequest`, `ArbkTemplate`, `MediaAsset`, `EnergyNotice`, `EnergyPrice`), 5 kolona, 15 indekse dhe 6 kufizime të huaja ishin aplikuar në prodhim me `prisma db push`, i cili nuk lë file migrimi. Një mjedis i rikrijuar dilte pa modulin e ofertave, pa audit log, pa media, pa energji — aplikacioni do të binte.
+
+**Zgjidhja:** `add_segment_axes` u kthye si hallkë e detyrueshme, plus `20260810210000_catchup_db_push_drift`. I verifikuar: rikrijim nga zeroja → `migrate diff` **0 rreshta në të dy drejtimet**, Prisma Client lexon të 10 modelet. Në prodhim u regjistrua me `migrate resolve --applied`, pa prekur asnjë të dhënë. Job-i `migrimet` te `ci.yml` e mbron këtë nga rikthimi.
+
+### Korrigjim i §12 (L3) — më mirë sesa u raportua
+
+Frika për grante të halucinuara nga `gemini_synthesize` **nuk u konfirmua**. Nga 104 grantet jo të fshira, 59 mbajnë etiketën `legacy_synthetic` dhe janë tashmë të fshehura publikisht. Nga 45 të mbeturat, **të 45 kanë URL të vlefshme http**, asnjë me etiketë AI dhe asnjë me `classificationSource` nga Gemini. Rreziqe të reja u parandaluan: strategjia `gemini_synthesize` u hoq nga të 7 burimet ku ishte konfiguruar si rezervë.
+
+### Korrigjim i §12 (L2) — ATK dhe OEK ishin dy probleme të ndryshme
+
+- **ATK** kishte zinxhir TLS të paplotë: serveri dërgon leaf të vlefshëm por harron CA-në e ndërmjetme. U rregullua duke e furnizuar vetë atë certifikatë publike, me verifikimin e plotë të paprekur (`rejectUnauthorized` mbetet `true`). Nga **51 dështime radhazi pa asnjë sukses ndonjëherë** te `ok:true` me 10 artikuj.
+- **OEK** nuk ishte i prishur: scraper-i i tij varet nga Anthropic dhe është i mbyllur me qëllim pas `SCRAPER_AI_ENRICH`. Problemi ishte që numërohej publikisht si "monitorohet çdo ditë". U vendos `isActive=false`.
+
+Të 7 burimet aktive tani kanë **0 dështime radhazi** dhe sukses të datës 2026-08-10.
+
+### Mbeten të hapura
+
+| Çështja | Kush e zhbllokon |
+|---|---|
+| Rrotullimi i token-it GitHub | Pronari (GitHub → Deploy keys ose PAT i ri) |
+| Çelësat realë të Turnstile | Pronari (Cloudflare → Turnstile) |
+| `RESEND_API_KEY` + verifikim domeni | Pronari (Resend) |
+| Vetëm 1 grant aktiv | Punë burimesh: burime të reja ose ringjallje e atyre ekzistuese |
+| 22 rregulla MANDATORY pa akt ligjor | Punë verifikimi juridik |
+| Automatizimi i backup-it | I pabërë; procedura manuale është dokumentuar |
+| KIESA Source Phase 6 | I parkuar me kërkesë të pronarit |
+
+---
+
 ## 1. PËRMBLEDHJE E PROJEKTIT
 
 Kosova Business Hub është një platformë SaaS që u ofron bizneseve kosovare informacion të strukturuar për:
