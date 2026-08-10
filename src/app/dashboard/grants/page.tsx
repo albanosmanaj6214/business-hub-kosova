@@ -1,3 +1,4 @@
+import { isFairStandCall } from '@/lib/fair-stand-calls'
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
 import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
@@ -71,11 +72,6 @@ function extractYearFromTitle(title: string): number | null {
 // Calls about applying to a state booth at a trade fair (KIESA "Stenda Shtetërore")
 // or co-financing for fair participation. These conceptually belong with /dashboard/fairs,
 // not with general grants. Filtered out of the grants page only — they still exist in admin.
-const FAIR_STAND_CALL_PATTERN = /STEND[ËÊE]N|bashk[ëe]financim.{0,40}panair/i
-
-function isFairStandCall(g: { title: string; titleSq?: string | null }): boolean {
-  return FAIR_STAND_CALL_PATTERN.test(g.titleSq ?? g.title) || FAIR_STAND_CALL_PATTERN.test(g.title)
-}
 
 const LOCAL_PROVIDER_PATTERNS = [
   /ministri/i,         // Ministria e ...

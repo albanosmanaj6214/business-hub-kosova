@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { currentBusinessProfile } from '@/lib/audience-server'
 import { feedFor } from '@/lib/audience'
 import { Card, CardContent } from '@/components/ui/card'
+import { FairStandCalls } from '@/components/dashboard/FairStandCalls'
 import { Globe, Home, GraduationCap, Users, BookOpen, Mic, FolderArchive, ArrowRight } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -82,6 +83,10 @@ export default async function PanaireDheEventePage() {
           Panaire ndërkombëtare e vendore, trajnime, matchmaking, workshope dhe konferenca. Filtruar sipas sektorit tënd.
         </p>
       </div>
+
+      {/* Thirrjet e hapura per stenden shtetërore — permbajtja e panairit, e filtruar
+          sipas sektorit. Renderohet vetem kur ka thirrje aktive. */}
+      <FairStandCalls />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <HubCard

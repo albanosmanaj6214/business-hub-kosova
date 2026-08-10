@@ -1,3 +1,4 @@
+import { isFairStandCall } from '@/lib/fair-stand-calls'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { currentBusinessProfile } from '@/lib/audience-server'
@@ -66,7 +67,7 @@ export default async function BurimeFinancimiPage() {
     })
     const today = new Date(); today.setUTCHours(0, 0, 0, 0)
     const visible = feedFor(profile, grantsRaw)
-      .filter((g) => !/STEND[ËÊE]N|bashk[ëe]financim.{0,40}panair/i.test(`${(g as { titleSq?: string | null }).titleSq ?? ''} ${(g as { title?: string }).title ?? ''}`))
+      .filter((g) => !isFairStandCall({ title: (g as { title?: string }).title ?? '', titleSq: (g as { titleSq?: string | null }).titleSq }))
     activeGrantsCount = visible.filter((g) => g.isOngoing || (g.deadline && new Date(g.deadline) >= today)).length
   }
 

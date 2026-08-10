@@ -1,3 +1,4 @@
+import { isFairStandCall } from '@/lib/fair-stand-calls'
 // Server-side Dashboard selectors: one place that resolves every real signal with
 // parallel queries, plus priority derivation. No fabricated data.
 import { prisma } from '@/lib/prisma'
@@ -88,7 +89,7 @@ export async function loadDashboardData(opts: { userId?: string; role: DashRole;
   })
 
   const grants = (feedFor(bp, grantsRaw as never[]) as Record<string, unknown>[])
-    .filter((g) => !/STEND[ËÊE]N|bashk[ëe]financim.{0,40}panair/i.test(`${g.titleSq ?? ''} ${g.title ?? ''}`))
+    .filter((g) => !isFairStandCall({ title: (g.title as string) ?? '', titleSq: (g.titleSq as string | null) ?? null }))
     .slice(0, 4).map(toGrant)
   const fairs = (feedFor(bp, fairsRaw as never[]) as Record<string, unknown>[]).slice(0, 4).map((f) => toFair(f, 'fair'))
   const trainings = (feedFor(bp, trainingsRaw as never[]) as Record<string, unknown>[]).slice(0, 4).map((f) => toFair(f, 'training'))

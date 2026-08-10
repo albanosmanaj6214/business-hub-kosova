@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma"
+// Modeli i njohjes vjen nga moduli i vetem — shih src/lib/fair-stand-calls.ts.
+import { isFairStandCall } from "@/lib/fair-stand-calls"
 
 // Mirrors the "Aktive" bucket on /dashboard/grants. Must stay in sync.
 // Kept in a shared module so dashboard + homepage counters never drift from
@@ -14,11 +16,6 @@ function kosovoToday(): Date {
   return new Date(`${get("year")}-${get("month")}-${get("day")}T00:00:00.000Z`)
 }
 
-const FAIR_STAND_CALL_PATTERN = /STEND[ËÊE]N|bashk[ëe]financim.{0,40}panair/i
-
-function isFairStandCall(g: { title: string; titleSq: string | null }): boolean {
-  return FAIR_STAND_CALL_PATTERN.test(g.titleSq ?? g.title) || FAIR_STAND_CALL_PATTERN.test(g.title)
-}
 
 export async function countActiveGrants(): Promise<number> {
   const grants = await prisma.grant.findMany({
