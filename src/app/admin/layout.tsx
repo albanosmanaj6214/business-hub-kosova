@@ -7,7 +7,7 @@ import { useSession } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 import {
   Shield, Users, Search, Calendar, BookOpen, Bot, Bell, Inbox, FileText, Zap,
-  LayoutDashboard, Menu, X, ArrowLeft, Trash2, Database, ClipboardCheck, Send, Newspaper, KeyRound, Building2, Beaker, FolderOpen, ScrollText, Package, Handshake, Compass,
+  LayoutDashboard, FileSearch, Menu, X, ArrowLeft, Trash2, Database, ClipboardCheck, Send, Newspaper, KeyRound, Building2, Beaker, FolderOpen, ScrollText, Package, Handshake, Compass,
 } from 'lucide-react'
 import { Toaster } from '@/components/admin/Toaster'
 
@@ -28,6 +28,7 @@ const adminNav = [
   { name: 'Template-t ARBK', href: '/admin/arbk-templates', icon: FileText },
   { name: 'Tregu i Energjisë', href: '/admin/energji', icon: Zap },
   { name: 'AI Scraper', href: '/admin/scraper', icon: Bot, superOnly: true },
+  { name: 'Regjistri i burimeve', href: '/admin/burimet', icon: FileSearch },
   { name: 'Burimet', href: '/admin/sources', icon: Database, superOnly: true },
   { name: 'Review Queue', href: '/admin/review', icon: ClipboardCheck },
   { name: 'Njoftimet', href: '/admin/notifications', icon: Bell },
