@@ -395,7 +395,28 @@ export interface ClaimAssessment {
   authorityName: string
   note?: string
   reason?: string
+  /** Pse burimi nuk përputhet — tri arsye krejt të ndryshme që s'duhen numëruar bashkë. */
+  mismatchClass?: MismatchClass
 }
+
+/**
+ * Një burim mund të mos përputhet me juridiksionin për tri arsye të papërzieshme.
+ * Numërimi i tyre bashkë jep një shifër alarmi që s'i qëndron kontrollit.
+ */
+export type MismatchClass =
+  /** Burim i vendit eksportues (Kosovë) për një dokument që LËSHOHET në Kosovë.
+   *  Nuk është gabim: certifikata e origjinës, EUR.1, fitosanitare i lëshon Kosova. */
+  | 'EXPORTER_SIDE'
+  /** Akt i BE-së i cituar përmes një shteti tjetër anëtar (p.sh. ministria gjermane
+   *  duke shpjeguar Rregulloren FIC në një udhëzues për Belgjikën). Përmbajtja qëndron;
+   *  citimi duhet ridrejtuar te akti vetë. */
+  | 'EU_ACT_VIA_OTHER_MEMBER'
+  /** Burim zyrtar i një vendi krejt tjetër, pa lidhje me pretendimin.
+   *  P.sh. rregullatori amerikan i alkoolit i cituar për alergjenët në Çeki. */
+  | 'WRONG_COUNTRY'
+  /** Burim autoritativ, por i shkruar për eksportuesin e vendit të vet (trade.gov, USDA GAIN).
+   *  Përmbajtja mund të jetë e saktë; niveli është dytësor. */
+  | 'FOREIGN_EXPORT_PROMOTION'
 
 const ORDER: AuthorityLevel[] = ['A', 'B', 'C', 'D', 'FORBIDDEN']
 
@@ -409,6 +430,7 @@ export function assessClaim(
   url: string | null | undefined,
   jurisdiction: string,
   euMember: boolean,
+  opts: { field?: string; text?: string } = {},
 ): ClaimAssessment {
   if (!url) {
     return { host: '', level: 'UNKNOWN', effectiveLevel: 'UNKNOWN', fitsJurisdiction: false,
@@ -416,25 +438,63 @@ export function assessClaim(
   }
   const a = lookupAuthority(url)!
   const scope = a.scope
-  const fits =
+  let fits =
     scope.includes('*') ||
     scope.includes('INT') ||
     scope.includes(jurisdiction) ||
     (euMember && scope.includes('EU'))
 
-  let eff = a.level
+  let mismatchClass: MismatchClass | undefined
   let reason: string | undefined
-  if (a.level === 'A' && !fits) {
-    eff = 'C'
-    reason = `${a.name} është autoritet për ${scope.join(', ') || '(pa juridiksion)'}, `
-      + `jo për ${jurisdiction}. Vlen si burim dytësor.`
-  } else if (a.level === 'B' && !fits) {
+
+  if (!fits && a.level === 'A') {
+    // 1. Ana e eksportit. Çdo udhëzues është shkruar për një eksportues nga Kosova,
+    //    prandaj institucionet e Kosovës janë burimi i saktë për dokumentet që lëshohen këtu.
+    const anaEksportit = scope.includes(EXPORTER)
+      && (EXPORTER_SIDE_FIELDS.has(opts.field || '')
+        || /kosov/i.test(opts.text || ''))
+    if (anaEksportit) {
+      fits = true
+      mismatchClass = 'EXPORTER_SIDE'
+      reason = `${a.name} është autoriteti që e lëshon këtë dokument në anën e eksportit. Citim i saktë.`
+    } else if (euMember && scope.length === 1 && EU_MEMBERS.has(scope[0])) {
+      mismatchClass = 'EU_ACT_VIA_OTHER_MEMBER'
+      reason = `${a.name} është autoritet i ${scope[0]}, jo i ${jurisdiction}. `
+        + 'Nëse rregulli buron nga një akt i BE-së, citimi duhet ridrejtuar te akti.'
+    } else if (EXPORT_PROMOTION.has(a.host)) {
+      mismatchClass = 'FOREIGN_EXPORT_PROMOTION'
+      reason = `${a.name} e përshkruan tregun nga këndvështrimi i eksportuesit të vendit të vet. `
+        + 'Burim dytësor, jo bazë ligjore.'
+    } else {
+      mismatchClass = 'WRONG_COUNTRY'
+      reason = `${a.name} është autoritet për ${scope.join(', ') || '(pa juridiksion)'}, `
+        + `pa lidhje me ${jurisdiction}.`
+    }
+  }
+
+  let eff = a.level
+  if (a.level === 'A' && !fits) eff = 'C'
+  else if (a.level === 'B' && !fits) {
     eff = 'C'
     reason = `${a.name} nuk mbulon ${jurisdiction} drejtpërdrejt.`
   }
   return { host: a.host, level: a.level, effectiveLevel: eff, fitsJurisdiction: fits,
-    authorityName: a.name, note: a.note, reason }
+    authorityName: a.name, note: a.note, reason, mismatchClass }
 }
+
+/** Vendi eksportues për të cilin janë shkruar të gjithë udhëzuesit. */
+const EXPORTER = 'XK'
+
+/** Fushat ku dokumentin e lëshon ana e eksportit, jo tregu i destinacionit. */
+const EXPORTER_SIDE_FIELDS = new Set(['requiredDocs', 'customs', 'tradeAgreements', 'certifications'])
+
+/** Agjenci promovimi eksporti të vendeve të treta: përshkruajnë tregun për eksportuesit e VETË. */
+const EXPORT_PROMOTION = new Set([
+  'trade.gov', 'apps.fas.usda.gov', 'fas.usda.gov', 'export.gov', 'legacy.export.gov',
+])
+
+const EU_MEMBERS = new Set(['AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE',
+  'IT','LV','LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE'])
 
 /** A lejohet publikimi i një pretendimi të detyrueshëm me këtë nivel efektiv? */
 export function canPublishAsMandatory(level: AuthorityLevel): boolean {

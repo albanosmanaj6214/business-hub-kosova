@@ -7,7 +7,7 @@
  *   npx tsx scripts/auditim-burimesh.ts --csv > /tmp/auditim.csv
  */
 import { PrismaClient } from '@prisma/client'
-import { assessClaim, canPublishAsMandatory, type AuthorityLevel } from '../src/lib/provenance/authorities'
+import { assessClaim, canPublishAsMandatory, type AuthorityLevel, type MismatchClass } from '../src/lib/provenance/authorities'
 
 const prisma = new PrismaClient()
 const PLOT = process.argv.includes('--plot')
@@ -19,9 +19,10 @@ const EEA = new Set([...BE, 'NO', 'IS', 'LI'])
 const FUSHAT = ['customs','requiredDocs','certifications','labeling','sectorRules','tradeAgreements'] as const
 
 interface Rresht {
+  host?: string
   vend: string; fusha: string; teksti: string; url: string | null; detyrues: boolean
   nivel: AuthorityLevel; nivelEfektiv: AuthorityLevel; autoriteti: string
-  pershtatet: boolean; arsyeja?: string; shenim?: string
+  pershtatet: boolean; arsyeja?: string; shenim?: string; klasa?: MismatchClass
 }
 
 function tekstiI(o: any): string | null {
@@ -39,10 +40,10 @@ function mbledh(o: any, vend: string, fusha: string, out: Rresht[]) {
     const url: string | null = o.sourceUrl || o.source || null
     const detyrues = o.mandatory === true
     const euM = BE.has(vend) || EEA.has(vend)
-    const a = assessClaim(url, vend, euM)
-    out.push({ vend, fusha, teksti: String(teksti).replace(/\s+/g, ' ').slice(0, 90),
+    const a = assessClaim(url, vend, euM, { field: fusha, text: String(teksti) })
+    out.push({ host: a.host, vend, fusha, teksti: String(teksti).replace(/\s+/g, ' ').slice(0, 90),
       url, detyrues, nivel: a.level, nivelEfektiv: a.effectiveLevel,
-      autoriteti: a.authorityName, pershtatet: a.fitsJurisdiction, arsyeja: a.reason, shenim: a.note })
+      autoriteti: a.authorityName, pershtatet: a.fitsJurisdiction, arsyeja: a.reason, shenim: a.note, klasa: a.mismatchClass })
   }
   for (const v of Object.values(o)) if (v && typeof v === 'object') mbledh(v, vend, fusha, out)
 }
@@ -91,12 +92,25 @@ async function main() {
     if (c) console.log('  ' + L.padEnd(10) + String(c).padStart(5) + '  (' + (c * 100 / rreshtat.length).toFixed(1) + '%)')
   }
 
-  const ulur = rreshtat.filter((r) => r.nivel === 'A' && r.nivelEfektiv !== 'A')
-  console.log('\n── PRETENDIME ME BURIM ZYRTAR, POR TË GABUAR PËR ATË JURIDIKSION: ' + ulur.length + ' ──')
-  const perDomen: Record<string, number> = {}
-  for (const r of ulur) { const h = new URL(r.url!).hostname.replace(/^www\./, ''); perDomen[h] = (perDomen[h] || 0) + 1 }
-  for (const [h, c] of Object.entries(perDomen).sort((a, b) => b[1] - a[1]).slice(0, 12))
-    console.log('  ' + String(c).padStart(5) + '  ' + h)
+  const ETIKETA: Record<string, string> = {
+    EXPORTER_SIDE: 'Ana e eksportit — citim i saktë, jo gabim',
+    EU_ACT_VIA_OTHER_MEMBER: 'Akt i BE-së i cituar përmes një shteti tjetër anëtar',
+    FOREIGN_EXPORT_PROMOTION: 'Agjenci promovimi e një vendi të tretë — dytësore',
+    WRONG_COUNTRY: 'Autoritet i një vendi pa lidhje me pretendimin',
+  }
+  const meKlase = rreshtat.filter((r) => r.klasa)
+  console.log('\n── BURIME QË NUK I TAKOJNË JURIDIKSIONIT: ' + meKlase.length + ' ──')
+  for (const k of ['WRONG_COUNTRY','FOREIGN_EXPORT_PROMOTION','EU_ACT_VIA_OTHER_MEMBER','EXPORTER_SIDE'] as MismatchClass[]) {
+    const g = meKlase.filter((r) => r.klasa === k)
+    if (!g.length) continue
+    console.log('\n  ' + ETIKETA[k] + ': ' + g.length)
+    const perDomen: Record<string, number> = {}
+    for (const r of g) { const h = new URL(r.url!).hostname.replace(/^www\./, ''); perDomen[h] = (perDomen[h] || 0) + 1 }
+    for (const [h, c] of Object.entries(perDomen).sort((a, b) => b[1] - a[1]).slice(0, 6))
+      console.log('      ' + String(c).padStart(4) + '  ' + h)
+    if (k === 'WRONG_COUNTRY') for (const r of g.slice(0, 8))
+      console.log('        · [' + r.vend + '/' + r.fusha + '] ' + r.teksti.slice(0, 56) + '  ← ' + r.host)
+  }
 
   console.log('\n── RREGULLA TË SHËNUARA SI TË DETYRUESHME QË NUK KALOJNË PRAGUN ──')
   const keq = detyruese.filter((r) => !canPublishAsMandatory(r.nivelEfektiv))
