@@ -333,6 +333,31 @@ export const AUTHORITIES: Record<string, AuthorityEntry> = {
   'mtca.gov.mt': A(['MT'], 'ministry', 'Ministri e Maltës'),
   'agriculture.gov.mt': A(['MT'], 'ministry', 'Ministria e Bujqësisë, Maltë'),
   'minsal.cl': A(['CL'], 'health', 'Ministria e Shëndetësisë, Kili'),
+
+  // ── Plotësim pas auditimit të 2026-08-26 ──────────────────────────────────
+  'slov-lex.sk': A(['SK'], 'legislator', 'Slov-Lex — sistemi zyrtar i informacionit juridik i Sllovakisë'),
+  'mfa-ks.net': A(['XK'], 'ministry', 'Ministria e Punëve të Jashtme dhe Diasporës, Kosovë'),
+  'itac.org.za': A(['ZA'], 'ministry', 'ITAC — Komisioni i Administrimit të Tregtisë Ndërkombëtare, Afrika e Jugut'),
+  'sabs.co.za': A(['ZA'], 'standards', 'SABS — Byroja e Standardeve e Afrikës së Jugut'),
+  'pkn.pl': A(['PL'], 'standards', 'PKN — Komiteti Polak i Standardizimit'),
+  'info.hub.brussels': A(['BE'], 'ministry', 'hub.brussels — agjenci e Rajonit të Brukselit'),
+  'citizensinformation.ie': B(['IE'], 'ministry', 'Citizens Information — shërbim publik irlandez',
+    'Përmbledhje zyrtare për qytetarët; teksti ligjor te irishstatutebook.ie.'),
+  'ippc.int': B(['INT'], 'intergov', 'IPPC — Konventa Ndërkombëtare për Mbrojtjen e Bimëve (FAO)'),
+  'wits.worldbank.org': B(['INT'], 'intergov', 'WITS — Banka Botërore', 'Të dhëna tregtare, jo bazë ligjore.'),
+  'w3.org': B(['INT'], 'standardOwner', 'W3C — pronari i standardeve WCAG'),
+  'fssc.com': B(['INT'], 'standardOwner', 'FSSC 22000 — pronari i skemës'),
+  'tuvsud.com': C('certBody', 'TÜV SÜD — organ certifikimi', 'Ofrues shërbimi, jo autoritet rregullator.'),
+  'sites.manchester.ac.uk': C('media', 'Faqe akademike, Universiteti i Mançesterit'),
+  'ecommerce4all.rs': D('media', 'Projekt privat'),
+  'ecommerce4all.mk': D('media', 'Projekt privat'),
+  'morganshipping.com': D('logistics', 'Spedicion privat'),
+  'export2gulf.com': D('consultancy', 'Konsulencë private'),
+  'carvo.com': D('media', 'Faqe private'),
+  'vinciworks.com': D('consultancy', 'Shitës trajnimesh pajtueshmërie'),
+  'instrktiv.com': D('consultancy', 'Konsulencë manualesh produkti'),
+  'nexreg.com': D('consultancy', 'Konsulencë rregullatore private'),
+  'peko.pl': D('media', 'Faqe tregtare private'),
 }
 
 function hostOf(url: string): string | null {
