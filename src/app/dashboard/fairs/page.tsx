@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { isDemoSession, DEMO_LIST_LIMIT } from '@/lib/guide-access'
 import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -90,10 +91,14 @@ export default async function FairsPage({
   })) as (FairRow & { isGeneral: boolean; targetActivityTypes: string[] })[]
 
   const profile = (await currentBusinessProfile()) ?? { activityType: null, entitledSectors: [], femaleOwnership: null }
-  const fairs = feedFor(profile, fairsRaw)
-
   const today = new Date()
   today.setUTCHours(0, 0, 0, 0)
+
+  // Demo: vetem disa evente te ardhshme si shembull.
+  const fairsVisible = feedFor(profile, fairsRaw)
+  const fairs = (await isDemoSession())
+    ? fairsVisible.filter((f) => f.endDate >= today).slice(0, DEMO_LIST_LIMIT)
+    : fairsVisible
 
   const upcoming = fairs.filter((f) => f.endDate >= today)
   const past = fairs.filter((f) => f.endDate < today)

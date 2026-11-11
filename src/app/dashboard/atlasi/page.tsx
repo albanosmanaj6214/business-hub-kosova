@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { fullAccessForSession } from '@/lib/guide-access'
+import { fullAccessForSession, isDemoSession, DEMO_MARKETS, DEMO_LIST_LIMIT } from '@/lib/guide-access'
 import { ExportAtlas, type AtlasGuide, type AtlasStat, type AtlasFair, type AtlasSectorStat } from '@/components/atlas/ExportAtlas'
 
 export const dynamic = 'force-dynamic'
@@ -15,22 +15,25 @@ export default async function AtlasiPage() {
   if (!userId) redirect('/login')
 
   const fullAccess = await fullAccessForSession()
+  // Demo: vetem tregjet shembull dalin ne harte; te dhenat e tjera s'dergohen fare te shfletuesi.
+  const demo = await isDemoSession()
+  const marketWhere = demo ? { countryCode: { in: DEMO_MARKETS } } : {}
 
   const [guides, statsRaw, sectorRaw, fairsRaw, ownCompany, ownUser, myCertRows, reqRows] = await Promise.all([
-    prisma.exportGuide.findMany({ select: { id: true, country: true, countryCode: true, titleSq: true, title: true } }),
+    prisma.exportGuide.findMany({ where: marketWhere, select: { id: true, country: true, countryCode: true, titleSq: true, title: true } }),
     prisma.marketStat.findMany({
-      where: { kind: { in: ['POPULATION', 'GDP_PER_CAPITA'] }, sectorSlug: '' },
+      where: { kind: { in: ['POPULATION', 'GDP_PER_CAPITA'] }, sectorSlug: '', ...marketWhere },
       select: { countryCode: true, kind: true, value: true, unit: true, year: true, sourceName: true, sourceDataset: true, retrievedAt: true },
     }),
     prisma.marketStat.findMany({
-      where: { kind: 'SECTOR_IMPORTS' },
+      where: { kind: 'SECTOR_IMPORTS', ...marketWhere },
       select: { countryCode: true, sectorSlug: true, value: true, unit: true, year: true, sourceName: true, sourceDataset: true, retrievedAt: true },
     }),
     prisma.tradeFair.findMany({
       where: { startDate: { gte: new Date() } },
       select: { name: true, nameSq: true, country: true, startDate: true },
       orderBy: { startDate: 'asc' },
-      take: 300,
+      take: demo ? DEMO_LIST_LIMIT : 300,
     }),
     prisma.company.findUnique({ where: { ownerUserId: userId }, select: { sectors: true, productGroups: true } }),
     prisma.user.findUnique({ where: { id: userId }, select: { sectors: true } }),

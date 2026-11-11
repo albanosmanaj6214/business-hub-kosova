@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { exportGuideAccess } from '@/lib/guide-access'
+import { exportGuideAccess, DEMO_MARKETS } from '@/lib/guide-access'
 import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
@@ -112,7 +112,7 @@ export default async function GuidePage({ params }: { params: { id: string } }) 
 
   // Zbatimi i pakos: me 'limited', udhezuesit jashte sektorit tend hapen me upgrade.
   const access = await exportGuideAccess()
-  if (access.mode === 'none' || (access.mode === 'limited' && guide.targetSectors.length > 0 && !guide.targetSectors.some((s) => access.entitled.includes(s)))) {
+  if (access.mode === 'none' || (access.mode === 'demo' && !DEMO_MARKETS.includes((guide.countryCode ?? '').toUpperCase())) || (access.mode === 'limited' && guide.targetSectors.length > 0 && !guide.targetSectors.some((s) => access.entitled.includes(s)))) {
     return (
       <div className="max-w-2xl mx-auto py-12">
         <div className="rounded-xl border border-gray-200 bg-white p-8 text-center space-y-3">

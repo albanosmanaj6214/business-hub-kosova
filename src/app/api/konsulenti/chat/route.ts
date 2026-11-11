@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isDemoEmail } from '@/lib/guide-access'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
@@ -119,6 +120,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'I paautorizuar.' }, { status: 401 })
   }
   const userId = session.user.id
+  // Llogaria demo nuk e perdor konsulentin: ai kerkon ne te gjitha te dhenat e mbledhura.
+  if (isDemoEmail(session.user.email)) {
+    return NextResponse.json({ error: 'Konsulenti nuk është aktiv në versionin demonstrues.' }, { status: 403 })
+  }
 
   const body = await req.json().catch(() => ({})) as { sessionId?: string; message?: string }
   const userMsg = (body.message || '').trim().slice(0, MAX_USER_MSG_LEN)
