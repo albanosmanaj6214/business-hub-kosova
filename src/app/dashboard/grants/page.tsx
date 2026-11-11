@@ -1,4 +1,5 @@
 import { isFairStandCall } from '@/lib/fair-stand-calls'
+import { demoLimiter } from '@/lib/guide-access'
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
 import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
@@ -166,6 +167,11 @@ export default async function GrantsPage({
   buckets.active = sortLocalFirst(buckets.active)
   buckets.no_deadline = sortLocalFirst(buckets.no_deadline)
   buckets.expired.sort((a, b) => expiredYear(b) - expiredYear(a))
+  // Demo: vetem disa shembuj per grup, pa arkivin e skaduar.
+  const demoCap = await demoLimiter()
+  buckets.active = demoCap(buckets.active)
+  buckets.no_deadline = demoCap(buckets.no_deadline)
+  buckets.expired = demoCap(buckets.expired, 0)
 
   const expiredByYear = new Map<number, GrantRow[]>()
   for (const g of buckets.expired) {

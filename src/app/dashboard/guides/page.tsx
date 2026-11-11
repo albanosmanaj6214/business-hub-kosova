@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { ExpertContactCard } from '@/components/contact/ExpertContactCard'
 import { prisma } from '@/lib/prisma'
 import { currentBusinessProfile } from '@/lib/audience-server'
-import { exportGuideAccess } from '@/lib/guide-access'
+import { exportGuideAccess, DEMO_MARKETS } from '@/lib/guide-access'
 import { SECTORS, sectorAppliesToAny } from '@/lib/sectors'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -69,8 +69,10 @@ export default async function GuidesPage() {
       </div>
     )
   }
-  const guideOk = (g: { targetSectors: string[] }) =>
-    access.mode !== 'limited' || g.targetSectors.length === 0 || g.targetSectors.some((s) => access.entitled.includes(s))
+  const guideOk = (g: { targetSectors: string[]; countryCode: string | null }) =>
+    access.mode === 'demo'
+      ? DEMO_MARKETS.includes((g.countryCode ?? '').toUpperCase())
+      : access.mode !== 'limited' || g.targetSectors.length === 0 || g.targetSectors.some((s) => access.entitled.includes(s))
   const guides = guidesRaw.filter(guideOk)
   const lockedCount = guidesRaw.length - guides.length
 
@@ -95,6 +97,11 @@ export default async function GuidesPage() {
           )}
         </p>
       </div>
+      {access.mode === 'demo' && lockedCount > 0 && (
+        <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">
+          Ky është version demonstrues. Këtu shfaqen {guides.length} udhëzues shembull; platforma e plotë përmban edhe {lockedCount} tregje të tjera.
+        </div>
+      )}
       {access.mode === 'limited' && lockedCount > 0 && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           Me pakon <strong>Falas</strong> sheh udhëzuesit e sektorit tënd ({guides.length} nga {guidesRaw.length}).{' '}

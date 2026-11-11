@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { isDemoSession } from '@/lib/guide-access'
 import {
   CERTIFICATION_CATEGORIES,
   filterCertCategoriesByUserSectors,
@@ -25,7 +26,9 @@ export default async function CertificationsPage({
   searchParams?: { filter?: string; all?: string }
 }) {
   const filter = searchParams?.filter ?? 'all'
-  const showAll = searchParams?.all === '1'
+  // Demo: pa katalogun e plote; vetem 2 certifikime shembull per kategori.
+  const demo = await isDemoSession()
+  const showAll = !demo && searchParams?.all === '1'
   const totalAll = CERTIFICATION_CATEGORIES.reduce((a, c) => a + c.certifications.length, 0)
 
   // Personalizim i detyrueshem: shfaqen vetem certifikimet e sektorit te biznesit.
@@ -46,7 +49,8 @@ export default async function CertificationsPage({
             (c) => c.mandatory === 'eu_mandatory' || c.mandatory === 'sector_required',
           )
         : cat.certifications,
-  })).filter((cat) => cat.certifications.length > 0)
+  })).map((cat) => (demo ? { ...cat, certifications: cat.certifications.slice(0, 2) } : cat))
+    .filter((cat) => cat.certifications.length > 0)
 
   const filteredCount = filtered.reduce((a, c) => a + c.certifications.length, 0)
 

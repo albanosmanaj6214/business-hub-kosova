@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { checklistAllowed } from '@/lib/guide-access'
+import { checklistAllowed, isDemoSession, DEMO_MARKETS } from '@/lib/guide-access'
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -72,11 +72,14 @@ export default async function ChecklistPage({
   }
 
   const code = (searchParams?.country || '').toUpperCase()
+  // Demo: vetem tregjet shembull.
+  const demo = await isDemoSession()
+  const demoWhere = demo ? { countryCode: { in: DEMO_MARKETS } } : {}
 
   // Detail view
   if (code) {
     const guide = await prisma.exportGuide.findFirst({
-      where: { countryCode: code, isPublished: true, deletedAt: null },
+      where: { countryCode: demo && !DEMO_MARKETS.includes(code) ? '__demo_locked__' : code, isPublished: true, deletedAt: null },
       select: {
         id: true, country: true, countryCode: true, flag: true,
         requiredDocs: true, certifications: true, labeling: true, customs: true,
@@ -210,7 +213,7 @@ export default async function ChecklistPage({
 
   // Selector view
   const guides = await prisma.exportGuide.findMany({
-    where: { isPublished: true, deletedAt: null },
+    where: { isPublished: true, deletedAt: null, ...demoWhere },
     select: { id: true, country: true, countryCode: true, flag: true },
     orderBy: [{ countryCode: 'asc' }],
   })
